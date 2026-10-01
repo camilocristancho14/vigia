@@ -5,10 +5,30 @@ import SwiftUI
 
 @MainActor
 enum VigiaMenuRows {
+    /// One detail card per AI on the rail — the card the notch opens when the
+    /// pointer rests on a ring, with the same figures, in place of a bare row.
     static func add(to menu: NSMenu, settings: AppSettings, store: UsageStore) {
-        for row in makeRows(settings: settings, store: store) {
+        for account in settings.shownAccounts {
+            let card = UsageDetailCard(
+                usesGlass: false,
+                usage: store.usage(for: account),
+                title: settings.label(for: account),
+                edge: .top,
+                showsRemaining: settings.showsRemaining,
+                showsForecast: settings.showsForecast,
+                resetCredits: account == AccountKey(.codex) ? store.codexResetCredits : nil,
+                isDetailed: settings.showsDetailedCard(for: account),
+                pointerCenter: 0,
+                showsPointer: false
+            )
+            .environment(\.usageWarningThreshold, settings.warningThreshold.fraction)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+
+            let host = NSHostingView(rootView: card)
+            host.frame.size = host.fittingSize
             let item = NSMenuItem()
-            item.view = row
+            item.view = host
             menu.addItem(item)
         }
     }

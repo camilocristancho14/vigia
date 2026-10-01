@@ -168,6 +168,9 @@ struct UsageDetailCard: View {
     /// at the card's centre — it has to be placed independently to keep aiming
     /// at the selected ring.
     let pointerCenter: CGFloat
+    /// False for a card that is not aimed at anything, like the ones in the
+    /// menu bar's menu: no tail, no room reserved for one.
+    var showsPointer = true
 
     /// Where red begins, so the card's bars agree with the rail's rings.
     @Environment(\.usageWarningThreshold) private var warningThreshold
@@ -252,7 +255,7 @@ struct UsageDetailCard: View {
         .frame(width: DetailCardLayout.width, alignment: .leading)
         // Room for the pointer on the side facing the rail. The shape below
         // covers the whole frame, body and pointer together.
-        .padding(Self.pointerSide(for: edge), DetailCardLayout.pointerWidth)
+        .padding(Self.pointerSide(for: edge), showsPointer ? DetailCardLayout.pointerWidth : 0)
         // **Inside the card, never ahead of it.** Switching between two cards
         // of different heights keeps this one view and swaps its rows: the
         // outline grows on the panel's spring, but a row the new card adds is
@@ -319,8 +322,8 @@ struct UsageDetailCard: View {
             edge: edge,
             pointerCenter: pointerCenter,
             cornerRadius: DetailCardLayout.cornerRadius,
-            pointerWidth: DetailCardLayout.pointerWidth,
-            pointerHeight: DetailCardLayout.pointerHeight
+            pointerWidth: showsPointer ? DetailCardLayout.pointerWidth : 0,
+            pointerHeight: showsPointer ? DetailCardLayout.pointerHeight : 0
         )
     }
 
