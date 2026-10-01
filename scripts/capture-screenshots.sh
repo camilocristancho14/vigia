@@ -51,7 +51,11 @@ launch_scene() {
     local i
     for i in $(seq 1 40); do
         if [ -f /tmp/vigia-ready ]; then
-            sleep 0.6
+            sleep 0.8
+            if [ "$scene" = "menu" ]; then
+                echo "menu debug:"
+                cat /tmp/vigia-menu-debug 2>/dev/null || true
+            fi
             screencapture -x "$OUT/${scene}-${mode}.png"
             return 0
         fi

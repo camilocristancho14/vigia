@@ -27,6 +27,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private var panelController: FloatingPanelController?
     private var statusItem: NSStatusItem?
+    /// The demo menu is a window, not an `NSMenu`. Kept so it stays on screen
+    /// until the capture script shoots.
+    private var demoMenuPanel: NSPanel?
     private var settingsWindow: SettingsWindowController?
     private var providerSetupWindow: ProviderSetupWindowController?
     private var preparedClaude = false
@@ -128,10 +131,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    /// `performClick` does not open a status-item menu, and on a background
-    /// launch it returns without showing anything. `popUp` keeps the menu up
-    /// inside a nested tracking loop; the timer runs in that loop so the
-    /// capture script shoots while the menu is still open.
+    /// `performClick` and `NSMenu.popUp` both return without a menu on a
+    /// background launch, and `screencapture` does not record a menu even
+    /// when one is tracking. A borderless panel at menu level uses the same
+    /// item views the status menu just built, so the shot shows that menu.
     private func presentDemoMenu() {
         NSApp.activate(ignoringOtherApps: true)
         guard let button = statusItem?.button, let menu = statusItem?.menu else {
@@ -139,11 +142,164 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         menu.update()
-        let timer = Timer(timeInterval: 0.45, repeats: false) { _ in
+        button.highlight(true)
+        let panel = makeDemoMenuPanel(menu: menu, under: button)
+        demoMenuPanel = panel
+        panel.orderFrontRegardless()
+        let note = "items=\(menu.items.count) frame=\(panel.frame.debugDescription)\n"
+        try? note.write(toFile: "/tmp/vigia-menu-debug", atomically: true, encoding: .utf8)
+        DispatchQueue.main.async {
             DemoMode.signalReady()
         }
-        RunLoop.main.add(timer, forMode: .common)
-        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: -4), in: button)
+    }
+
+    private func makeDemoMenuPanel(menu: NSMenu, under button: NSStatusBarButton) -> NSPanel {
+        let width: CGFloat = 340
+        let rows = demoMenuRows(menu)
+        let padY: CGFloat = 6
+        let height = padY * 2 + rows.reduce(CGFloat(0)) { $0 + $1.height }
+        let origin = demoMenuOrigin(width: width, height: height, under: button)
+
+        let panel = NSPanel(
+            contentRect: NSRect(origin: origin, size: NSSize(width: width, height: height)),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = .popUpMenu
+        panel.isFloatingPanel = true
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
+        panel.isReleasedWhenClosed = false
+        panel.appearance = NSApp.appearance
+
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
+        container.wantsLayer = true
+        container.layer?.cornerRadius = 10
+        container.layer?.masksToBounds = true
+        // The desktop behind a screenshot is black. A behind-window blur would
+        // sample that and the light-mode labels would disappear, so the menu
+        // paints its own fill and the material only tints that fill.
+        let dark = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        container.layer?.backgroundColor = (dark
+            ? NSColor(calibratedWhite: 0.15, alpha: 1)
+            : NSColor(calibratedWhite: 0.96, alpha: 1)
+        ).cgColor
+
+        let effect = NSVisualEffectView(frame: container.bounds)
+        effect.autoresizingMask = [.width, .height]
+        effect.material = .menu
+        effect.blendingMode = .withinWindow
+        effect.state = .active
+        container.addSubview(effect)
+
+        var y = height - padY
+        for row in rows {
+            y -= row.height
+            if row.item.isSeparatorItem {
+                let line = NSBox(frame: NSRect(x: 12, y: y + (row.height - 1) / 2, width: width - 24, height: 1))
+                line.boxType = .separator
+                container.addSubview(line)
+            } else if let view = row.item.view {
+                view.frame = NSRect(x: 0, y: y, width: width, height: row.height)
+                container.addSubview(view)
+                view.layoutSubtreeIfNeeded()
+            } else {
+                addDemoMenuTitle(row.item, rowY: y, rowHeight: row.height, width: width, to: container)
+            }
+        }
+
+        panel.contentView = container
+        return panel
+    }
+
+    private struct DemoMenuRow {
+        let item: NSMenuItem
+        let height: CGFloat
+    }
+
+    private func demoMenuRows(_ menu: NSMenu) -> [DemoMenuRow] {
+        var rows: [DemoMenuRow] = []
+        for item in menu.items where !item.isHidden {
+            if item.isSeparatorItem {
+                rows.append(DemoMenuRow(item: item, height: 9))
+            } else if let view = item.view {
+                rows.append(DemoMenuRow(item: item, height: max(view.frame.height, 22)))
+            } else {
+                rows.append(DemoMenuRow(item: item, height: 24))
+            }
+        }
+        return rows
+    }
+
+    private func demoMenuOrigin(width: CGFloat, height: CGFloat, under button: NSStatusBarButton) -> NSPoint {
+        let screen = button.window?.screen ?? NSScreen.main
+        let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1440, height: 800)
+        let anchor: NSRect
+        if let window = button.window {
+            anchor = window.convertToScreen(button.convert(button.bounds, to: nil))
+        } else {
+            anchor = NSRect(x: visible.maxX - 40, y: visible.maxY, width: 22, height: 22)
+        }
+        var origin = NSPoint(x: anchor.maxX - width, y: anchor.minY - height - 2)
+        let minX = visible.minX + 8
+        let maxX = visible.maxX - width - 8
+        if origin.x < minX { origin.x = minX }
+        if origin.x > maxX { origin.x = maxX }
+        if origin.y < visible.minY + 8 { origin.y = visible.minY + 8 }
+        return origin
+    }
+
+    private func addDemoMenuTitle(
+        _ item: NSMenuItem,
+        rowY: CGFloat,
+        rowHeight: CGFloat,
+        width: CGFloat,
+        to container: NSView
+    ) {
+        let keys = demoMenuKeyEquivalent(item)
+        let shortcutWidth: CGFloat = keys.isEmpty ? 0 : 46
+        if item.state == .on, let image = NSImage(named: NSImage.menuOnStateTemplateName) {
+            let mark = NSImageView(frame: NSRect(x: 8, y: rowY + (rowHeight - 12) / 2, width: 12, height: 12))
+            mark.image = image
+            mark.contentTintColor = .labelColor
+            container.addSubview(mark)
+        }
+        let title = NSTextField(labelWithString: item.title)
+        title.font = .menuFont(ofSize: 0)
+        title.textColor = .labelColor
+        title.lineBreakMode = .byTruncatingTail
+        let titleX: CGFloat = 18
+        let titleWidth = max(40, width - titleX - 14 - shortcutWidth - (shortcutWidth > 0 ? 8 : 0))
+        title.frame = NSRect(x: titleX, y: rowY + (rowHeight - 16) / 2, width: titleWidth, height: 16)
+        container.addSubview(title)
+        guard !keys.isEmpty else { return }
+        let shortcut = NSTextField(labelWithString: keys)
+        shortcut.font = .menuFont(ofSize: 0)
+        shortcut.textColor = .secondaryLabelColor
+        shortcut.alignment = .right
+        shortcut.frame = NSRect(x: width - 14 - shortcutWidth, y: title.frame.minY, width: shortcutWidth, height: 16)
+        container.addSubview(shortcut)
+    }
+
+    private func demoMenuKeyEquivalent(_ item: NSMenuItem) -> String {
+        let key = item.keyEquivalent
+        guard !key.isEmpty else { return "" }
+        let mask = item.keyEquivalentModifierMask
+        var prefix = ""
+        if mask.contains(.control) { prefix += "⌃" }
+        if mask.contains(.option) { prefix += "⌥" }
+        if mask.contains(.shift) { prefix += "⇧" }
+        if mask.contains(.command) { prefix += "⌘" }
+        if key == "\u{1b}" { return prefix + "⎋" }
+        if key.count == 1, let scalar = key.unicodeScalars.first, CharacterSet.letters.contains(scalar) {
+            return prefix + key.uppercased()
+        }
+        return prefix + key
     }
 
     private func showSettingsGeneral() {
