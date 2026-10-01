@@ -141,12 +141,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             DemoMode.signalReady()
             return
         }
-        menu.update()
+        // `update()` refreshes item state and does not call `menuNeedsUpdate`,
+        // so the session rows never get built unless the delegate runs itself.
+        menuNeedsUpdate(menu)
         button.highlight(true)
         let panel = makeDemoMenuPanel(menu: menu, under: button)
         demoMenuPanel = panel
         panel.orderFrontRegardless()
-        let note = "items=\(menu.items.count) frame=\(panel.frame.debugDescription)\n"
+        let titles = menu.items.map { item -> String in
+            if item.isSeparatorItem { return "-" }
+            if item.view != nil { return "row" }
+            return item.title
+        }.joined(separator: " | ")
+        let note = "items=\(menu.items.count) \(titles) frame=\(panel.frame.debugDescription)\n"
         try? note.write(toFile: "/tmp/vigia-menu-debug", atomically: true, encoding: .utf8)
         DispatchQueue.main.async {
             DemoMode.signalReady()
