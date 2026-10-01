@@ -20,6 +20,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Select Xcode
+        run: |
+          set -euo pipefail
+          ls -d /Applications/Xcode*.app
+          picked=""
+          for v in 26.2 26.1 26.0 16.4 16.3 16.2 16.1 16.0; do
+            if [ -d "/Applications/Xcode_${v}.app" ]; then
+              picked="/Applications/Xcode_${v}.app"
+              break
+            fi
+          done
+          if [ -z "$picked" ]; then
+            echo "No Xcode 16 or newer on this runner" >&2
+            exit 1
+          fi
+          sudo xcode-select -s "$picked"
+          xcodebuild -version
+          swift --version
+
       - name: Build
         run: swift build -c release --product Pulse
 

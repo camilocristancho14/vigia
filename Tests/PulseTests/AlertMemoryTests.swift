@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-import UserNotifications
+@preconcurrency import UserNotifications
 @testable import Pulse
 
 /// The notification rules, which are the reason `AlertMemory.alerts` was

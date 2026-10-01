@@ -1,6 +1,7 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 import Observation
-import UserNotifications
+@preconcurrency import UserNotifications
 
 /// How full a limit has to get before Pulse says something unprompted.
 ///
