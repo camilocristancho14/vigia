@@ -526,7 +526,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // it would be repeating. Agent rows stay off any other menu so the
         // structural menu test still sees the original items.
         if menu === statusItem?.menu {
-            menu.minimumWidth = 340
+            menu.minimumWidth = DetailCardLayout.width + 12
             addAgentRows(to: menu)
         }
         populateMenu(menu)
