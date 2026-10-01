@@ -45,16 +45,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // The required `Settings` scene is empty on purpose; if the system
         // ever opens it (it did on a first launch), the person is looking at
         // a blank window. Close it and open the real one in its place.
+        // A selector rather than a closure: the handler touches `NSWindow`,
+        // which is main-actor isolated, and a method on this class is too.
         NotificationCenter.default.addObserver(
-            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
-        ) { [weak self] note in
-            guard let window = note.object as? NSWindow, !(window is SettingsWindow),
-                  window.identifier?.rawValue.contains("Settings") == true else { return }
-            MainActor.assumeIsolated {
-                window.close()
-                self?.openRealSettings()
-            }
-        }
+            self, selector: #selector(windowBecameKey(_:)),
+            name: NSWindow.didBecomeKeyNotification, object: nil
+        )
 
         // **Writing to a pipe whose far end has closed raises SIGPIPE, whose
         // default is to kill the process.** Pulse writes to one: the Codex
@@ -324,6 +320,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return prefix + key.uppercased()
         }
         return prefix + key
+    }
+
+    @objc private func windowBecameKey(_ note: Notification) {
+        guard let window = note.object as? NSWindow, !(window is SettingsWindow),
+              window.identifier?.rawValue.contains("Settings") == true else { return }
+        window.close()
+        openRealSettings()
     }
 
     /// Settings, or the chooser while no service has been picked.
