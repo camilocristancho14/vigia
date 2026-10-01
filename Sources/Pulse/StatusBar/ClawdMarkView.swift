@@ -27,6 +27,8 @@ enum ClawdFrames {
         case .coffee: 0.25
         case .awake: 0.2
         case .sleep: 0.45
+        case .tired: 0.3
+        case .spent: 0.35
         }
     }
 
@@ -53,6 +55,12 @@ enum ClawdFrames {
         case .sleep:
             guard let frames = sets["sleep"] else { return walk.first }
             return frames[Int(seconds / 0.9) % frames.count]
+        case .tired:
+            guard let frames = sets["tired"] else { return walk.first }
+            return frames[Int(seconds / 0.3) % frames.count]
+        case .spent:
+            guard let frames = sets["spent"] else { return walk.first }
+            return frames[Int(seconds / 0.35) % frames.count]
         }
     }
 }

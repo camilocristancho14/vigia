@@ -165,7 +165,7 @@ private struct MenuBarMascotItem: View {
         let usage = store.usage(for: account)
         let headline = usage.headlineWindow(preferring: settings.pinnedWindow(for: account))
         let working = store.isRunning(provider)
-        let pose = store.mascotPose(provider)
+        let pose = store.mascotPose(provider, usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction)
 
         HStack(spacing: 4) {
             mark(working: working, pose: pose, headline: headline)
@@ -209,7 +209,7 @@ private struct MenuBarMascotItem: View {
                 size: Self.markSize
             )
         } else {
-            LobeIconView(provider: provider, size: Self.markSize - 4)
+            LogoMascotView(provider: provider, pose: pose, size: Self.markSize)
         }
     }
 

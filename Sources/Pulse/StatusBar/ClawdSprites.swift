@@ -16,13 +16,19 @@ enum MascotPose: Equatable, Sendable {
     case awake
     /// Idle for a long while.
     case sleep
+    /// Three quarters of a limit gone: worn out, sweating.
+    case tired
+    /// A limit used up: nothing more to give.
+    case spent
 
     var isWorking: Bool { self == .run || self == .type }
 
-    /// The pose for a turn in flight, from the word the status bar shows.
+    /// The pose for a turn in flight, from the word the status bar shows:
+    /// at the laptop for commands, edits and thinking, on the move for
+    /// looking things up and handing work out.
     static func working(label: String?) -> MascotPose {
         switch label {
-        case "Running command", "Searching", "Browsing web", "Searching web", "Delegating", "Using tool": .run
+        case "Reading", "Searching", "Browsing web", "Searching web", "Delegating": .run
         default: .type
         }
     }
@@ -33,7 +39,7 @@ enum ClawdSprites {
 
     private static let palette: [Character: (UInt8, UInt8, UInt8)] = [
         "O": (217, 119, 87), "K": (25, 20, 20), "W": (246, 242, 235), "B": (110, 70, 50),
-        "S": (225, 228, 236), "G": (198, 202, 210), "g": (138, 144, 156), "Z": (140, 165, 240)
+        "S": (225, 228, 236), "Y": (250, 204, 21), "C": (120, 200, 245), "D": (184, 96, 70), "G": (198, 202, 210), "g": (138, 144, 156), "Z": (140, 165, 240)
     ]
 
     static let awake0: [String] = [
@@ -171,13 +177,90 @@ enum ClawdSprites {
         "...ggggggggggg..."
     ]
 
+    static let tired0: [String] = [
+        "..............C..",
+        "...OOOOOOOOOOO...",
+        "...ODDOOOOODDO...",
+        "...OKKOOOOOKKO...",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let tired1: [String] = [
+        ".................",
+        "...OOOOOOOOOOOC..",
+        "...ODDOOOOODDO...",
+        "...OKKOOOOOKKO...",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let tired2: [String] = [
+        ".................",
+        "...OOOOOOOOOOO...",
+        "...ODDOOOOODDOC..",
+        "...OKKOOOOOKKO...",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let spent0: [String] = [
+        "....Y.......Y....",
+        "...OOOOOOOOOOO...",
+        "...OKOKOOOKOKO...",
+        "...OOKOOOOOKOO...",
+        "...OKOKOOOKOKO...",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let spent1: [String] = [
+        "......Y...Y......",
+        "...OOOOOOOOOOO...",
+        "...OKOKOOOKOKO...",
+        "...OOKOOOOOKOO...",
+        "...OKOKOOOKOKO...",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
     /// Full-colour frames for a pose, in the order they play.
     @MainActor
     static let frames: [String: [NSImage]] = [
         "awake": [awake0, awake1].map(render),
         "sleep": [sleep0, sleep1].map(render),
         "coffee": [coffee0, coffee1, coffee2].map(render),
-        "type": [type0, type1].map(render)
+        "type": [type0, type1].map(render),
+        "tired": [tired0, tired1, tired2, tired1].map(render),
+        "spent": [spent0, spent1].map(render)
     ]
 
     private static func render(_ rows: [String]) -> NSImage {

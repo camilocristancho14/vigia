@@ -201,23 +201,36 @@ final class UsageStore {
     }
 
     /// Whether a provider's CLI is working at this moment.
-    func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
+    func isRunning(_ provider: Provider) -> Bool { activity.running.contains(Self.activitySource(provider)) }
 
-    /// What the mascot is up to: working at what the status bar says, on a
-    /// break for ten minutes after a turn ends, awake while anything has been
-    /// written lately, and asleep after twenty quiet minutes.
-    func mascotPose(_ provider: Provider, now: Date = Date()) -> MascotPose {
-        if isRunning(provider) { return .working(label: activity.labels[provider]) }
-        if let finished = activity.finishedAt[provider], now.timeIntervalSince(finished) < 600 { return .coffee }
+    /// Whose transcripts say what this provider is doing. Grok Bot has none of
+    /// its own — it is the same family as Grok Build, whose sessions live in
+    /// `~/.grok` — so it follows that work.
+    static func activitySource(_ provider: Provider) -> Provider {
+        provider == .grokBot ? .grok : provider
+    }
+
+    /// What the mascot is up to. Working comes first, then a five-minute
+    /// break after a turn ends; once that is over a nearly spent limit shows
+    /// as tired (75%) or used up (100%); otherwise awake while anything has
+    /// been written lately, and asleep after twenty quiet minutes.
+    func mascotPose(_ provider: Provider, usedFraction: Double? = nil, now: Date = Date()) -> MascotPose {
+        let source = Self.activitySource(provider)
+        if activity.running.contains(source) { return .working(label: activity.labels[source]) }
+        if let finished = activity.finishedAt[source], now.timeIntervalSince(finished) < 300 { return .coffee }
+        if let used = usedFraction {
+            if used >= 1 { return .spent }
+            if used >= 0.75 { return .tired }
+        }
         if let written = activity.lastWrite, now.timeIntervalSince(written) < 1200 { return .awake }
         return .sleep
     }
 
     /// What a working provider is doing right now, as an English key.
-    func activityLabel(_ provider: Provider) -> String? { activity.labels[provider] }
+    func activityLabel(_ provider: Provider) -> String? { activity.labels[Self.activitySource(provider)] }
 
     /// When the turn running now was first seen.
-    func workingSince(_ provider: Provider) -> Date? { activity.startedAt[provider] }
+    func workingSince(_ provider: Provider) -> Date? { activity.startedAt[Self.activitySource(provider)] }
 
     /// Whether this provider's CLI finished a turn just now.
     ///
@@ -226,7 +239,7 @@ final class UsageStore {
     /// reopening the panel a minute later does not replay it.
     func justFinishedWorking(_ provider: Provider, within span: TimeInterval = 6,
                              now: Date = Date()) -> Bool {
-        guard let at = activity.finishedAt[provider] else { return false }
+        guard let at = activity.finishedAt[Self.activitySource(provider)] else { return false }
         return now.timeIntervalSince(at) >= 0 && now.timeIntervalSince(at) <= span
     }
 
@@ -420,7 +433,7 @@ final class UsageStore {
         if DemoMode.isActive { return }
         if !settings.needsProviderSelection
             && (settings.isPanelVisible || !settings.hidesMenuBarIcon) && !screensAsleep {
-            activity.start(providers: Set(settings.shownAccounts.map(\.provider)))
+            activity.start(providers: Set(settings.shownAccounts.map { Self.activitySource($0.provider) }))
         } else {
             activity.stop()
         }

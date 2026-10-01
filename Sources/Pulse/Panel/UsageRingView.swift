@@ -303,8 +303,9 @@ struct UsageRingView: View {
                     size: centreDiameter * Self.botScale
                 )
             } else {
-                LobeIconView(
+                LogoMascotView(
                     provider: provider,
+                    pose: mascotPose,
                     size: centreDiameter * Self.iconScale
                 )
                 // Dimmed while there is no reading, so the rail shows at a
