@@ -313,6 +313,9 @@ struct RailEntry: Identifiable, Equatable {
     /// Whether this provider's CLI is working at this moment, which the ring
     /// shows as a turning mark.
     var isRunning: Bool = false
+    /// What the mark is up to, and the status word behind it.
+    var pose: MascotPose = .awake
+    var activityLabel: String?
     /// Whether Pulse is currently fetching a fresh reading for this provider.
     var isRefreshing: Bool = false
     /// A colour chosen for this ring, or nil to colour it by usage.
@@ -637,6 +640,8 @@ private struct UsageDockItem: View {
             diameter: DockLayout.ringDiameter,
             lineWidth: DockLayout.ringLineWidth,
             isBusy: entry.isRunning,
+            mascotPose: entry.pose,
+            activityLabel: entry.activityLabel,
             isRefreshing: entry.isRefreshing,
             animatesActivity: animatesActivity,
             showsBotMark: entry.showsBotMark,

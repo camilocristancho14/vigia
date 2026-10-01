@@ -203,6 +203,16 @@ final class UsageStore {
     /// Whether a provider's CLI is working at this moment.
     func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
 
+    /// What the mascot is up to: working at what the status bar says, on a
+    /// break for ten minutes after a turn ends, awake while anything has been
+    /// written lately, and asleep after twenty quiet minutes.
+    func mascotPose(_ provider: Provider, now: Date = Date()) -> MascotPose {
+        if isRunning(provider) { return .working(label: activity.labels[provider]) }
+        if let finished = activity.finishedAt[provider], now.timeIntervalSince(finished) < 600 { return .coffee }
+        if let written = activity.lastWrite, now.timeIntervalSince(written) < 1200 { return .awake }
+        return .sleep
+    }
+
     /// What a working provider is doing right now, as an English key.
     func activityLabel(_ provider: Provider) -> String? { activity.labels[provider] }
 
@@ -240,7 +250,8 @@ final class UsageStore {
             activity.adoptDemo(
                 running: DemoMode.runningProviders(),
                 labels: DemoMode.activityLabels(),
-                startedAt: DemoMode.startedAt()
+                startedAt: DemoMode.startedAt(),
+                finishedAt: DemoMode.finishedAt()
             )
             let token = NotificationCenter.default.addObserver(
                 forName: .NSSystemClockDidChange, object: nil, queue: .main
