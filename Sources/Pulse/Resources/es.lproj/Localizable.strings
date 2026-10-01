@@ -1,0 +1,116 @@
+/* Interfaz de Vigía. Las claves que no están aquí se muestran en inglés. */
+
+"Settings…" = "Ajustes…";
+"Quit Pulse" = "Salir de Vigía";
+"Pulse Settings" = "Ajustes de Vigía";
+"Choose services to start monitoring…" = "Elige servicios para empezar a vigilar…";
+"Show floating panel" = "Mostrar el panel flotante";
+
+"Panel" = "Panel";
+"Application" = "Aplicación";
+"General" = "General";
+"Appearance" = "Apariencia";
+"Rings and figures" = "Anillos y cifras";
+"Position and behavior" = "Posición y comportamiento";
+"Network and refresh" = "Red y actualización";
+"Figures" = "Cifras";
+"Rings" = "Anillos";
+"Enabled" = "Activados";
+"Subscriptions" = "Suscripciones";
+"API and pay-as-you-go" = "API y pago por uso";
+"Notifications" = "Notificaciones";
+"About" = "Acerca de";
+"Token spend" = "Gasto de tokens";
+"Developer integrations" = "Integraciones";
+"Manage extensions" = "Extensiones";
+
+"Where to show it" = "Dónde mostrarlo";
+"The menu bar item, the notch along the top of the screen, or both." = "El ítem de la barra de menú, el notch en el borde superior de la pantalla, o ambos.";
+"Menu bar" = "Barra de menú";
+"Notch" = "Notch";
+"Both" = "Ambos";
+
+"Open at login" = "Abrir al iniciar sesión";
+"Start Pulse automatically when you log in." = "Iniciar Vigía automáticamente al iniciar sesión.";
+"Waiting for approval in System Settings › General › Login Items." = "Esperando aprobación en Ajustes del Sistema › General › Ítems de inicio.";
+"Hide menu bar icon" = "Ocultar el icono de la barra de menú";
+"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "Quita Vigía de la barra de menú; usa el menú del panel o el atajo para abrir los ajustes.";
+"Show usage in the menu bar" = "Mostrar el uso en la barra de menú";
+"A ring's mark and figure beside the icon, red past the warning line." = "La marca y la cifra de un anillo junto al icono; en rojo al pasar el aviso.";
+"Menu bar shows" = "La barra de menú muestra";
+"An account switched off falls back to the fullest ring." = "Una cuenta apagada vuelve al anillo más lleno.";
+"Fullest ring" = "Anillo más lleno";
+"Menu bar style" = "Estilo de la barra de menú";
+"Figure" = "Cifra";
+"Ring" = "Anillo";
+"Split" = "Dividido";
+
+"Shortcuts" = "Atajos";
+"Open settings" = "Abrir ajustes";
+"Reaches this window with the menu bar icon out of sight." = "Abre esta ventana cuando el icono de la barra de menú no se ve.";
+"Show or hide the panel" = "Mostrar u ocultar el panel";
+"Draws the usage rail, or takes it away." = "Muestra la barra de uso, o la oculta.";
+"Another app is already using this combination." = "Otra aplicación ya usa esta combinación.";
+
+"Language" = "Idioma";
+"Interface language" = "Idioma de la interfaz";
+"Takes effect right away." = "Surte efecto de inmediato.";
+"System" = "Sistema";
+
+"Refresh" = "Actualización";
+"Check every" = "Comprobar cada";
+"How often to fetch new figures." = "Cada cuánto pedir cifras nuevas.";
+"Network" = "Red";
+"Proxy" = "Proxy";
+"Use macOS settings or a proxy only for Pulse." = "Usar los ajustes de macOS o un proxy solo para Vigía.";
+"Type" = "Tipo";
+"Host" = "Servidor";
+"Port" = "Puerto";
+"Enter a host." = "Escribe un servidor.";
+"The proxy server's name or address." = "El nombre o la dirección del servidor proxy.";
+"Enter a whole number from 1 to 65535." = "Escribe un número entero del 1 al 65535.";
+"A number from 1 to 65535." = "Un número del 1 al 65535.";
+
+"Warn at" = "Avisar al";
+"When a limit comes back" = "Cuando vuelve un límite";
+"Only for one you were warned about." = "Solo para uno del que ya te avisamos.";
+"When a reading stops arriving" = "Cuando deja de llegar una lectura";
+"After several failed checks in a row, once per outage." = "Tras varios fallos seguidos, una vez por cada corte.";
+"Notify when a limit passes this, and again when it is spent." = "Avisa cuando un límite pasa de aquí, y otra vez cuando se agota.";
+"Turned off for Pulse in System Settings › Notifications." = "Desactivado para Vigía en Ajustes del Sistema › Notificaciones.";
+"Notifications need the bundled app." = "Las notificaciones necesitan la aplicación empaquetada.";
+
+"Version" = "Versión";
+"Source code" = "Código fuente";
+"Open" = "Abrir";
+"Credits" = "Créditos";
+"Usage data" = "Datos de uso";
+"Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so." = "Leídos de la cuenta de cada proveedor. Vigía muestra las cifras que ellos informan; cuando tiene que inferir una, la cifra lo dice.";
+"Built from source — no update check." = "Compilado desde el código — sin búsqueda de actualizaciones.";
+"Checking…" = "Comprobando…";
+"Couldn't reach the update feed." = "No se pudo llegar a la fuente de actualizaciones.";
+"Check now" = "Comprobar ahora";
+"Check automatically" = "Comprobar automáticamente";
+"Every two hours. Updates are offered, never installed on their own." = "Cada dos horas. Las actualizaciones se ofrecen; nunca se instalan solas.";
+
+"Notch, rings and provider readers from github.com/qunqin24/Pulse (Apache-2.0)." = "Notch, anillos y lectores de proveedores de github.com/qunqin24/Pulse (Apache-2.0).";
+"Notch ideas and agent activity from github.com/vinzdg/codenotch (MIT)." = "Ideas de notch y actividad de agentes de github.com/vinzdg/codenotch (MIT).";
+"Menu bar item and Clawd from github.com/m1ckc3s/claude-status-bar (MIT)." = "Ítem de la barra de menú y Clawd de github.com/m1ckc3s/claude-status-bar (MIT).";
+"Provider marks from github.com/lobehub/lobe-icons." = "Marcas de proveedores de github.com/lobehub/lobe-icons.";
+"The animated marks are a port of github.com/iduu/grokbot-animation, itself a study of the bot on x.ai." = "Las marcas animadas son un porte de github.com/iduu/grokbot-animation, a su vez un estudio del bot de x.ai.";
+
+"Animated mark" = "Marca animada";
+"Draw Clawd, the pixel crab, instead of the Claude logo. It walks while Claude Code is working." = "Dibuja a Clawd, el cangrejo en píxeles, en lugar del logo de Claude. Camina mientras Claude Code trabaja.";
+"Draw the round mascot with eyes instead of the Grok logo. It looks around while Grok Build is working." = "Dibuja la mascota redonda con ojos en lugar del logo de Grok. Mira alrededor mientras Grok Build trabaja.";
+"Draw a bot that reacts to this account instead of the provider's logo." = "Dibuja un bot que reacciona a esta cuenta en lugar del logo del proveedor.";
+
+"ACTIVE" = "ACTIVO";
+"IDLE" = "QUIETO";
+
+"Reset order" = "Restablecer el orden";
+"Reset" = "Restablecer";
+"Back to the order Pulse ships with." = "Vuelve al orden con el que Vigía sale de fábrica.";
+"Clear glass that shows what is behind the panel, instead of solid black." = "Cristal que deja ver lo que hay detrás del panel, en lugar de negro sólido.";
+"Adds the plan and when the figures were read." = "Añade el plan y cuándo se leyeron las cifras.";
+"Pulse floating usage panel" = "Panel flotante de uso de Vigía";
+"Pulse %@ is available" = "Vigía %@ está disponible";

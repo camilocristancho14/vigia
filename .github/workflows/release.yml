@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Vigia.dmg and Vigia.zip
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and package
+        run: bash scripts/make-app.sh
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release create "${GITHUB_REF_NAME}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes "Vigía ${GITHUB_REF_NAME}. Abre Vigia.dmg y arrastra Vigia.app a Aplicaciones. La primera vez: ábrela y, si macOS la bloquea, Ajustes del Sistema > Privacidad y seguridad > Abrir de todos modos." \
+            build.noindex/Vigia.dmg \
+            build.noindex/Vigia.zip
