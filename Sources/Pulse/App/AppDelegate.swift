@@ -175,7 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func makeDemoMenuPanel(menu: NSMenu, under button: NSStatusBarButton) -> NSPanel {
-        let width: CGFloat = 340
+        let width = DetailCardLayout.width + 12
         let rows = demoMenuRows(menu: menu, width: width)
         let padY: CGFloat = 6
         let height = padY * 2 + rows.reduce(CGFloat(0)) { $0 + $1.height }
@@ -247,7 +247,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// `NSMenuItem.view.frame` to the bottom of whatever superview it has.
     private func demoMenuRows(menu: NSMenu, width: CGFloat) -> [DemoMenuRow] {
         var rows: [DemoMenuRow] = []
-        for view in VigiaMenuRows.makeRows(settings: settings, store: store, width: width) {
+        for view in VigiaMenuRows.makeCards(settings: settings, store: store) {
             rows.append(DemoMenuRow(item: nil, session: view, height: max(view.frame.height, 22)))
         }
         for item in menu.items where !item.isHidden && item.view == nil {

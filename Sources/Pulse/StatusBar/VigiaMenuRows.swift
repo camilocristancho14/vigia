@@ -8,7 +8,17 @@ enum VigiaMenuRows {
     /// One detail card per AI on the rail — the card the notch opens when the
     /// pointer rests on a ring, with the same figures, in place of a bare row.
     static func add(to menu: NSMenu, settings: AppSettings, store: UsageStore) {
-        for account in settings.shownAccounts {
+        for card in makeCards(settings: settings, store: store) {
+            let item = NSMenuItem()
+            item.view = card
+            menu.addItem(item)
+        }
+    }
+
+    /// The cards, not yet installed in a menu: the screenshot panel hosts
+    /// copies of its own, as it does for rows.
+    static func makeCards(settings: AppSettings, store: UsageStore) -> [NSView] {
+        settings.shownAccounts.map { account in
             let card = UsageDetailCard(
                 usesGlass: false,
                 usage: store.usage(for: account),
@@ -27,9 +37,7 @@ enum VigiaMenuRows {
 
             let host = NSHostingView(rootView: card)
             host.frame.size = host.fittingSize
-            let item = NSMenuItem()
-            item.view = host
-            menu.addItem(item)
+            return host
         }
     }
 
