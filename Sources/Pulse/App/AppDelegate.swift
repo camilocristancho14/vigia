@@ -424,7 +424,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let button = statusItem?.button else { return }
         menuBarGeneration += 1
         let generation = menuBarGeneration
-        let (reading, remaining, style, label) = withObservationTracking {
+        let (reading, remaining, style, label, mascots) = withObservationTracking {
             let reading = settings.showsUsageInMenuBar
                 ? MenuBarReading.choose(
                     among: settings.shownAccounts,
@@ -435,8 +435,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 )
                 : nil
             // The label inside too: renaming the account is a change to show.
+            // Who is mid-turn is read here too: a turn starting or ending has
+            // to redraw the item, and nothing else about it changes.
             return (reading, settings.showsRemaining, settings.menuBarStyle,
-                    reading.map { settings.label(for: $0.account) })
+                    reading.map { settings.label(for: $0.account) },
+                    VigiaStatusFace.mascots(settings: settings, store: store))
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self, self.menuBarGeneration == generation else { return }
@@ -449,8 +452,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             remaining: remaining,
             style: style,
             label: label,
-            settings: settings,
-            store: store,
+            mascots: mascots,
             on: button
         )
     }
@@ -476,6 +478,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
               )
         else { return }
         settings.hidesMenuBarIcon = false
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        if menu === statusItem?.menu { VigiaStatusFace.setMenuOpen(true) }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        if menu === statusItem?.menu { VigiaStatusFace.setMenuOpen(false) }
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
