@@ -139,9 +139,9 @@ struct SettingsView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $navigation.pane) {
-                if SettingsPane.panel.contains(where: matches) || matches(.spend) {
+                if SettingsPane.panel.contains(where: { matches($0) }) || matches(.spend) {
                     Section(String.localized("Panel")) {
-                        ForEach(SettingsPane.panel.filter(matches), id: \.self) { row($0) }
+                        ForEach(SettingsPane.panel.filter { matches($0) }, id: \.self) { row($0) }
                         // Above the accounts, not below them. Eighteen
                         // provider rows is more than a sidebar shows at once,
                         // and a pane whose whole subject is "all of them
@@ -154,9 +154,9 @@ struct SettingsView: View {
                 // Above the accounts for the same reason Token spend is: under
                 // twenty-odd provider rows these were below the fold, and they
                 // are the panes a person opens Settings for.
-                if SettingsPane.application.contains(where: matches) {
+                if SettingsPane.application.contains(where: { matches($0) }) {
                     Section(String.localized("Application")) {
-                        ForEach(SettingsPane.application.filter(matches), id: \.self) { row($0) }
+                        ForEach(SettingsPane.application.filter { matches($0) }, id: \.self) { row($0) }
                     }
                 }
 
@@ -204,9 +204,9 @@ struct SettingsView: View {
 
                 // Rarely visited, so below the accounts: out of the way of the
                 // panes above, and still one scroll away.
-                if SettingsPane.trailing.contains(where: matches) {
+                if SettingsPane.trailing.contains(where: { matches($0) }) {
                     Section {
-                        ForEach(SettingsPane.trailing.filter(matches), id: \.self) { row($0) }
+                        ForEach(SettingsPane.trailing.filter { matches($0) }, id: \.self) { row($0) }
                     }
                 }
             }
@@ -261,7 +261,7 @@ struct SettingsView: View {
             )
             .overlay {
                 if isSearching, matchingAccounts.isEmpty,
-                   !(SettingsPane.panel + [.spend, .extensions] + SettingsPane.application + SettingsPane.trailing).contains(where: matches) {
+                   !(SettingsPane.panel + [.spend, .extensions] + SettingsPane.application + SettingsPane.trailing).contains(where: { matches($0) }) {
                     Text(localized: "No matches")
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
@@ -411,7 +411,7 @@ struct SettingsView: View {
     private var matchingAccounts: [AccountKey] {
         guard isSearching else { return settings.orderedAccounts }
         return settings.orderedAccounts.filter {
-            matches(title(.account($0))) || matches($0.provider.displayName)
+            queryMatches(title(.account($0))) || queryMatches($0.provider.displayName)
         }
     }
 
@@ -428,13 +428,18 @@ struct SettingsView: View {
     /// one proxy is on rather than nothing.
     private func matches(_ pane: SettingsPane) -> Bool {
         guard isSearching else { return true }
-        return matches(title(pane)) || pane.searchTerms.contains(where: matches)
+        if queryMatches(title(pane)) { return true }
+        // A method reference here makes Swift 6.0 treat this overload as throwing.
+        for term in pane.searchTerms where queryMatches(term) {
+            return true
+        }
+        return false
     }
 
     /// Case- and accent-insensitive, and localized: `localizedStandardContains`
     /// is what Finder searches with, so "z.ai" finds Z.ai and a stray accent
     /// doesn't lose a row.
-    private func matches(_ text: String) -> Bool {
+    private func queryMatches(_ text: String) -> Bool {
         text.localizedStandardContains(query)
     }
 

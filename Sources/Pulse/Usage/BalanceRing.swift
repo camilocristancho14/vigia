@@ -102,7 +102,16 @@ final class BalanceBaselines {
     /// The mark after seeing `balance`: a first sight and a top-up set it,
     /// anything else leaves it. Written to disk only when it moved.
     func advance(account: AccountKey, currency: String, seeing balance: Double, at now: Date) -> DeepSeekBaseline.Mark {
-        var all = marks ?? file.map(Self.load) ?? [:]
+        // `Optional.map` would pass `load` into a nonisolated closure. Swift 6.0
+        // rejects that for a @MainActor type, so branch instead of mapping.
+        var all: [String: DeepSeekBaseline.Mark]
+        if let marks {
+            all = marks
+        } else if let file {
+            all = Self.load(file)
+        } else {
+            all = [:]
+        }
         let key = "\(account.id)|\(currency)"
         let mark = DeepSeekBaseline.advanced(all[key], seeing: balance, at: now)
         if all[key] != mark {
@@ -115,7 +124,7 @@ final class BalanceBaselines {
 
     private static let disk = DispatchQueue(label: "Pulse.balance-baseline", qos: .utility)
 
-    private static func load(_ file: URL) -> [String: DeepSeekBaseline.Mark] {
+    nonisolated private static func load(_ file: URL) -> [String: DeepSeekBaseline.Mark] {
         guard let data = try? Data(contentsOf: file) else { return [:] }
         return (try? JSONDecoder().decode([String: DeepSeekBaseline.Mark].self, from: data)) ?? [:]
     }

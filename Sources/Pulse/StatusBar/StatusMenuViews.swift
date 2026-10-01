@@ -86,7 +86,10 @@ final class ToggleView: NSView {
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
-        trackingAreas.forEach(removeTrackingArea)
+        // A method reference is treated as throwing by Swift 6.0's rethrows checker.
+        for area in trackingAreas {
+            removeTrackingArea(area)
+        }
         addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
     }
     override func mouseEntered(with event: NSEvent) { hovered = true; updateState(animated: false) }
@@ -227,7 +230,9 @@ final class SessionRowView: NSView {
     // Custom views don't get the menu's automatic hover highlight, so draw it ourselves.
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
-        trackingAreas.forEach(removeTrackingArea)
+        for area in trackingAreas {
+            removeTrackingArea(area)
+        }
         addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
     }
     override func mouseEntered(with event: NSEvent) { setHover(true) }
@@ -288,7 +293,9 @@ final class CopyRowView: NSView {
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
-        trackingAreas.forEach(removeTrackingArea)
+        for area in trackingAreas {
+            removeTrackingArea(area)
+        }
         addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
     }
     override func mouseEntered(with event: NSEvent) { setHover(true) }
