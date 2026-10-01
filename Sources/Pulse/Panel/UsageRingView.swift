@@ -546,7 +546,7 @@ enum LobeIconStore {
     static func image(named name: String) -> NSImage? {
         if let cached = images[name] { return cached }
         guard
-            let url = Bundle.module.url(forResource: name, withExtension: "svg"),
+            let url = Bundle.pulseResources.url(forResource: name, withExtension: "svg"),
             let image = NSImage(contentsOf: url)
         else {
             return nil

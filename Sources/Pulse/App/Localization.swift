@@ -62,6 +62,23 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     }
 }
 
+extension Bundle {
+    /// The app's resource bundle.
+    ///
+    /// SwiftPM's generated `Bundle.module` for an executable looks beside the
+    /// `.app` (`Vigia.app/Pulse_Pulse.bundle`) or at the build machine's
+    /// `.build` path, and traps when neither exists. codesign refuses loose
+    /// content at the root of an app, so the bundle ships in
+    /// `Contents/Resources` and is looked up there first. `.module` stays as
+    /// the fallback for `swift run` and tests, where it resolves normally.
+    static let pulseResources: Bundle = {
+        Bundle.main.resourceURL
+            .map { $0.appendingPathComponent("Pulse_Pulse.bundle") }
+            .flatMap { Bundle(url: $0) }
+            ?? .module
+    }()
+}
+
 /// Where `String.localized(_:)` reads from.
 ///
 /// Normally the module's own bundle, which resolves against the system
@@ -76,7 +93,7 @@ enum LocalizationSource {
     nonisolated(unsafe) private static var chosen: AppLanguage = .system
 
     static var bundle: Bundle {
-        lock.withLock { override } ?? .module
+        lock.withLock { override } ?? .pulseResources
     }
 
     /// The locale that goes with the language the strings are coming from.
@@ -99,18 +116,18 @@ enum LocalizationSource {
     /// will use, so anything that assumes one spelling can come up empty —
     /// silently, leaving the app in the system language with no clue why.
     private static func loadTable(named name: String) -> Bundle? {
-        let match = Bundle.module.localizations.first {
+        let match = Bundle.pulseResources.localizations.first {
             $0.caseInsensitiveCompare(name) == .orderedSame
         } ?? name
 
-        if let path = Bundle.module.path(forResource: match, ofType: "lproj"),
+        if let path = Bundle.pulseResources.path(forResource: match, ofType: "lproj"),
            let bundle = Bundle(path: path) {
             return bundle
         }
 
         // Fall back to building the path by hand, in case the resource lookup
         // above doesn't consider `.lproj` directories.
-        return Bundle.module.resourceURL
+        return Bundle.pulseResources.resourceURL
             .map { $0.appendingPathComponent("\(match).lproj") }
             .flatMap { Bundle(url: $0) }
     }

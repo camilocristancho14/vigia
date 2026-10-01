@@ -27,7 +27,7 @@ struct BotMarkLibrary {
     /// Loaded once and never written to afterwards; the drawing code that
     /// reads it all runs on the main actor.
     nonisolated(unsafe) static let shared: BotMarkLibrary = {
-        guard let url = Bundle.module.url(forResource: "bot-data", withExtension: "json"),
+        guard let url = Bundle.pulseResources.url(forResource: "bot-data", withExtension: "json"),
               let data = try? Data(contentsOf: url) else {
             fatalError("bot-data.json is missing from the bundle")
         }
