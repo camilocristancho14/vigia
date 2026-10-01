@@ -152,6 +152,10 @@ struct BotMarkView: View {
     /// Whether nothing has happened on this machine for a while — see
     /// `BotMarkPersona.idleStates`.
     var isQuiet = false
+    /// What the mark is up to, when that is known: it picks the scenes it
+    /// plays while working, and a break or a nap while it waits.
+    var pose: MascotPose?
+    var activityLabel: String?
     /// The body colour: the provider's brand, lifted if it would disappear
     /// into the disc behind it. See `BotMarkTint`.
     let tint: Color
@@ -214,6 +218,10 @@ struct BotMarkView: View {
                     Canvas(rendersAsynchronously: false) { context, canvasSize in
                         drawBotMark(step.frame, config: step.config,
                                     in: &context, size: canvasSize)
+                        if pose == .coffee, mood == .idle {
+                            drawCoffeeBreak(in: &context, size: canvasSize,
+                                            time: timeline.date.timeIntervalSinceReferenceDate)
+                        }
                     }
                 }
             }
@@ -239,6 +247,7 @@ struct BotMarkView: View {
             mood, persona: persona, isQuiet: isQuiet, isPointedAt: isPointedAt, at: date
         )
         programme.event = event
+        if let pose { programme.apply(pose: pose, activityLabel: activityLabel) }
         programme.shape = bodyShape.shape
         programme.gazeBias = gaze.bias
         programme.flipX = gaze.mirrored

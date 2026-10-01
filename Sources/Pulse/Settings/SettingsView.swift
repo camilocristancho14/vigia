@@ -1091,6 +1091,20 @@ struct SettingsView: View {
 
                     SettingsRowDivider()
 
+                    SettingsRow(
+                        String.localized("Mascots in colour"),
+                        subtitle: String.localized("Clawd in Claude's own orange, instead of the menu bar's ink.")
+                    ) {
+                        Toggle("", isOn: Binding(
+                            get: { settings.menuBarColorMascots },
+                            set: { settings.menuBarColorMascots = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+
+                    SettingsRowDivider()
+
                     SettingsRow(String.localized("Show elapsed time")) {
                         Toggle("", isOn: Binding(
                             get: { settings.menuBarTimer },

@@ -42,6 +42,10 @@ struct UsageRingView: View {
     /// Whether this provider's CLI is working right now. This drives the white
     /// travelling mark inside the usage ring.
     var isBusy: Bool = false
+    /// What the mark is up to — working at something, on a break, awake or
+    /// asleep — and the status word behind it. See `MascotPose`.
+    var mascotPose: MascotPose = .awake
+    var activityLabel: String?
     /// Whether Pulse is fetching a fresh usage reading. This rotates the
     /// coloured usage arc itself, keeping white reserved for CLI activity.
     var isRefreshing: Bool = false
@@ -276,7 +280,7 @@ struct UsageRingView: View {
             if showsBotMark, provider == .claudeCode {
                 // Clawd, Claude Code's pixel crab, in place of the blob.
                 // Modified for Vigía from Pulse (Apache-2.0).
-                ClawdMarkView(isWorking: isBusy, size: centreDiameter * Self.botScale)
+                ClawdMarkView(pose: mascotPose, size: centreDiameter * Self.botScale)
             } else if showsBotMark {
                 // The mark has its own unavailable expression; keep it legible
                 // instead of dimming the face into the dark disc.
@@ -292,6 +296,8 @@ struct UsageRingView: View {
                     pointer: botPointer,
                     isPointedAt: highlight,
                     isQuiet: botQuiet,
+                    pose: mascotPose,
+                    activityLabel: activityLabel,
                     tint: body,
                     eyeTint: BotMarkTint.eyes(on: body),
                     size: centreDiameter * Self.botScale

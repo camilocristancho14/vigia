@@ -65,6 +65,11 @@ enum DemoMode {
 
     static func activityLabels() -> [Provider: String] { [.claudeCode: "Reading"] }
 
+    /// Grok Bot finished a turn a couple of minutes ago and is on its break.
+    static func finishedAt(now: Date = Date()) -> [Provider: Date] {
+        [.grokBot: now.addingTimeInterval(-120)]
+    }
+
     static func startedAt(now: Date = Date()) -> [Provider: Date] {
         [.claudeCode: now.addingTimeInterval(-74)]
     }

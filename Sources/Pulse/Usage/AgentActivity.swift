@@ -635,11 +635,13 @@ final class AgentActivityMonitor {
     /// `stop()` clears `running`; the set is applied after that, and the timer
     /// stays down so the next scan cannot replace it.
     func adoptDemo(running providers: Set<Provider>, labels: [Provider: String] = [:],
-                   startedAt: [Provider: Date] = [:]) {
+                   startedAt: [Provider: Date] = [:], finishedAt: [Provider: Date] = [:]) {
         stop()
         running = providers
         self.labels = labels
         self.startedAt = startedAt
+        self.finishedAt = finishedAt
+        lastWrite = Date()
     }
 
     /// Internal, with the task returned, so tests can await a complete scan

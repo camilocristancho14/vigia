@@ -85,6 +85,38 @@ struct BotMarkProgramme {
         return programme
     }
 
+    /// Bends the scene to what the agent is doing: while it works, the states
+    /// that look like that work (writing, searching, running something); while
+    /// it waits, a break after a turn and sleep after a long quiet. Anything
+    /// else keeps the persona's own routine.
+    mutating func apply(pose: MascotPose, activityLabel: String?) {
+        let scene: [(String, ClosedRange<Double>)]
+        switch (mood, pose) {
+        case (.working, _):
+            switch activityLabel {
+            case "Reading", "Searching", "Searching web", "Browsing web":
+                scene = [("searching", 2_800...3_800), ("radar", 2_000...2_800)]
+            case "Editing", "Writing", "Planning":
+                scene = [("writing", 3_000...4_000), ("working", 2_000...3_000)]
+            case "Running command":
+                scene = [("working", 2_500...3_500), ("loading", 2_000...2_800), ("orbit", 1_800...2_400)]
+            case "Delegating":
+                scene = [("spawning", 2_200...3_000), ("orbit", 2_000...2_800)]
+            default:
+                scene = [("thinking", 2_500...3_300), ("working", 2_500...3_300)]
+            }
+        case (.idle, .coffee):
+            scene = [("humming", 3_000...4_000), ("happy", 2_000...3_000), ("bored", 2_000...3_000)]
+        case (.idle, .sleep):
+            scene = [("drowsy", 3_000...4_000), ("sleeping", 7_000...10_000)]
+        default:
+            return
+        }
+        states = scene.map(\.0)
+        stateHolds = Dictionary(scene, uniquingKeysWith: { first, _ in first })
+        order = .sequence
+    }
+
     func state(for event: BotMarkEvent) -> String {
         event == .workFinished ? completionState : event.state
     }

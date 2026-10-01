@@ -165,9 +165,10 @@ private struct MenuBarMascotItem: View {
         let usage = store.usage(for: account)
         let headline = usage.headlineWindow(preferring: settings.pinnedWindow(for: account))
         let working = store.isRunning(provider)
+        let pose = store.mascotPose(provider)
 
         HStack(spacing: 4) {
-            mark(working: working, headline: headline)
+            mark(working: working, pose: pose, headline: headline)
                 .frame(width: Self.markSize, height: Self.markSize)
             if working, settings.menuBarActivityText || settings.menuBarTimer {
                 activity(for: provider)
@@ -185,10 +186,10 @@ private struct MenuBarMascotItem: View {
     }
 
     @ViewBuilder
-    private func mark(working: Bool, headline: UsageWindow?) -> some View {
+    private func mark(working: Bool, pose: MascotPose, headline: UsageWindow?) -> some View {
         let provider = account.provider
         if settings.showsBotMark(for: account), provider == .claudeCode {
-            ClawdMarkView(isWorking: working, size: Self.markSize)
+            ClawdMarkView(pose: pose, colour: settings.menuBarColorMascots, size: Self.markSize)
         } else if settings.showsBotMark(for: account) {
             let body = tint == .clear ? BotMarkTint.body(for: provider) : tint
             BotMarkView(
@@ -201,6 +202,8 @@ private struct MenuBarMascotItem: View {
                 persona: persona,
                 bodyShape: settings.botBody(for: account),
                 event: store.justFinishedWorking(provider) ? .workFinished : nil,
+                pose: pose,
+                activityLabel: store.activityLabel(provider),
                 tint: body,
                 eyeTint: BotMarkTint.eyes(on: body),
                 size: Self.markSize

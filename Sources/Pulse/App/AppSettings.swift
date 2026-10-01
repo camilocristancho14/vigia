@@ -93,6 +93,15 @@ final class AppSettings {
         }
     }
 
+    /// Whether Clawd keeps Claude's orange in the menu bar instead of taking
+    /// the ink of the bar behind it.
+    var menuBarColorMascots = true {
+        didSet {
+            guard menuBarColorMascots != oldValue else { return }
+            UserDefaults.standard.set(menuBarColorMascots, forKey: Key.menuBarColorMascots)
+        }
+    }
+
     /// Whether each mascot carries its ring's percentage.
     var menuBarPercent = false {
         didSet {
@@ -1750,6 +1759,7 @@ final class AppSettings {
         settings.menuBarActivityText = defaults.object(forKey: Key.menuBarActivityText) as? Bool ?? true
         settings.menuBarTimer = defaults.object(forKey: Key.menuBarTimer) as? Bool ?? true
         settings.menuBarPercent = defaults.bool(forKey: Key.menuBarPercent)
+        settings.menuBarColorMascots = defaults.object(forKey: Key.menuBarColorMascots) as? Bool ?? true
         settings.menuBarWorkingOnly = defaults.bool(forKey: Key.menuBarWorkingOnly)
         settings.menuBarHiddenAccounts = Set(defaults.stringArray(forKey: Key.menuBarHiddenAccounts) ?? [])
         settings.primedProviders = Set(defaults.stringArray(forKey: Key.primedProviders) ?? [])
@@ -1876,6 +1886,7 @@ final class AppSettings {
         static let menuBarActivityText = "settings.menuBarActivityText"
         static let menuBarTimer = "settings.menuBarTimer"
         static let menuBarPercent = "settings.menuBarPercent"
+        static let menuBarColorMascots = "settings.menuBarColorMascots"
         static let menuBarWorkingOnly = "settings.menuBarWorkingOnly"
         static let menuBarHiddenAccounts = "settings.menuBarHiddenAccounts"
         static let primedProviders = "settings.primedProviders"
