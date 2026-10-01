@@ -1,6 +1,9 @@
 /* Interfaz de Vigía. Las claves que no están aquí se muestran en inglés. */
 
 "Settings…" = "Ajustes…";
+"Search" = "Buscar";
+"No matches" = "Sin resultados";
+"Not set" = "Sin asignar";
 "Quit Pulse" = "Salir de Vigía";
 "Pulse Settings" = "Ajustes de Vigía";
 "Choose services to start monitoring…" = "Elige servicios para empezar a vigilar…";

@@ -43,7 +43,22 @@ jobs:
         run: swift build -c release --product Pulse
 
       - name: Test
-        run: swift test
+        run: |
+          set -euo pipefail
+          # Xcode 16.2 (Swift 6.0) segfaults while emitting this Swift Testing
+          # module (signal 11 in ExpandPeerMacroRequest). Swift 6.1 does not.
+          # macos-15 already selects a newer Xcode and skips the install.
+          if swift --version | head -1 | grep -q "Swift version 6.0"; then
+            echo "Installing Swift 6.1.2 toolchain"
+            curl -fL --retry 3 -o /tmp/swift-6.1.2.pkg \
+              "https://download.swift.org/swift-6.1.2-release/xcode/swift-6.1.2-RELEASE/swift-6.1.2-RELEASE-osx.pkg"
+            sudo installer -pkg /tmp/swift-6.1.2.pkg -target /
+            rm -f /tmp/swift-6.1.2.pkg
+            export TOOLCHAINS=swift
+            hash -r
+            swift --version
+          fi
+          swift test
 
       - name: Package
         run: bash scripts/make-app.sh

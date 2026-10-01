@@ -245,12 +245,14 @@ struct SettingsView: View {
             // at the sidebar's 13pt against `Xiaomi Coding Plan`'s 117.3, and
             // with the scroller showing — which it always is now, with
             // seventy-odd rows — 200 cut it to "Alibaba Coding Pl…".
-            .frame(minWidth: 220)
+            // 270, not 220: "Posición y comportamiento" is wider than
+            // "Alibaba Coding Plan" and was drawing with an ellipsis.
+            .frame(minWidth: 270)
             // Still worth setting: these bound what dragging the divider may
             // do. `ideal` matches the frame so first layout and every rebuild
             // land on the same width; `max` keeps a stretched sidebar from
             // eating the pane.
-            .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 320)
+            .navigationSplitViewColumnWidth(min: 270, ideal: 290, max: 360)
             // `.sidebar`, not `.automatic`: this window has no `NSToolbar` —
             // see `SettingsWindowController` on why the title bar is left to
             // AppKit — and automatic placement has nowhere to put the field.

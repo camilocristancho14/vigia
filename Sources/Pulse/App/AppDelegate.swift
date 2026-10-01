@@ -111,12 +111,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func presentDemo() {
         switch DemoMode.scene {
         case .menu:
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                NSApp.activate(ignoringOtherApps: true)
-                self?.statusItem?.button?.performClick(nil)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    DemoMode.signalReady()
-                }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                self?.presentDemoMenu()
             }
         case .settings:
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in
@@ -130,6 +126,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 DemoMode.signalReady()
             }
         }
+    }
+
+    /// `performClick` does not open a status-item menu, and on a background
+    /// launch it returns without showing anything. `popUp` keeps the menu up
+    /// inside a nested tracking loop; the timer runs in that loop so the
+    /// capture script shoots while the menu is still open.
+    private func presentDemoMenu() {
+        NSApp.activate(ignoringOtherApps: true)
+        guard let button = statusItem?.button, let menu = statusItem?.menu else {
+            DemoMode.signalReady()
+            return
+        }
+        menu.update()
+        let timer = Timer(timeInterval: 0.45, repeats: false) { _ in
+            DemoMode.signalReady()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: -4), in: button)
     }
 
     private func showSettingsGeneral() {
