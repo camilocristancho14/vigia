@@ -5,9 +5,17 @@ import AppKit
 @MainActor
 enum VigiaMenuRows {
     static func add(to menu: NSMenu, settings: AppSettings, store: UsageStore) {
-        let width: CGFloat = 340
-        for account in settings.shownAccounts {
+        for row in makeRows(settings: settings, store: store) {
             let item = NSMenuItem()
+            item.view = row
+            menu.addItem(item)
+        }
+    }
+
+    /// Fresh rows, not yet installed in a menu. A menu item keeps moving its
+    /// view, so the screenshot panel has to host copies of its own.
+    static func makeRows(settings: AppSettings, store: UsageStore, width: CGFloat = 340) -> [SessionRowView] {
+        settings.shownAccounts.map { account in
             let row = SessionRowView(id: account.id, width: width)
             let working = store.isRunning(account.provider)
             let usage = store.usage(for: account)
@@ -27,8 +35,7 @@ enum VigiaMenuRows {
                 pillInset: 12,
                 timerGap: 10
             )
-            item.view = row
-            menu.addItem(item)
+            return row
         }
     }
 

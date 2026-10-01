@@ -162,7 +162,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func makeDemoMenuPanel(menu: NSMenu, under button: NSStatusBarButton) -> NSPanel {
         let width: CGFloat = 340
-        let rows = demoMenuRows(menu)
+        let rows = demoMenuRows(menu: menu, width: width)
         let padY: CGFloat = 6
         let height = padY * 2 + rows.reduce(CGFloat(0)) { $0 + $1.height }
         let origin = demoMenuOrigin(width: width, height: height, under: button)
@@ -207,16 +207,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         var y = height - padY
         for row in rows {
             y -= row.height
-            if row.item.isSeparatorItem {
+            if let item = row.item, item.isSeparatorItem {
                 let line = NSBox(frame: NSRect(x: 12, y: y + (row.height - 1) / 2, width: width - 24, height: 1))
                 line.boxType = .separator
                 container.addSubview(line)
-            } else if let view = row.item.view {
+            } else if let view = row.session {
                 view.frame = NSRect(x: 0, y: y, width: width, height: row.height)
                 container.addSubview(view)
-                view.layoutSubtreeIfNeeded()
-            } else {
-                addDemoMenuTitle(row.item, rowY: y, rowHeight: row.height, width: width, to: container)
+            } else if let item = row.item {
+                addDemoMenuTitle(item, rowY: y, rowHeight: row.height, width: width, to: container)
             }
         }
 
@@ -225,19 +224,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private struct DemoMenuRow {
-        let item: NSMenuItem
+        let item: NSMenuItem?
+        let session: NSView?
         let height: CGFloat
     }
 
-    private func demoMenuRows(_ menu: NSMenu) -> [DemoMenuRow] {
+    /// Session rows are built here, not taken from the menu. AppKit rewrites
+    /// `NSMenuItem.view.frame` to the bottom of whatever superview it has.
+    private func demoMenuRows(menu: NSMenu, width: CGFloat) -> [DemoMenuRow] {
         var rows: [DemoMenuRow] = []
-        for item in menu.items where !item.isHidden {
+        for view in VigiaMenuRows.makeRows(settings: settings, store: store, width: width) {
+            rows.append(DemoMenuRow(item: nil, session: view, height: max(view.frame.height, 22)))
+        }
+        for item in menu.items where !item.isHidden && item.view == nil {
             if item.isSeparatorItem {
-                rows.append(DemoMenuRow(item: item, height: 9))
-            } else if let view = item.view {
-                rows.append(DemoMenuRow(item: item, height: max(view.frame.height, 22)))
+                rows.append(DemoMenuRow(item: item, session: nil, height: 9))
             } else {
-                rows.append(DemoMenuRow(item: item, height: 24))
+                rows.append(DemoMenuRow(item: item, session: nil, height: 24))
             }
         }
         return rows
