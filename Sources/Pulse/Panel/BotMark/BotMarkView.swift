@@ -218,9 +218,9 @@ struct BotMarkView: View {
                     Canvas(rendersAsynchronously: false) { context, canvasSize in
                         drawBotMark(step.frame, config: step.config,
                                     in: &context, size: canvasSize)
-                        if pose == .coffee, mood == .idle {
-                            drawCoffeeBreak(in: &context, size: canvasSize,
-                                            time: timeline.date.timeIntervalSinceReferenceDate)
+                        if let pose {
+                            drawMascotOverlay(pose: pose, mood: mood, in: &context, size: canvasSize,
+                                              time: timeline.date.timeIntervalSinceReferenceDate)
                         }
                     }
                 }

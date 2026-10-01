@@ -14,6 +14,22 @@ Cubre Claude Code, Codex, Cursor, Gemini CLI y Grok Build (`~/.grok`), y el rest
 
 La apariencia clara y oscura sigue al sistema. Cada agente tiene un interruptor en Ajustes para usar el logo oficial o la mascota animada.
 
+## Animaciones
+
+Cada mascota muestra qué está haciendo la IA. Claude Code y Grok Bot tienen mascota propia (Clawd y la bolita); las demás animan su logo. Las poses salen de la actividad real que Vigía lee en el equipo, y lo que dice el texto de la barra de menú es lo que se ve.
+
+| Situación | Clawd | Bolita (Grok Bot) | Logo |
+| --- | --- | --- | --- |
+| Ejecuta un comando, edita, escribe, planea o piensa | Teclea en una laptop | Escena de «escribir» o «trabajar» con una laptop delante | Un brillo cruza el logo |
+| Busca, lee, navega o delega | Camina de prisa | Escena de «buscar», con líneas de velocidad | Tres puntos orbitan el logo |
+| Acaba de terminar un turno (5 min) | Toma café, con vapor | Canturrea con una taza humeante | Vapor sube del logo |
+| Quieta y despierta | Parpadea | Su rutina de siempre | Respira |
+| Sin actividad (20 min) | Duerme con «Z» | Se adormila y duerme, con «z» | Atenuado, con «z» |
+| Límite al 75 % o más | Cansado: párpados caídos y una gota de sudor | Cansada, con una gota de sudor | Se ladea y suda |
+| Límite al 100 % | Ojos en X y estrellas mareadas | Se apaga, con estrellas mareadas | Tiembla entre estrellas |
+
+Trabajar manda sobre todo, y el descanso de después del turno también; el cansancio y el agotamiento se ven cuando no está trabajando ni de descanso. Grok Bot sigue la actividad de Grok Build (`~/.grok`), porque no tiene sesiones propias. Con «Reducir movimiento» activado en macOS los logos se quedan quietos. En Ajustes, Clawd puede conservar el naranja de Claude en la barra de menú.
+
 ## Capturas
 
 El notch plegado, el notch abierto, la barra de menú con su menú, y la ventana de ajustes:

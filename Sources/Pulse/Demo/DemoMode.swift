@@ -67,7 +67,7 @@ enum DemoMode {
 
     /// Grok Bot finished a turn a couple of minutes ago and is on its break.
     static func finishedAt(now: Date = Date()) -> [Provider: Date] {
-        [.grokBot: now.addingTimeInterval(-120)]
+        [.grok: now.addingTimeInterval(-120)]
     }
 
     static func startedAt(now: Date = Date()) -> [Provider: Date] {

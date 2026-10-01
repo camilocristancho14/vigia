@@ -105,6 +105,10 @@ struct BotMarkProgramme {
             default:
                 scene = [("thinking", 2_500...3_300), ("working", 2_500...3_300)]
             }
+        case (.spent, .spent):
+            scene = [("powering-down", 3_500...5_000), ("sad", 3_000...4_500)]
+        case (.idle, .tired):
+            scene = [("drowsy", 3_000...4_000), ("bored", 2_500...3_500), ("sad", 2_000...3_000)]
         case (.idle, .coffee):
             scene = [("humming", 3_000...4_000), ("happy", 2_000...3_000), ("bored", 2_000...3_000)]
         case (.idle, .sleep):
