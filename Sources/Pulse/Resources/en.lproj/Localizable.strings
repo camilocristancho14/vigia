@@ -934,3 +934,14 @@
 "Delegating" = "Delegating";
 "Planning" = "Planning";
 "Using tool" = "Using tool";
+"Menu bar mascots" = "Menu bar mascots";
+"Show AI mascots" = "Show AI mascots";
+"The same marks as the notch, in the same order, moving while each AI works." = "The same marks as the notch, in the same order, moving while each AI works.";
+"Show what it is doing" = "Show what it is doing";
+"Thinking, reading, running a command… beside a working AI." = "Thinking, reading, running a command… beside a working AI.";
+"Show elapsed time" = "Show elapsed time";
+"Show usage percentage" = "Show usage percentage";
+"Each ring's figure beside its mascot." = "Each ring's figure beside its mascot.";
+"Only AIs that are working" = "Only AIs that are working";
+"The rest appear when they start. With none working, the plain icon shows." = "The rest appear when they start. With none working, the plain icon shows.";
+"Show %@" = "Show %@";

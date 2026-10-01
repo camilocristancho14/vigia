@@ -1,6 +1,7 @@
 // Modified for Vigía from Pulse (Apache-2.0).
 // Session rows on the status-item menu, laid out like claude-status-bar.
 import AppKit
+import SwiftUI
 
 @MainActor
 enum VigiaMenuRows {
@@ -15,20 +16,38 @@ enum VigiaMenuRows {
     /// Fresh rows, not yet installed in a menu. A menu item keeps moving its
     /// view, so the screenshot panel has to host copies of its own.
     static func makeRows(settings: AppSettings, store: UsageStore, width: CGFloat = 340) -> [SessionRowView] {
-        settings.shownAccounts.map { account in
+        // Dealt over the whole rail, as the notch and the menu bar do, so each
+        // AI keeps its colour and character in all three places.
+        let rail = settings.shownAccounts
+        let tints = rail.contains(where: { settings.showsBotMark(for: $0) })
+            ? BotMarkTint.deal(over: rail.map(\.provider), chosen: rail.map { settings.botColour(for: $0) })
+            : []
+
+        return rail.enumerated().map { index, account in
             let row = SessionRowView(id: account.id, width: width)
             let working = store.isRunning(account.provider)
             let usage = store.usage(for: account)
-            let percent = usage.windows.first.map { window in
-                "\(Int((min(max(window.usedFraction, 0), 1) * 100).rounded()))%"
-            }
+            // The same figure the notch's ring shows, not the first window.
+            let headline = usage.headlineWindow(preferring: settings.pinnedWindow(for: account))
+            let percent = headline?.percentText(remaining: settings.showsRemaining)
             let pill = working ? String.localized("ACTIVE") : String.localized("IDLE")
+            let detail: String = if working {
+                String.localized(String.LocalizationValue(store.activityLabel(account.provider) ?? "Thinking…"))
+            } else {
+                usage.plan ?? ""
+            }
+            let marked = settings.showsBotMark(for: account)
             row.configure(
-                icon: icon(for: account, working: working, settings: settings),
-                iconTint: working ? .labelColor : .tertiaryLabelColor,
+                icon: icon(
+                    for: account, working: working, marked: marked, headline: headline,
+                    tint: index < tints.count ? tints[index] : .clear,
+                    persona: settings.botPersona(for: account) ?? BotMarkPersona.automatic(at: index),
+                    settings: settings, store: store
+                ),
+                iconTint: working || marked ? .labelColor : .tertiaryLabelColor,
                 spinning: false,
                 name: account.provider.displayName,
-                branch: usage.plan ?? "",
+                branch: detail,
                 timer: percent,
                 pillNormal: pillImage(pill),
                 pillSelected: pillImage(pill, selected: true),
@@ -39,18 +58,44 @@ enum VigiaMenuRows {
         }
     }
 
-    private static func icon(for account: AccountKey, working: Bool, settings: AppSettings) -> NSImage? {
-        if account.provider == .claudeCode, settings.showsBotMark(for: account) {
+    /// The same mark the notch draws, as a still: Clawd, the account's bot, or
+    /// its logo.
+    private static func icon(
+        for account: AccountKey, working: Bool, marked: Bool, headline: UsageWindow?,
+        tint: Color, persona: BotMarkPersona, settings: AppSettings, store: UsageStore
+    ) -> NSImage? {
+        guard marked else { return MenuBarReading.markImage(for: account.provider, size: 16) }
+        if account.provider == .claudeCode {
             let frames = ClawdFrames.images
             guard !frames.isEmpty else { return nil }
             let image = (working ? frames[frames.count / 2] : frames[0]).copy() as? NSImage
             image?.size = NSSize(width: 22, height: 16)
             return image
         }
-        if account.provider == .grok, settings.showsBotMark(for: account) {
-            return VigiaStatusFace.ballImage(pupilShift: working ? 1.5 : 0, points: 16)
-        }
-        return MenuBarReading.markImage(for: account.provider, size: 16)
+
+        let body = tint == .clear ? BotMarkTint.body(for: account.provider) : tint
+        var programme = BotMarkProgramme.forMood(
+            BotMarkMood.resolve(
+                isBusy: working,
+                isRefreshing: false,
+                isSpent: UsageTint.isSpent(headline) || (headline?.usedFraction ?? 0) >= 1,
+                hasReading: headline != nil
+            ),
+            persona: persona, isQuiet: false, isPointedAt: false, at: Date()
+        )
+        programme.shape = settings.botBody(for: account).shape
+        programme.color = body
+        programme.eyeColor = BotMarkTint.eyes(on: body)
+        programme.viewWidth = 18
+        let still = BotMarkView.still(for: programme)
+        let renderer = ImageRenderer(content:
+            Canvas(rendersAsynchronously: false) { context, size in
+                drawBotMark(still.frame, config: still.config, in: &context, size: size)
+            }
+            .frame(width: 18, height: 18)
+        )
+        renderer.scale = NSScreen.main?.backingScaleFactor ?? 2
+        return renderer.nsImage
     }
 
     /// The CLI/APP pill from claude-status-bar, used here for the working state.

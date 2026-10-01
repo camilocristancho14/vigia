@@ -67,6 +67,59 @@ final class AppSettings {
         }
     }
 
+    /// Whether the menu bar item shows the mascots of the AIs on the rail,
+    /// the same marks the notch draws, instead of the plain icon.
+    var menuBarMascots = true {
+        didSet {
+            guard menuBarMascots != oldValue else { return }
+            UserDefaults.standard.set(menuBarMascots, forKey: Key.menuBarMascots)
+            onMenuBarIconChange?()
+        }
+    }
+
+    /// Whether a working AI says what it is doing beside its mascot.
+    var menuBarActivityText = true {
+        didSet {
+            guard menuBarActivityText != oldValue else { return }
+            UserDefaults.standard.set(menuBarActivityText, forKey: Key.menuBarActivityText)
+        }
+    }
+
+    /// Whether a working AI shows how long its turn has run.
+    var menuBarTimer = true {
+        didSet {
+            guard menuBarTimer != oldValue else { return }
+            UserDefaults.standard.set(menuBarTimer, forKey: Key.menuBarTimer)
+        }
+    }
+
+    /// Whether each mascot carries its ring's percentage.
+    var menuBarPercent = false {
+        didSet {
+            guard menuBarPercent != oldValue else { return }
+            UserDefaults.standard.set(menuBarPercent, forKey: Key.menuBarPercent)
+        }
+    }
+
+    /// Whether only the AIs that are working are drawn.
+    var menuBarWorkingOnly = false {
+        didSet {
+            guard menuBarWorkingOnly != oldValue else { return }
+            UserDefaults.standard.set(menuBarWorkingOnly, forKey: Key.menuBarWorkingOnly)
+            onMenuBarIconChange?()
+        }
+    }
+
+    /// Accounts kept off the menu bar, by id. Empty by default: every account
+    /// on the rail has its mascot there.
+    var menuBarHiddenAccounts: Set<String> = [] {
+        didSet {
+            guard menuBarHiddenAccounts != oldValue else { return }
+            UserDefaults.standard.set(Array(menuBarHiddenAccounts).sorted(), forKey: Key.menuBarHiddenAccounts)
+            onMenuBarIconChange?()
+        }
+    }
+
     /// The account the menu bar speaks for, by id. Nil — the default — is
     /// whichever ring is fullest. An account taken off the rail falls back to
     /// that too (`MenuBarReading.choose`) rather than leaving the bar blank.
@@ -1693,6 +1746,12 @@ final class AppSettings {
         )
         settings.showsCodexResetCredits = defaults.bool(forKey: Key.showsCodexResetCredits)
         settings.showsUsageInMenuBar = defaults.bool(forKey: Key.showsUsageInMenuBar)
+        settings.menuBarMascots = defaults.object(forKey: Key.menuBarMascots) as? Bool ?? true
+        settings.menuBarActivityText = defaults.object(forKey: Key.menuBarActivityText) as? Bool ?? true
+        settings.menuBarTimer = defaults.object(forKey: Key.menuBarTimer) as? Bool ?? true
+        settings.menuBarPercent = defaults.bool(forKey: Key.menuBarPercent)
+        settings.menuBarWorkingOnly = defaults.bool(forKey: Key.menuBarWorkingOnly)
+        settings.menuBarHiddenAccounts = Set(defaults.stringArray(forKey: Key.menuBarHiddenAccounts) ?? [])
         settings.primedProviders = Set(defaults.stringArray(forKey: Key.primedProviders) ?? [])
         if let start = defaults.object(forKey: Key.primerStart) as? Int,
            let end = defaults.object(forKey: Key.primerEnd) as? Int,
@@ -1813,6 +1872,12 @@ final class AppSettings {
         static let balanceBases = "settings.balanceBases"
         static let showsCodexResetCredits = "settings.showsCodexResetCredits"
         static let showsUsageInMenuBar = "settings.showsUsageInMenuBar"
+        static let menuBarMascots = "settings.menuBarMascots"
+        static let menuBarActivityText = "settings.menuBarActivityText"
+        static let menuBarTimer = "settings.menuBarTimer"
+        static let menuBarPercent = "settings.menuBarPercent"
+        static let menuBarWorkingOnly = "settings.menuBarWorkingOnly"
+        static let menuBarHiddenAccounts = "settings.menuBarHiddenAccounts"
         static let primedProviders = "settings.primedProviders"
         static let primerStart = "settings.primerStart"
         static let primerEnd = "settings.primerEnd"

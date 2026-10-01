@@ -286,7 +286,7 @@ struct BotMarkView: View {
 
     /// The settled pose for a programme, with a fresh engine so nothing is
     /// carried between calls.
-    private static func still(for programme: BotMarkProgramme) -> (frame: BotMarkFrame,
+    static func still(for programme: BotMarkProgramme) -> (frame: BotMarkFrame,
                                                                    config: BotMarkConfig) {
         var quiet = programme
         // A still has no playlist and no event: one state, held.
