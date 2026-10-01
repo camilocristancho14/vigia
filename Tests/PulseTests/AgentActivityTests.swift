@@ -258,12 +258,29 @@ struct AgentActivityTests {
         #expect(monitor.finishedAt.isEmpty)
     }
 
-    @Test("Hiding the panel stops activity and reopening starts a new observation")
+    @Test("A visible menu bar item watches activity even with the panel hidden")
+    @MainActor
+    func menuBarWatches() async {
+        let reader = Reader()
+        let monitor = AgentActivityMonitor { await reader.read($0) }
+        let settings = AppSettings(isPanelVisible: false, enabledAccounts: [Provider.codex.rawValue])
+        let store = UsageStore(settings: settings, activity: monitor)
+        defer { monitor.stop() }
+
+        settings.hidesMenuBarIcon = false
+        store.updateActivityMonitor()
+        await monitor.sample()?.value
+        #expect(monitor.running == [.codex])
+    }
+
+    @Test("Hiding the panel and the menu bar item stops activity; showing the panel starts a new observation")
     @MainActor
     func panelVisibility() async {
         let reader = Reader()
         let monitor = AgentActivityMonitor { await reader.read($0) }
         let settings = AppSettings(isPanelVisible: false, enabledAccounts: [Provider.codex.rawValue])
+        // The menu bar item draws the mascots too, so it keeps the monitor on.
+        settings.hidesMenuBarIcon = true
         let store = UsageStore(settings: settings, activity: monitor)
         defer { monitor.stop() }
 

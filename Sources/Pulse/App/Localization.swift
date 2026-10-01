@@ -2,48 +2,44 @@
 import Foundation
 import SwiftUI
 
-/// The interface language: whatever the system is set to, or one the user has
-/// picked explicitly.
+/// The interface language: Spanish or English, picked explicitly or followed
+/// from the system.
+///
+/// Only these two ship complete. Every string is translated in both, so the
+/// interface is never half one language and half the other; a system set to
+/// anything else gets English.
 enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
     case system
     case english
     case spanish
-    case chineseSimplified
-    case chineseTraditional
-    case japanese
-    case korean
 
     var id: String { rawValue }
+
+    /// What "follow the system" comes to: Spanish when the system's first
+    /// language is Spanish, English otherwise.
+    private var resolved: AppLanguage {
+        guard self == .system else { return self }
+        return Locale.preferredLanguages.first?.hasPrefix("es") == true ? .spanish : .english
+    }
 
     /// The locale to format dates, times and money in.
     ///
     /// Strings and numbers have to agree: picking English and then being told
-    /// a credit expires "in 22天8小时" is the sort of half-translated seam
-    /// that makes an app feel unfinished.
+    /// a credit expires "en 22 días" is the sort of half-translated seam that
+    /// makes an app feel unfinished.
     var locale: Locale {
-        switch self {
-        case .system: .autoupdatingCurrent
-        case .english: Locale(identifier: "en_US")
+        switch resolved {
         case .spanish: Locale(identifier: "es")
-        case .chineseSimplified: Locale(identifier: "zh_Hans")
-        case .chineseTraditional: Locale(identifier: "zh_Hant")
-        case .japanese: Locale(identifier: "ja_JP")
-        case .korean: Locale(identifier: "ko_KR")
+        default: Locale(identifier: "en_US")
         }
     }
 
-    /// Name of the `.lproj` folder to read strings from, or `nil` to let the
-    /// system choose. Lowercased because SwiftPM lowercases these folder
-    /// names when it builds the resource bundle.
+    /// Name of the `.lproj` folder to read strings from. Never `nil`: leaving
+    /// it to the system lookup is how a third language could leak in.
     var bundleName: String? {
-        switch self {
-        case .system: nil
-        case .english: "en"
+        switch resolved {
         case .spanish: "es"
-        case .chineseSimplified: "zh-hans"
-        case .chineseTraditional: "zh-hant"
-        case .japanese: "ja"
-        case .korean: "ko"
+        default: "en"
         }
     }
 
@@ -54,10 +50,6 @@ enum AppLanguage: String, CaseIterable, Identifiable, Sendable {
         case .system: .localized("System")
         case .english: "English"
         case .spanish: "Español"
-        case .chineseSimplified: "简体中文"
-        case .chineseTraditional: "繁體中文"
-        case .japanese: "日本語"
-        case .korean: "한국어"
         }
     }
 }

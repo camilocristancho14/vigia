@@ -203,6 +203,12 @@ final class UsageStore {
     /// Whether a provider's CLI is working at this moment.
     func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
 
+    /// What a working provider is doing right now, as an English key.
+    func activityLabel(_ provider: Provider) -> String? { activity.labels[provider] }
+
+    /// When the turn running now was first seen.
+    func workingSince(_ provider: Provider) -> Date? { activity.startedAt[provider] }
+
     /// Whether this provider's CLI finished a turn just now.
     ///
     /// The rail's mark celebrates a finished turn. Six seconds is long enough
@@ -391,12 +397,14 @@ final class UsageStore {
         }
     }
 
-    /// Nothing shows the spinner while the panel is off screen or the display
-    /// is asleep, so nothing needs watching either.
+    /// Nothing shows the spinner while the display is asleep, or while neither
+    /// the panel nor the menu bar item (which draws the mascots) is on screen,
+    /// so nothing needs watching either.
     /// Internal so tests can check selection without starting provider requests.
     func updateActivityMonitor() {
         if DemoMode.isActive { return }
-        if !settings.needsProviderSelection && settings.isPanelVisible && !screensAsleep {
+        if !settings.needsProviderSelection
+            && (settings.isPanelVisible || !settings.hidesMenuBarIcon) && !screensAsleep {
             activity.start(providers: Set(settings.shownAccounts.map(\.provider)))
         } else {
             activity.stop()

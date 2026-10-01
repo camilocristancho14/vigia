@@ -36,6 +36,9 @@ enum AgentActivity {
     struct State: Sendable, Equatable {
         var lastWrite: Date?
         var isWorking: Bool
+        /// What the turn is doing right now, as an English key for
+        /// `String.localized` ("Thinking…", "Reading", …). Nil when idle.
+        var label: String?
     }
 
     /// What a turn in flight is waiting for, which is what decides how long
@@ -98,6 +101,9 @@ enum AgentActivity {
                     // that died mid-turn look freshly written for ever, and the
                     // ring turned for as long as the file kept being poked.
                     state.isWorking = now.timeIntervalSince(at ?? file.modified) <= wait.grace
+                    if state.isWorking {
+                        state.label = activityLabel(for: file.url, provider: provider, wait: wait)
+                    }
                 case .finished:
                     continue
                 case .unknown:
@@ -130,6 +136,46 @@ enum AgentActivity {
         }
 
         return states
+    }
+
+    // MARK: - What the turn is doing
+
+    /// The status-bar wording for a turn in flight, as claude-status-bar words
+    /// it: the model's move is "Thinking…", a tool's is named by the tool.
+    static func activityLabel(for url: URL, provider: Provider, wait: Wait) -> String {
+        guard wait == .tool else { return "Thinking…" }
+        guard provider.handWritten == .claudeCode,
+              let tool = lastToolName(in: tail(of: url))
+        else { return "Using tool" }
+        return toolLabel(tool)
+    }
+
+    static func toolLabel(_ tool: String) -> String {
+        switch tool {
+        case "Bash": "Running command"
+        case "Edit", "MultiEdit", "NotebookEdit": "Editing"
+        case "Write": "Writing"
+        case "Read": "Reading"
+        case "Grep", "Glob": "Searching"
+        case "WebFetch": "Browsing web"
+        case "WebSearch": "Searching web"
+        case "Task", "Agent": "Delegating"
+        case "TodoWrite": "Planning"
+        default: "Using tool"
+        }
+    }
+
+    private static func lastToolName(in lines: [Data]) -> String? {
+        for line in lines.reversed() {
+            guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
+                  record["type"] as? String == "assistant",
+                  let content = (record["message"] as? [String: Any])?["content"] as? [[String: Any]]
+            else { continue }
+            if let name = content.last(where: { $0["type"] as? String == "tool_use" })?["name"] as? String {
+                return name
+            }
+        }
+        return nil
     }
 
     // MARK: - Reading the tail
@@ -527,6 +573,11 @@ final class AgentActivityMonitor {
     /// own previous render would celebrate whenever SwiftUI rebuilt it.
     private(set) var finishedAt: [Provider: Date] = [:]
 
+    /// What each working provider is doing, and since when its turn was first
+    /// seen running — the status bar's "Reading 0:12".
+    private(set) var labels: [Provider: String] = [:]
+    private(set) var startedAt: [Provider: Date] = [:]
+
     /// Fast enough that the spinner starts and stops with the turn rather than
     /// lagging it noticeably, slow enough to be free.
     private static let interval: TimeInterval = 2
@@ -576,6 +627,8 @@ final class AgentActivityMonitor {
         running = []
         lastWrite = nil
         finishedAt = [:]
+        labels = [:]
+        startedAt = [:]
     }
 
     /// Demo screenshots name who is working without reading this Mac's sessions.
@@ -613,8 +666,12 @@ final class AgentActivityMonitor {
         if active != running {
             let now = Date()
             for provider in running.subtracting(active) { finishedAt[provider] = now }
+            for provider in active.subtracting(running) { startedAt[provider] = now }
+            for provider in running.subtracting(active) { startedAt[provider] = nil }
             running = active
         }
+        let labels = states.compactMapValues { $0.isWorking ? $0.label : nil }
+        if labels != self.labels { self.labels = labels }
 
         let newest = states.values.compactMap(\.lastWrite).max()
         if newest != lastWrite { lastWrite = newest }

@@ -923,3 +923,14 @@
 "Notch, rings and provider readers from github.com/qunqin24/Pulse (Apache-2.0)." = "Notch, rings and provider readers from github.com/qunqin24/Pulse (Apache-2.0).";
 "Notch ideas and agent activity from github.com/vinzdg/codenotch (MIT)." = "Notch ideas and agent activity from github.com/vinzdg/codenotch (MIT).";
 "Menu bar item and Clawd from github.com/m1ckc3s/claude-status-bar (MIT)." = "Menu bar item and Clawd from github.com/m1ckc3s/claude-status-bar (MIT).";
+"Thinking…" = "Thinking…";
+"Running command" = "Running command";
+"Editing" = "Editing";
+"Writing" = "Writing";
+"Reading" = "Reading";
+"Searching" = "Searching";
+"Browsing web" = "Browsing web";
+"Searching web" = "Searching web";
+"Delegating" = "Delegating";
+"Planning" = "Planning";
+"Using tool" = "Using tool";
