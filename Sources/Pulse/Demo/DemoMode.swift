@@ -36,11 +36,11 @@ enum DemoMode {
         defaults.set(true, forKey: "settings.topRailShowsPercentages")
         defaults.set(AppLanguage.spanish.rawValue, forKey: "settings.language")
         defaults.set(
-            ["claudeCode": true, "grok": true],
+            ["claudeCode": true, "grokBot": true],
             forKey: "settings.botMarks"
         )
         defaults.set(
-            ["claudeCode", "codex", "grok", "cursor"],
+            ["claudeCode", "grokBot", "grok", "antigravity"],
             forKey: ProviderSelection.enabledKey
         )
         defaults.set(Provider.builtIn.map(\.rawValue), forKey: ProviderSelection.offeredKey)
@@ -53,14 +53,21 @@ enum DemoMode {
 
     static func readings(now: Date = Date()) -> [ProviderUsage] {
         [
-            reading(.claudeCode, fraction: 0.62, plan: "Pro", now: now),
-            reading(.codex, fraction: 0.18, plan: "Plus", now: now),
-            reading(.grok, fraction: 0.41, plan: "SuperGrok", now: now),
-            reading(.cursor, fraction: 0.27, plan: "Pro", now: now),
+            reading(.claudeCode, fraction: 0.58, plan: "Pro", now: now),
+            reading(.grokBot, fraction: 1.0, plan: "SuperGrok", now: now),
+            reading(.grok, fraction: 0.63, plan: "SuperGrok", now: now),
+            reading(.antigravity, fraction: 0.0, plan: "Pro", now: now),
         ]
     }
 
-    static func runningProviders() -> Set<Provider> { [.claudeCode, .grok] }
+    /// Claude Code is mid-turn, so the menu bar shows its status word and timer.
+    static func runningProviders() -> Set<Provider> { [.claudeCode] }
+
+    static func activityLabels() -> [Provider: String] { [.claudeCode: "Reading"] }
+
+    static func startedAt(now: Date = Date()) -> [Provider: Date] {
+        [.claudeCode: now.addingTimeInterval(-74)]
+    }
 
     static func signalReady() {
         try? Data("ready\n".utf8).write(to: URL(fileURLWithPath: "/tmp/vigia-ready"))

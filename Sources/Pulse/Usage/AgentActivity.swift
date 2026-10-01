@@ -634,9 +634,12 @@ final class AgentActivityMonitor {
     /// Demo screenshots name who is working without reading this Mac's sessions.
     /// `stop()` clears `running`; the set is applied after that, and the timer
     /// stays down so the next scan cannot replace it.
-    func adoptDemo(running providers: Set<Provider>) {
+    func adoptDemo(running providers: Set<Provider>, labels: [Provider: String] = [:],
+                   startedAt: [Provider: Date] = [:]) {
         stop()
         running = providers
+        self.labels = labels
+        self.startedAt = startedAt
     }
 
     /// Internal, with the task returned, so tests can await a complete scan

@@ -237,7 +237,11 @@ final class UsageStore {
             for reading in DemoMode.readings() {
                 usage[reading.account.id] = reading
             }
-            activity.adoptDemo(running: DemoMode.runningProviders())
+            activity.adoptDemo(
+                running: DemoMode.runningProviders(),
+                labels: DemoMode.activityLabels(),
+                startedAt: DemoMode.startedAt()
+            )
             let token = NotificationCenter.default.addObserver(
                 forName: .NSSystemClockDidChange, object: nil, queue: .main
             ) { _ in }
