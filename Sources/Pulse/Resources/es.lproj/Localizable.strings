@@ -809,3 +809,14 @@
 "Delegating" = "Delegando";
 "Planning" = "Planificando";
 "Using tool" = "Usando herramienta";
+"Menu bar mascots" = "Mascotas en la barra de menú";
+"Show AI mascots" = "Mostrar mascotas de las IAs";
+"The same marks as the notch, in the same order, moving while each AI works." = "Las mismas marcas del notch, en el mismo orden, que se mueven mientras cada IA trabaja.";
+"Show what it is doing" = "Mostrar qué está haciendo";
+"Thinking, reading, running a command… beside a working AI." = "Pensando, leyendo, ejecutando un comando… junto a la IA que trabaja.";
+"Show elapsed time" = "Mostrar el tiempo transcurrido";
+"Show usage percentage" = "Mostrar el porcentaje de uso";
+"Each ring's figure beside its mascot." = "La cifra de cada anillo junto a su mascota.";
+"Only AIs that are working" = "Solo las IAs que están trabajando";
+"The rest appear when they start. With none working, the plain icon shows." = "Las demás aparecen al empezar. Si ninguna trabaja, se muestra el icono simple.";
+"Show %@" = "Mostrar %@";

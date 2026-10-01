@@ -1,53 +1,30 @@
 // Modified for Vigía from Pulse (Apache-2.0).
-// Menu bar face: the mascot of every AI on the rail (Clawd, the Grok ball, the
-// others' marks), moving only while that AI works, with what it is doing and
-// for how long beside it — as claude-status-bar shows it. With none to show,
-// Pulse's usage reading. Animation matches claude-status-bar's sprite rate.
+// Menu bar face: the mascot of every AI on the rail, drawn by the same views
+// as the notch and in the notch's order, moving only while that AI works, with
+// what it is doing and for how long beside it — as claude-status-bar shows it.
+// With none to show, Pulse's usage reading.
 import AppKit
+import SwiftUI
 
 @MainActor
 enum VigiaStatusFace {
-    /// One AI in the menu bar: its mascot, moving while it works.
-    struct Mascot: Equatable {
-        let provider: Provider
-        let working: Bool
-        /// English key for `String.localized`; nil while idle.
-        let label: String?
-        let since: Date?
-    }
+    private static var host: MascotHostingView?
+    /// While the item's menu is tracking, nothing on the item may change: a
+    /// live view redrawing under an open menu makes the menu flicker, and a
+    /// change of width moves it.
+    private(set) static var menuIsOpen = false
 
-    private static let maxMascots = 6
-    private static let height: CGFloat = 18
-    private static let gap: CGFloat = 6
-    private static let textFont = NSFont.systemFont(ofSize: 11, weight: .medium)
-    private static let timerFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .regular)
-
-    private static var timer: Timer?
-    private static var tick = 0
-    private static weak var button: NSStatusBarButton?
-    private static var mascots: [Mascot] = []
-    /// Painting into the button while its menu is tracking makes the open menu
-    /// flicker, so nothing is touched until it closes.
-    private static var menuIsOpen = false
-    private static var laidOutAsReading = true
-
-    /// Every shown account's AI, working ones first, so what is happening is
-    /// always on screen. Called inside the observation closure: a turn
-    /// starting, ending or changing what it does redraws the item.
-    static func mascots(settings: AppSettings, store: UsageStore) -> [Mascot] {
+    /// The accounts to draw, in the order of the rail. Called inside the
+    /// observation closure: switching one off, or a turn starting under
+    /// "working only", changes whether there is anything to draw.
+    static func accounts(settings: AppSettings, store: UsageStore) -> [AccountKey] {
+        guard settings.menuBarMascots else { return [] }
         var seen = Set<Provider>()
-        var found: [Mascot] = []
-        for account in settings.shownAccounts where seen.insert(account.provider).inserted {
-            let provider = account.provider
-            let working = store.isRunning(provider)
-            found.append(Mascot(
-                provider: provider,
-                working: working,
-                label: working ? (store.activityLabel(provider) ?? "Thinking…") : nil,
-                since: working ? store.workingSince(provider) : nil
-            ))
+        return settings.shownAccounts.filter { account in
+            guard !settings.menuBarHiddenAccounts.contains(account.id),
+                  seen.insert(account.provider).inserted else { return false }
+            return !settings.menuBarWorkingOnly || store.isRunning(account.provider)
         }
-        return Array(found.sorted { $0.working && !$1.working }.prefix(maxMascots))
     }
 
     static func draw(
@@ -55,186 +32,199 @@ enum VigiaStatusFace {
         remaining: Bool,
         style: MenuBarStyle,
         label: String?,
-        mascots: [Mascot],
-        on button: NSStatusBarButton
+        accounts: [AccountKey],
+        settings: AppSettings,
+        store: UsageStore,
+        on item: NSStatusItem
     ) {
-        self.button = button
-        self.mascots = mascots
+        guard let button = item.button, !menuIsOpen else { return }
 
-        guard !mascots.isEmpty else {
-            stopTimer()
-            laidOutAsReading = true
+        guard !accounts.isEmpty else {
+            host?.isHidden = true
+            item.length = NSStatusItem.variableLength
             MenuBarReading.draw(reading, remaining: remaining, style: style, label: label, on: button)
             return
         }
 
-        if laidOutAsReading {
-            button.imagePosition = .imageOnly
-            button.attributedTitle = NSAttributedString()
-            button.toolTip = "Vigía"
-            laidOutAsReading = false
-        }
-        guard !menuIsOpen else { return }
-        paintMascots(on: button)
-        syncTimer()
+        let host = host(for: button, item: item, settings: settings, store: store)
+        if !host.isHidden { return }
+        // Handing the button over: nothing of its own is left on it.
+        button.image = nil
+        button.attributedTitle = NSAttributedString()
+        button.imagePosition = .noImage
+        button.toolTip = "Vigía"
+        host.isHidden = false
+        host.sizeItem()
     }
 
-    /// The status item's menu opened or closed. Frozen while open, repainted
-    /// with whatever changed in the meantime when it closes.
-    static func setMenuOpen(_ open: Bool) {
-        menuIsOpen = open
-        if open {
-            stopTimer()
-        } else if let button, !mascots.isEmpty {
-            paintMascots(on: button)
-            syncTimer()
-        }
+    /// The menu is about to open: the live mascots give way to a photograph of
+    /// themselves, so the item holds perfectly still until it closes.
+    static func menuWillOpen(item: NSStatusItem) {
+        menuIsOpen = true
+        guard let host, !host.isHidden, let button = item.button,
+              let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { return }
+        host.cacheDisplay(in: host.bounds, to: rep)
+        let snapshot = NSImage(size: host.bounds.size)
+        snapshot.addRepresentation(rep)
+        button.image = snapshot
+        button.imagePosition = .imageOnly
+        host.isHidden = true
     }
 
-    private static func syncTimer() {
-        guard mascots.contains(where: \.working) else { return stopTimer() }
-        guard timer == nil else { return }
-        let timer = Timer(timeInterval: 1.0 / 12.5, repeats: true) { _ in
-            MainActor.assumeIsolated {
-                tick += 1
-                guard let button = self.button else { return }
-                paintMascots(on: button)
-            }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        self.timer = timer
-    }
-
-    private static func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-
-    // MARK: - Layout
-
-    /// The status word's width as drawn, capped so one chatty tool name cannot
-    /// push the other marks off the menu bar.
-    private static func labelWidth(of mascot: Mascot) -> CGFloat {
-        let text = String.localized(String.LocalizationValue(mascot.label ?? "Thinking…"))
-        return min(ceil((text as NSString).size(withAttributes: [.font: textFont]).width), 120)
-    }
-
-    private static let timerWidth: CGFloat =
-        ceil(("00:00" as NSString).size(withAttributes: [.font: timerFont]).width)
-
-    private static func iconWidth(of mascot: Mascot) -> CGFloat {
-        mascot.provider == .claudeCode ? 22 : height
-    }
-
-    private static func width(of mascot: Mascot) -> CGFloat {
-        guard mascot.working else { return iconWidth(of: mascot) }
-        return iconWidth(of: mascot) + 4 + labelWidth(of: mascot) + 4 + timerWidth
-    }
-
-    private static func paintMascots(on button: NSStatusBarButton) {
-        let items = mascots
-        let widths = items.map(width(of:))
-        let total = widths.reduce(0, +) + gap * CGFloat(max(0, items.count - 1))
-        let size = NSSize(width: total, height: height)
-        let tick = tick
-        let now = Date()
-
-        // Drawn per tick under the button's own appearance, so the marks come
-        // out light on a dark menu bar and dark on a light one.
-        var image = NSImage(size: size)
-        button.effectiveAppearance.performAsCurrentDrawingAppearance {
-            let ink = NSColor.labelColor.usingColorSpace(.deviceRGB) ?? .white
-            image = NSImage(size: size, flipped: false) { _ in
-                var x: CGFloat = 0
-                for (mascot, width) in zip(items, widths) {
-                    let icon = iconWidth(of: mascot)
-                    draw(mascot, tick: tick, in: NSRect(x: x, y: 0, width: icon, height: height), ink: ink)
-                    if mascot.working {
-                        drawStatus(mascot, at: x + icon + 4, now: now, ink: ink)
-                    }
-                    x += width + gap
-                }
-                return true
-            }
-        }
-        image.isTemplate = false
-        button.image = image
-    }
-
-    private static func drawStatus(_ mascot: Mascot, at x: CGFloat, now: Date, ink: NSColor) {
-        let style = NSMutableParagraphStyle()
-        style.lineBreakMode = .byTruncatingTail
-        let text = String.localized(String.LocalizationValue(mascot.label ?? "Thinking…"))
-        let labelWidth = labelWidth(of: mascot)
-        let textHeight = ceil(textFont.boundingRectForFont.height)
-        let y = (height - textHeight) / 2
-        (text as NSString).draw(
-            in: NSRect(x: x, y: y, width: labelWidth, height: textHeight),
-            withAttributes: [.font: textFont, .foregroundColor: ink, .paragraphStyle: style]
-        )
-        let elapsed = max(0, Int(now.timeIntervalSince(mascot.since ?? now)))
-        let clock = String(format: "%d:%02d", elapsed / 60, elapsed % 60)
-        let right = NSMutableParagraphStyle()
-        right.alignment = .right
-        (clock as NSString).draw(
-            in: NSRect(x: x + labelWidth + 4, y: y, width: timerWidth, height: textHeight),
-            withAttributes: [.font: timerFont, .foregroundColor: ink.withAlphaComponent(0.7), .paragraphStyle: right]
-        )
-    }
-
-    private static func draw(_ mascot: Mascot, tick: Int, in rect: NSRect, ink: NSColor) {
-        let phase = Double(tick) / 2.0
-        switch mascot.provider {
-        case .claudeCode:
-            let frames = ClawdFrames.images
-            guard !frames.isEmpty else { return }
-            let frame = frames[mascot.working ? tick % frames.count : 0]
-            frame.draw(in: NSRect(x: rect.minX, y: rect.midY - 8, width: 22, height: 16))
-        case .grok:
-            let shift = mascot.working ? CGFloat(sin(phase)) * 2 : 0
-            tint(ballImage(pupilShift: shift), in: rect, ink: ink, alpha: 1)
-        default:
-            guard let logo = LobeIconStore.image(for: mascot.provider) else { return }
-            // Working: the logo bobs and breathes. Idle: still and dimmed.
-            let bob = mascot.working ? CGFloat(sin(phase)) * 1.5 : 0
-            let alpha = mascot.working ? 0.8 + 0.2 * CGFloat(sin(phase * 0.8)) : 0.5
-            let box = rect.insetBy(dx: 1, dy: 1).offsetBy(dx: 0, dy: bob)
-            tint(logo, in: box, ink: ink, alpha: alpha)
+    /// Back to the live mascots, and to whatever changed while it was open.
+    static func menuDidClose(item: NSStatusItem) {
+        menuIsOpen = false
+        guard let host, let button = item.button else { return }
+        if button.imagePosition == .imageOnly, host.isHidden, button.image != nil {
+            button.image = nil
+            button.imagePosition = .noImage
+            host.isHidden = false
+            host.sizeItem()
         }
     }
 
-    /// A template image filled with the menu bar's ink.
-    private static func tint(_ image: NSImage, in rect: NSRect, ink: NSColor, alpha: CGFloat) {
-        guard let context = NSGraphicsContext.current?.cgContext else { return }
-        context.saveGState()
-        context.setAlpha(alpha)
-        context.beginTransparencyLayer(in: rect, auxiliaryInfo: nil)
-        image.draw(in: rect)
-        ink.set()
-        rect.fill(using: .sourceIn)
-        context.endTransparencyLayer()
-        context.restoreGState()
+    private static func host(
+        for button: NSStatusBarButton, item: NSStatusItem, settings: AppSettings, store: UsageStore
+    ) -> MascotHostingView {
+        if let host, host.superview === button { return host }
+        host?.removeFromSuperview()
+        let host = MascotHostingView(rootView: MenuBarMascotsView(settings: settings, store: store))
+        host.item = item
+        host.translatesAutoresizingMaskIntoConstraints = false
+        host.isHidden = true
+        button.addSubview(host)
+        NSLayoutConstraint.activate([
+            host.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: MascotHostingView.inset),
+            host.centerYAnchor.constraint(equalTo: button.centerYAnchor)
+        ])
+        self.host = host
+        return host
+    }
+}
+
+/// Lets the SwiftUI row decide how wide the status item is, and lets every
+/// click through to the button underneath, which opens the menu.
+final class MascotHostingView: NSHostingView<MenuBarMascotsView> {
+    static let inset: CGFloat = 4
+    weak var item: NSStatusItem?
+
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+    override func invalidateIntrinsicContentSize() {
+        super.invalidateIntrinsicContentSize()
+        DispatchQueue.main.async { [weak self] in self?.sizeItem() }
     }
 
-    /// Round template mark. Eyes are holes so the menu bar color shows through.
-    static func ballImage(pupilShift: CGFloat, points: CGFloat = 18) -> NSImage {
-        let image = NSImage(size: NSSize(width: points, height: points), flipped: false) { rect in
-            NSColor.black.setFill()
-            NSBezierPath(ovalIn: rect.insetBy(dx: 1, dy: 1)).fill()
-            guard let context = NSGraphicsContext.current?.cgContext else { return true }
-            context.setBlendMode(.destinationOut)
-            let eye = points * 0.16
-            let y = rect.midY + points * 0.06
-            for side in [-1.0, 1.0] as [CGFloat] {
-                let origin = NSPoint(
-                    x: rect.midX + side * points * 0.18 + pupilShift - eye / 2,
-                    y: y - eye / 2
+    func sizeItem() {
+        guard !isHidden, !VigiaStatusFace.menuIsOpen, let item else { return }
+        let width = ceil(fittingSize.width) + Self.inset * 2
+        if abs(item.length - width) > 0.5 { item.length = width }
+    }
+}
+
+struct MenuBarMascotsView: View {
+    let settings: AppSettings
+    let store: UsageStore
+
+    var body: some View {
+        let accounts = VigiaStatusFace.accounts(settings: settings, store: store)
+        // Dealt over the whole rail, as the notch does, so each AI wears the
+        // same colour and character in both places.
+        let rail = settings.shownAccounts
+        let tints = rail.contains(where: { settings.showsBotMark(for: $0) })
+            ? BotMarkTint.deal(over: rail.map(\.provider), chosen: rail.map { settings.botColour(for: $0) })
+            : []
+        HStack(spacing: 10) {
+            ForEach(accounts) { account in
+                let index = rail.firstIndex(of: account) ?? 0
+                MenuBarMascotItem(
+                    account: account,
+                    tint: index < tints.count ? tints[index] : .clear,
+                    persona: settings.botPersona(for: account) ?? BotMarkPersona.automatic(at: index),
+                    settings: settings,
+                    store: store
                 )
-                NSBezierPath(ovalIn: NSRect(origin: origin, size: NSSize(width: eye, height: eye))).fill()
             }
-            return true
         }
-        image.isTemplate = true
-        return image
+        .fixedSize()
+        .frame(height: 22)
+    }
+}
+
+private struct MenuBarMascotItem: View {
+    let account: AccountKey
+    let tint: Color
+    let persona: BotMarkPersona
+    let settings: AppSettings
+    let store: UsageStore
+
+    private static let markSize: CGFloat = 20
+
+    var body: some View {
+        let provider = account.provider
+        let usage = store.usage(for: account)
+        let headline = usage.headlineWindow(preferring: settings.pinnedWindow(for: account))
+        let working = store.isRunning(provider)
+
+        HStack(spacing: 4) {
+            mark(working: working, headline: headline)
+                .frame(width: Self.markSize, height: Self.markSize)
+            if working, settings.menuBarActivityText || settings.menuBarTimer {
+                activity(for: provider)
+            }
+            if settings.menuBarPercent, let headline {
+                Text(headline.percentText(remaining: settings.showsRemaining))
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(UsageTint.isSpent(headline) ? Color.pulseExhausted : .primary)
+            }
+        }
+        // Idle ones stay on screen, quieter, so the whole rail is always there.
+        .opacity(working || settings.showsBotMark(for: account) ? 1 : 0.6)
+        .animation(.easeOut(duration: 0.2), value: working)
+    }
+
+    @ViewBuilder
+    private func mark(working: Bool, headline: UsageWindow?) -> some View {
+        let provider = account.provider
+        if settings.showsBotMark(for: account), provider == .claudeCode {
+            ClawdMarkView(isWorking: working, size: Self.markSize)
+        } else if settings.showsBotMark(for: account) {
+            let body = tint == .clear ? BotMarkTint.body(for: provider) : tint
+            BotMarkView(
+                mood: BotMarkMood.resolve(
+                    isBusy: working,
+                    isRefreshing: store.isRefreshing(account),
+                    isSpent: UsageTint.isSpent(headline) || (headline?.usedFraction ?? 0) >= 1,
+                    hasReading: headline != nil
+                ),
+                persona: persona,
+                bodyShape: settings.botBody(for: account),
+                event: store.justFinishedWorking(provider) ? .workFinished : nil,
+                tint: body,
+                eyeTint: BotMarkTint.eyes(on: body),
+                size: Self.markSize
+            )
+        } else {
+            LobeIconView(provider: provider, size: Self.markSize - 4)
+        }
+    }
+
+    private func activity(for provider: Provider) -> some View {
+        HStack(spacing: 4) {
+            if settings.menuBarActivityText {
+                Text(String.localized(String.LocalizationValue(store.activityLabel(provider) ?? "Thinking…")))
+                    .font(.system(size: 11, weight: .medium))
+                    .lineLimit(1)
+            }
+            if settings.menuBarTimer, let since = store.workingSince(provider) {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    let seconds = max(0, Int(context.date.timeIntervalSince(since)))
+                    Text(String(format: "%d:%02d", seconds / 60, seconds % 60))
+                        .font(.system(size: 11).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
     }
 }

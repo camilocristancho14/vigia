@@ -42,6 +42,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.updateMenuBarItem()
         }
 
+        // The required `Settings` scene is empty on purpose; if the system
+        // ever opens it (it did on a first launch), the person is looking at
+        // a blank window. Close it and open the real one in its place.
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification, object: nil, queue: .main
+        ) { [weak self] note in
+            guard let window = note.object as? NSWindow, !(window is SettingsWindow),
+                  window.identifier?.rawValue.contains("Settings") == true else { return }
+            MainActor.assumeIsolated {
+                window.close()
+                self?.openRealSettings()
+            }
+        }
+
         // **Writing to a pipe whose far end has closed raises SIGPIPE, whose
         // default is to kill the process.** Pulse writes to one: the Codex
         // helper's standard input. So that helper exiting — crashing, being
@@ -312,6 +326,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return prefix + key
     }
 
+    /// Settings, or the chooser while no service has been picked.
+    private func openRealSettings() {
+        if settings.needsProviderSelection {
+            if let chooser = providerSetupWindow {
+                chooser.show()
+            } else {
+                showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
+            }
+        } else {
+            showSettings()
+        }
+    }
+
     private func showSettingsGeneral() {
         let window = settingsWindow ?? SettingsWindowController(
             store: store, settings: settings, placement: placement,
@@ -421,10 +448,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// Re-read whenever anything it reads changes: the tracking is armed
     /// again on every change, because `withObservationTracking` fires once.
     private func showMenuBarReading() {
-        guard let button = statusItem?.button else { return }
+        guard let item = statusItem else { return }
         menuBarGeneration += 1
         let generation = menuBarGeneration
-        let (reading, remaining, style, label, mascots) = withObservationTracking {
+        let (reading, remaining, style, label, accounts) = withObservationTracking {
             let reading = settings.showsUsageInMenuBar
                 ? MenuBarReading.choose(
                     among: settings.shownAccounts,
@@ -439,7 +466,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // to redraw the item, and nothing else about it changes.
             return (reading, settings.showsRemaining, settings.menuBarStyle,
                     reading.map { settings.label(for: $0.account) },
-                    VigiaStatusFace.mascots(settings: settings, store: store))
+                    VigiaStatusFace.accounts(settings: settings, store: store))
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self, self.menuBarGeneration == generation else { return }
@@ -452,8 +479,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             remaining: remaining,
             style: style,
             label: label,
-            mascots: mascots,
-            on: button
+            accounts: accounts,
+            settings: settings,
+            store: store,
+            on: item
         )
     }
 
@@ -481,11 +510,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func menuWillOpen(_ menu: NSMenu) {
-        if menu === statusItem?.menu { VigiaStatusFace.setMenuOpen(true) }
+        if menu === statusItem?.menu, let statusItem { VigiaStatusFace.menuWillOpen(item: statusItem) }
     }
 
     func menuDidClose(_ menu: NSMenu) {
-        if menu === statusItem?.menu { VigiaStatusFace.setMenuOpen(false) }
+        guard menu === statusItem?.menu, let statusItem else { return }
+        VigiaStatusFace.menuDidClose(item: statusItem)
+        // Anything that changed while the item was frozen.
+        showMenuBarReading()
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -601,15 +633,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         // Before a service is chosen the chooser is the way in, not Settings —
         // the one already open brought forward rather than a second made.
-        if settings.needsProviderSelection {
-            if let chooser = providerSetupWindow {
-                chooser.show()
-            } else {
-                showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
-            }
-        } else {
-            showSettings()
-        }
+        openRealSettings()
         return false
     }
 

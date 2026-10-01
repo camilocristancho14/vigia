@@ -1061,6 +1061,94 @@ struct SettingsView: View {
                 }
             }
 
+            SettingsGroup(String.localized("Menu bar mascots")) {
+                SettingsRow(
+                    String.localized("Show AI mascots"),
+                    subtitle: String.localized("The same marks as the notch, in the same order, moving while each AI works.")
+                ) {
+                    Toggle("", isOn: Binding(
+                        get: { settings.menuBarMascots },
+                        set: { settings.menuBarMascots = $0 }
+                    ))
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                }
+
+                if settings.menuBarMascots {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Show what it is doing"),
+                        subtitle: String.localized("Thinking, reading, running a command… beside a working AI.")
+                    ) {
+                        Toggle("", isOn: Binding(
+                            get: { settings.menuBarActivityText },
+                            set: { settings.menuBarActivityText = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+
+                    SettingsRowDivider()
+
+                    SettingsRow(String.localized("Show elapsed time")) {
+                        Toggle("", isOn: Binding(
+                            get: { settings.menuBarTimer },
+                            set: { settings.menuBarTimer = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Show usage percentage"),
+                        subtitle: String.localized("Each ring's figure beside its mascot.")
+                    ) {
+                        Toggle("", isOn: Binding(
+                            get: { settings.menuBarPercent },
+                            set: { settings.menuBarPercent = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Only AIs that are working"),
+                        subtitle: String.localized("The rest appear when they start. With none working, the plain icon shows.")
+                    ) {
+                        Toggle("", isOn: Binding(
+                            get: { settings.menuBarWorkingOnly },
+                            set: { settings.menuBarWorkingOnly = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+
+                    ForEach(settings.shownAccounts, id: \.id) { account in
+                        SettingsRowDivider()
+
+                        SettingsRow(String.localized("Show \(settings.label(for: account))")) {
+                            Toggle("", isOn: Binding(
+                                get: { !settings.menuBarHiddenAccounts.contains(account.id) },
+                                set: { shown in
+                                    if shown {
+                                        settings.menuBarHiddenAccounts.remove(account.id)
+                                    } else {
+                                        settings.menuBarHiddenAccounts.insert(account.id)
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                        }
+                    }
+                }
+            }
+
             SettingsGroup(String.localized("Shortcuts")) {
                 SettingsRow(
                     String.localized("Open settings"),
