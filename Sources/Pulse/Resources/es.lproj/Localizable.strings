@@ -822,3 +822,7 @@
 "Show %@" = "Mostrar %@";
 "Mascots in colour" = "Mascotas a color";
 "Clawd in Claude's own orange, instead of the menu bar's ink." = "Clawd en el naranja propio de Claude, en vez de la tinta de la barra de menú.";
+"Remote Claude Code activity" = "Actividad remota de Claude Code";
+"Lets Claude Code on a server or another computer report when it is working. Listens on port 7717 with a secret token; use a private network." = "Permite que Claude Code en un servidor u otro computador avise cuando está trabajando. Escucha en el puerto 7717 con un token secreto; usa una red privada.";
+"Remote activity token" = "Token de actividad remota";
+"Copy token" = "Copiar token";

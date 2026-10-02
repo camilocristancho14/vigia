@@ -240,6 +240,45 @@ enum ClaudeDesktopSession {
         }
     }
 
+    // MARK: - Chat activity
+
+    /// When the newest conversation on the account last changed, or nil when
+    /// the route is not usable *quietly*.
+    ///
+    /// **Why this exists.** Chat in a browser tab, in the desktop app or on a
+    /// phone writes nothing on this Mac, so the transcript reader cannot see
+    /// it. The account can: the conversation list says which chat moved last,
+    /// whichever surface moved it.
+    ///
+    /// Gated exactly like `attemptIfAlreadyPermitted` — it never raises the
+    /// keychain prompt; a background probe is not a reason to ask. Not public
+    /// API, and **unmeasured**: whether `updated_at` moves while a reply
+    /// streams, or only once it lands, decides how early this can say
+    /// "working", and has to be read off a real session.
+    static func latestConversationUpdate() async -> Date? {
+        guard wasPermitted, let store = cookieStore(),
+              let key = BrowserCookies.safeStorageKey(service: keychainService)
+        else { return nil }
+
+        let cookies = BrowserCookies.chromiumCookies(at: store, host: host, key: key)
+        guard let cookie = sessionHeader(from: cookies) else { return nil }
+        guard case .success(let identity) = await resolveIdentity(
+            cookie: cookie, preferring: activeOrganization(from: cookies), ignoringCache: false
+        ) else { return nil }
+
+        var parts = URLComponents(string: "https://claude.ai/api/organizations/\(identity.organization)/chat_conversations")!
+        parts.queryItems = [URLQueryItem(name: "limit", value: "1")]
+        guard let url = parts.url,
+              case .success(let data) = await fetchData(url, cookie: cookie),
+              let list = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+              let stamp = list.first?["updated_at"] as? String
+        else { return nil }
+
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: stamp) ?? ISO8601DateFormatter().date(from: stamp)
+    }
+
     // MARK: - The cookie
 
     /// Electron writes the store at the profile's root on some versions and
@@ -383,6 +422,24 @@ enum ClaudeDesktopSession {
     }
 
     private static func get(_ url: URL, cookie: String) async -> ReadOutcome {
+        switch await fetchData(url, cookie: cookie) {
+        case .success(let data):
+            guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return .failure(.unreadableReply)
+            }
+            return .success(root)
+        case .organizationGone: return .organizationGone
+        case .failure(let reason): return .failure(reason)
+        }
+    }
+
+    private enum DataOutcome {
+        case success(Data)
+        case organizationGone
+        case failure(ProviderUsage.Unavailability)
+    }
+
+    private static func fetchData(_ url: URL, cookie: String) async -> DataOutcome {
         let session = session()
         defer { session.invalidateAndCancel() }
         var request = URLRequest(url: url)
@@ -405,10 +462,7 @@ enum ClaudeDesktopSession {
 
                 switch http.statusCode {
                 case 200:
-                    guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                        return .failure(.unreadableReply)
-                    }
-                    return .success(root)
+                    return .success(data)
                 case 401, 403:
                     return .failure(.claudeDesktopSessionExpired)
                 case 404:

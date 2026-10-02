@@ -594,7 +594,27 @@ final class AgentActivityMonitor {
     /// of providers without reading the user's transcripts.
     init(
         readStates: @escaping @Sendable (Set<Provider>) async -> [Provider: AgentActivity.State] = {
-            AgentActivity.states(for: $0)
+            var states = AgentActivity.states(for: $0)
+            // Claude Code on another machine pushes its own state here.
+            if $0.contains(.claudeCode), let remote = RemoteActivityReceiver.shared.state() {
+                var state = states[.claudeCode] ?? AgentActivity.State(lastWrite: nil, isWorking: false)
+                if !state.isWorking { state.isWorking = true; state.label = remote.label }
+                state.lastWrite = max(state.lastWrite ?? Date(), Date())
+                states[.claudeCode] = state
+            }
+            // Chat in a browser or the desktop app leaves nothing on disk, so
+            // Claude's mark also listens to the account's conversation list.
+            if $0.contains(.claudeCode), let moved = await ClaudeChatActivity.latestUpdate(),
+               Date().timeIntervalSince(moved) <= ClaudeChatActivity.window {
+                var state = states[.claudeCode] ?? AgentActivity.State(lastWrite: nil, isWorking: false)
+                if !state.isWorking {
+                    state.isWorking = true
+                    state.label = "Thinking…"
+                }
+                state.lastWrite = max(state.lastWrite ?? moved, moved)
+                states[.claudeCode] = state
+            }
+            return states
         }
     ) {
         self.readStates = readStates
@@ -680,5 +700,26 @@ final class AgentActivityMonitor {
 
         let newest = states.values.compactMap(\.lastWrite).max()
         if newest != lastWrite { lastWrite = newest }
+    }
+}
+
+/// Throttles the account's conversation probe: the monitor scans every two
+/// seconds, and a network call at that pace is neither polite nor needed.
+actor ClaudeChatActivity {
+    /// How recently a chat must have moved to count as in flight.
+    static let window: TimeInterval = 45
+    private static let minimumGap: TimeInterval = 10
+    private static let shared = ClaudeChatActivity()
+
+    private var checkedAt: Date?
+    private var cached: Date?
+
+    static func latestUpdate() async -> Date? { await shared.read() }
+
+    private func read() async -> Date? {
+        if let checkedAt, Date().timeIntervalSince(checkedAt) < Self.minimumGap { return cached }
+        checkedAt = Date()
+        cached = await ClaudeDesktopSession.latestConversationUpdate()
+        return cached
     }
 }

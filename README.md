@@ -32,6 +32,10 @@ Trabajar manda sobre todo, y el descanso de después del turno también; el cans
 
 Las IAs que no se pueden observar (Grok Bot, por ejemplo) no «trabajan»: muestran primero el cansancio y el agotamiento según su límite y, si no, van cambiando de escena a lo largo del día: duermen de noche (23:00 a 06:00), toman café por la mañana y después, cada cuarto de hora, parpadean, descansan, teclean en la laptop o salen a correr. Los logos solo descansan y toman café. Con «Reducir movimiento» activado en macOS los logos se quedan quietos. En Ajustes, Clawd puede conservar el naranja de Claude en la barra de menú.
 
+## Actividad remota
+
+Claude en el navegador o en la app de Mac se detecta mirando la conversación más reciente de tu cuenta (usa la sesión de la app de escritorio). Para Claude Code en otra máquina, activa **Ajustes > Barra de menú > Actividad remota de Claude Code**: Vigía escucha en el puerto 7717, protegido con un token (botón *Copiar token*), y los hooks de Claude Code del servidor le avisan con un POST a `/activity` (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`). Está apagado por defecto; úsalo solo por una red privada (Tailscale o un túnel SSH).
+
 ## Capturas
 
 El notch plegado, el notch abierto, la barra de menú con su menú, y la ventana de ajustes:
