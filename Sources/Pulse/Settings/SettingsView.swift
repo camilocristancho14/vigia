@@ -1824,27 +1824,6 @@ struct SettingsView: View {
                     SettingsRowDivider()
 
                     SettingsRow(
-                        String.localized("Bot personality"),
-                        subtitle: settings.botPersona(for: account) == nil
-                            ? String.localized("The character it plays: which motions it uses and how fast. Automatic keeps it different from the rings beside it.")
-                            : String.localized("The character you picked for this bot, wherever this ring sits.")
-                    ) {
-                        Picker("", selection: Binding(
-                            get: { settings.botPersona(for: account) },
-                            set: { settings.setBotPersona($0, for: account) }
-                        )) {
-                            Text(localized: "Automatic").tag(BotMarkPersona?.none)
-                            ForEach(BotMarkPersona.allCases) { persona in
-                                Text(persona.title).tag(BotMarkPersona?.some(persona))
-                            }
-                        }
-                        .labelsHidden()
-                        .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
-                    }
-
-                    SettingsRowDivider()
-
-                    SettingsRow(
                         String.localized("Bot colour"),
                         subtitle: settings.botColour(for: account) == nil
                             ? String.localized("Its brand colour, or one dealt to stand apart from its neighbours.")

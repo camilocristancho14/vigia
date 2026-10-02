@@ -298,6 +298,7 @@ struct UsageRingView: View {
                     isQuiet: botQuiet,
                     pose: mascotPose,
                     activityLabel: activityLabel,
+                    lively: !provider.supportsLocalActivity,
                     tint: body,
                     eyeTint: BotMarkTint.eyes(on: body),
                     size: centreDiameter * Self.botScale
