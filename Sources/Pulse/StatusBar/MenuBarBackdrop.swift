@@ -12,9 +12,9 @@ import SwiftUI
 /// the screen — where the status items live — is close enough to tell orange
 /// from green. Dynamic wallpapers are read at the frame the system names.
 ///
-/// **One answer for all screens.** The status item is one image shown in
-/// every display's bar, so it has to read on all of them at once: the ink
-/// that is worst on its worst screen decides, not the main one.
+/// **One answer, decided by the primary screen.** The status item is one
+/// image; the system re-tints it for the other displays itself, so the
+/// primary bar's backdrop is the one worth reading.
 struct MenuBarColour: Equatable, Sendable {
     var red: Double
     var green: Double
@@ -187,16 +187,23 @@ final class MenuBarBackdrop {
         NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? .white : .black
     }
 
-    /// `preferred` if it can be seen on every screen's bar, else white or black.
+    /// The bar the status item is really drawn on: the primary display's.
+    /// macOS adapts the same image to the other displays' bars by itself —
+    /// measured on an orange bar, an orange mark came out pale cream — so
+    /// forcing white everywhere because *one* bar is orange took the colour
+    /// away from the green bar where it showed fine.
+    private var primary: [MenuBarColour] { colours.prefix(1).map { $0 } }
+
+    /// `preferred` if it can be seen on the primary bar, else white or black.
     func legible(_ preferred: Color) -> Color {
-        MenuBarColour.legible(MenuBarColour(preferred), over: colours).color
+        MenuBarColour.legible(MenuBarColour(preferred), over: primary).color
     }
 
     /// The system ink, unless it is lost against some screen's bar — and then
     /// white or black. Nil means "leave it to the system".
     func inkOverride() -> Color? {
         let system = systemInk
-        let chosen = MenuBarColour.legible(system, over: colours)
+        let chosen = MenuBarColour.legible(system, over: primary)
         return chosen == system ? nil : chosen.color
     }
 }
