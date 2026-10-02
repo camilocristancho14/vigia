@@ -16,7 +16,7 @@ La apariencia clara y oscura sigue al sistema. Cada agente tiene un interruptor 
 
 ## Animaciones
 
-Cada mascota muestra qué está haciendo la IA. Claude Code y Grok Bot tienen mascota propia (Clawd y la bolita); las demás animan su logo. Las poses salen de la actividad real que Vigía lee en el equipo, y lo que dice el texto de la barra de menú es lo que se ve.
+Cada mascota muestra qué está haciendo la IA. Claude Code tiene a Clawd, y cualquier otra IA puede usar la bolita animada (mismo motor, cada una con su color y su personalidad) si activas su interruptor; las demás animan su logo. Donde Vigía puede ver las sesiones del agente (Claude Code, Codex, Cursor, Gemini CLI, Grok Build…), las poses salen de la actividad real, y lo que dice el texto de la barra de menú es lo que se ve.
 
 | Situación | Clawd | Bolita (Grok Bot) | Logo |
 | --- | --- | --- | --- |
@@ -28,7 +28,9 @@ Cada mascota muestra qué está haciendo la IA. Claude Code y Grok Bot tienen ma
 | Límite al 75 % o más | Cansado: párpados caídos y una gota de sudor | Cansada, con una gota de sudor | Se ladea y suda |
 | Límite al 100 % | Ojos en X y estrellas mareadas | Se apaga, con estrellas mareadas | Tiembla entre estrellas |
 
-Trabajar manda sobre todo, y el descanso de después del turno también; el cansancio y el agotamiento se ven cuando no está trabajando ni de descanso. Grok Bot sigue la actividad de Grok Build (`~/.grok`), porque no tiene sesiones propias. Con «Reducir movimiento» activado en macOS los logos se quedan quietos. En Ajustes, Clawd puede conservar el naranja de Claude en la barra de menú.
+Trabajar manda sobre todo, y el descanso de después del turno también; el cansancio y el agotamiento se ven cuando no está trabajando ni de descanso.
+
+Las IAs que no se pueden observar (Grok Bot, por ejemplo) no «trabajan»: muestran primero el cansancio y el agotamiento según su límite y, si no, van cambiando de escena a lo largo del día: duermen de noche (23:00 a 06:00), toman café por la mañana y después, cada cuarto de hora, parpadean, descansan, teclean en la laptop o salen a correr. Los logos solo descansan y toman café. Con «Reducir movimiento» activado en macOS los logos se quedan quietos. En Ajustes, Clawd puede conservar el naranja de Claude en la barra de menú.
 
 ## Capturas
 

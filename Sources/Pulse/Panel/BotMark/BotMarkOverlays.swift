@@ -7,8 +7,8 @@ func drawMascotOverlay(pose: MascotPose, mood: BotMarkMood, in context: inout Gr
                        size: CGSize, time: TimeInterval) {
     switch (pose, mood) {
     case (.coffee, .idle): drawCoffeeBreak(in: &context, size: size, time: time)
-    case (.type, .working): drawLaptop(in: &context, size: size, time: time)
-    case (.run, .working): drawSpeedLines(in: &context, size: size, time: time)
+    case (.type, .working), (.type, .idle): drawLaptop(in: &context, size: size, time: time)
+    case (.run, .working), (.run, .idle): drawSpeedLines(in: &context, size: size, time: time)
     case (.tired, .idle): drawSweat(in: &context, size: size, time: time)
     case (.spent, _): drawDizzyStars(in: &context, size: size, time: time)
     case (.sleep, .idle): drawSleepZs(in: &context, size: size, time: time)

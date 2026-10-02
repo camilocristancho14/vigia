@@ -98,7 +98,8 @@ enum VigiaMenuRows {
     ) -> NSImage? {
         guard marked else { return MenuBarReading.markImage(for: account.provider, size: 16) }
         if account.provider == .claudeCode {
-            let image = ClawdFrames.frame(for: store.mascotPose(account.provider, usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction), at: 0,
+            let image = ClawdFrames.frame(for: store.mascotPose(account.provider, usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
+                             playful: true), at: 0,
                                           colour: settings.menuBarColorMascots)?.copy() as? NSImage
             image?.size = NSSize(width: 22, height: 16)
             return image

@@ -19,7 +19,7 @@ struct MascotPoseTests {
         #expect(!MascotPose.tired.isWorking && !MascotPose.spent.isWorking)
     }
 
-    @Test("Work, then a break, then the limit it is at, then awake or asleep")
+    @Test("Where sessions are visible: work, then a break, then the limit, then awake or asleep")
     func waitingPose() async {
         let now = Date()
         let monitor = AgentActivityMonitor { _ in [:] }
@@ -45,14 +45,33 @@ struct MascotPoseTests {
         #expect(store.mascotPose(.claudeCode, usedFraction: 1, now: now) == .type)
     }
 
-    @Test("Grok Bot follows Grok Build's sessions")
-    func grokBotFollowsGrok() {
+    @Test("An agent that cannot be watched follows its limit, then the clock")
+    func unwatchedPose() {
         let monitor = AgentActivityMonitor { _ in [:] }
         let store = UsageStore(settings: AppSettings(enabledAccounts: [Provider.grokBot.rawValue]), activity: monitor)
+        #expect(!Provider.grokBot.supportsLocalActivity)
+        let noon = Self.date(hour: 10, minute: 20)
+        #expect(store.mascotPose(.grokBot, usedFraction: 1, playful: true, now: noon) == .spent)
+        #expect(store.mascotPose(.grokBot, usedFraction: 0.8, playful: true, now: noon) == .tired)
+        #expect(store.mascotPose(.grokBot, usedFraction: 0.3, playful: true, now: noon) == MascotPose.ofTheDay(at: noon, playful: true))
+        // Even a session somewhere else cannot make it "work".
         monitor.adoptDemo(running: [.grok], labels: [.grok: "Searching"])
-        #expect(store.isRunning(.grokBot))
-        #expect(store.mascotPose(.grokBot) == .run)
-        #expect(store.activityLabel(.grokBot) == "Searching")
+        #expect(!store.isRunning(.grokBot))
+    }
+
+    @Test("Through the day: asleep at night, coffee early, then varied scenes")
+    func dayPose() {
+        #expect(MascotPose.ofTheDay(at: Self.date(hour: 2, minute: 0), playful: true) == .sleep)
+        #expect(MascotPose.ofTheDay(at: Self.date(hour: 23, minute: 30), playful: false) == .sleep)
+        #expect(MascotPose.ofTheDay(at: Self.date(hour: 7, minute: 30), playful: true) == .coffee)
+        let scenes = Set((0..<48).map { MascotPose.ofTheDay(at: Self.date(hour: 9 + $0 / 4, minute: ($0 % 4) * 15), playful: true) })
+        #expect(scenes.isSuperset(of: [.awake, .type, .run, .coffee]))
+        let plain = Set((0..<48).map { MascotPose.ofTheDay(at: Self.date(hour: 9 + $0 / 4, minute: ($0 % 4) * 15), playful: false) })
+        #expect(plain.isSubset(of: [.awake, .coffee]))
+    }
+
+    private static func date(hour: Int, minute: Int) -> Date {
+        Calendar.current.date(from: DateComponents(year: 2026, month: 10, day: 1, hour: hour, minute: minute)) ?? Date()
     }
 
     @Test("Every pose has frames on the walking sprite's 51 × 36 grid")
