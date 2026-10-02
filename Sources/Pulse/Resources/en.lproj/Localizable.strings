@@ -947,3 +947,7 @@
 "Show %@" = "Show %@";
 "Mascots in colour" = "Mascots in colour";
 "Clawd in Claude's own orange, instead of the menu bar's ink." = "Clawd in Claude's own orange, instead of the menu bar's ink.";
+"Remote Claude Code activity" = "Remote Claude Code activity";
+"Lets Claude Code on a server or another computer report when it is working. Listens on port 7717 with a secret token; use a private network." = "Lets Claude Code on a server or another computer report when it is working. Listens on port 7717 with a secret token; use a private network.";
+"Remote activity token" = "Remote activity token";
+"Copy token" = "Copy token";

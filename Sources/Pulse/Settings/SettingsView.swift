@@ -1117,6 +1117,31 @@ struct SettingsView: View {
                     SettingsRowDivider()
 
                     SettingsRow(
+                        String.localized("Remote Claude Code activity"),
+                        subtitle: String.localized("Lets Claude Code on a server or another computer report when it is working. Listens on port 7717 with a secret token; use a private network.")
+                    ) {
+                        Toggle("", isOn: Binding(
+                            get: { settings.remoteActivityEnabled },
+                            set: { settings.remoteActivityEnabled = $0 }
+                        ))
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                    }
+
+                    if settings.remoteActivityEnabled {
+                        SettingsRowDivider()
+
+                        SettingsRow(String.localized("Remote activity token")) {
+                            Button(String.localized("Copy token")) {
+                                NSPasteboard.general.clearContents()
+                                NSPasteboard.general.setString(RemoteActivityReceiver.token(), forType: .string)
+                            }
+                        }
+                    }
+
+                    SettingsRowDivider()
+
+                    SettingsRow(
                         String.localized("Show usage percentage"),
                         subtitle: String.localized("Each ring's figure beside its mascot.")
                     ) {

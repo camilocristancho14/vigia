@@ -85,6 +85,16 @@ final class AppSettings {
         }
     }
 
+    /// Whether Claude Code on other machines may report its activity to this
+    /// one. Off by default: enabling it opens a token-protected port.
+    var remoteActivityEnabled = false {
+        didSet {
+            guard remoteActivityEnabled != oldValue else { return }
+            UserDefaults.standard.set(remoteActivityEnabled, forKey: Key.remoteActivityEnabled)
+            RemoteActivityReceiver.shared.apply(enabled: remoteActivityEnabled)
+        }
+    }
+
     /// Whether a working AI shows how long its turn has run.
     var menuBarTimer = true {
         didSet {
@@ -1758,6 +1768,7 @@ final class AppSettings {
         settings.menuBarMascots = defaults.object(forKey: Key.menuBarMascots) as? Bool ?? true
         settings.menuBarActivityText = defaults.object(forKey: Key.menuBarActivityText) as? Bool ?? true
         settings.menuBarTimer = defaults.object(forKey: Key.menuBarTimer) as? Bool ?? true
+        settings.remoteActivityEnabled = defaults.bool(forKey: Key.remoteActivityEnabled)
         settings.menuBarPercent = defaults.bool(forKey: Key.menuBarPercent)
         settings.menuBarColorMascots = defaults.object(forKey: Key.menuBarColorMascots) as? Bool ?? true
         settings.menuBarWorkingOnly = defaults.bool(forKey: Key.menuBarWorkingOnly)
@@ -1885,6 +1896,7 @@ final class AppSettings {
         static let menuBarMascots = "settings.menuBarMascots"
         static let menuBarActivityText = "settings.menuBarActivityText"
         static let menuBarTimer = "settings.menuBarTimer"
+        static let remoteActivityEnabled = "settings.remoteActivityEnabled"
         static let menuBarPercent = "settings.menuBarPercent"
         static let menuBarColorMascots = "settings.menuBarColorMascots"
         static let menuBarWorkingOnly = "settings.menuBarWorkingOnly"
