@@ -23,6 +23,23 @@ enum MascotPose: Equatable, Sendable {
 
     var isWorking: Bool { self == .run || self == .type }
 
+    /// What a mark does when nobody can say what its agent is up to: asleep
+    /// through the night, coffee in the early morning, then a change of
+    /// scene every quarter of an hour. Marks with a character (`playful`) also
+    /// sit down at the laptop and go off for a run; a plain logo only
+    /// rests and has its coffee.
+    static func ofTheDay(at date: Date, playful: Bool, calendar: Calendar = .current) -> MascotPose {
+        let parts = calendar.dateComponents([.hour, .minute], from: date)
+        let hour = parts.hour ?? 12
+        let minutes = hour * 60 + (parts.minute ?? 0)
+        if hour >= 23 || hour < 6 { return .sleep }
+        if hour < 9 { return .coffee }
+        let slot = (minutes / 15) % 6
+        let characterful: [MascotPose] = [.awake, .type, .awake, .run, .coffee, .awake]
+        let plain: [MascotPose] = [.awake, .coffee, .awake, .awake, .coffee, .awake]
+        return playful ? characterful[slot] : plain[slot]
+    }
+
     /// The pose for a turn in flight, from the word the status bar shows:
     /// at the laptop for commands, edits and thinking, on the move for
     /// looking things up and handing work out.

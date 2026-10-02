@@ -134,6 +134,7 @@ struct MenuBarMascotsView: View {
         let tints = rail.contains(where: { settings.showsBotMark(for: $0) })
             ? BotMarkTint.deal(over: rail.map(\.provider), chosen: rail.map { settings.botColour(for: $0) })
             : []
+        TimelineView(.periodic(from: .now, by: 60)) { tick in
         HStack(spacing: 10) {
             ForEach(accounts) { account in
                 let index = rail.firstIndex(of: account) ?? 0
@@ -142,12 +143,14 @@ struct MenuBarMascotsView: View {
                     tint: index < tints.count ? tints[index] : .clear,
                     persona: settings.botPersona(for: account) ?? BotMarkPersona.automatic(at: index),
                     settings: settings,
-                    store: store
+                    store: store,
+                    now: tick.date
                 )
             }
         }
         .fixedSize()
         .frame(height: 22)
+        }
     }
 }
 
@@ -157,6 +160,8 @@ private struct MenuBarMascotItem: View {
     let persona: BotMarkPersona
     let settings: AppSettings
     let store: UsageStore
+    /// Moves on every minute, so a pose that follows the clock is re-read.
+    let now: Date
 
     private static let markSize: CGFloat = 20
 
@@ -165,7 +170,12 @@ private struct MenuBarMascotItem: View {
         let usage = store.usage(for: account)
         let headline = usage.headlineWindow(preferring: settings.pinnedWindow(for: account))
         let working = store.isRunning(provider)
-        let pose = store.mascotPose(provider, usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction)
+        let pose = store.mascotPose(
+            provider,
+            usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
+            playful: settings.showsBotMark(for: account),
+            now: now
+        )
 
         HStack(spacing: 4) {
             mark(working: working, pose: pose, headline: headline)
