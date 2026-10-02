@@ -116,13 +116,15 @@ final class MenuBarBackdrop {
             let url = NSWorkspace.shared.desktopImageURL(for: screen)
             return Request(url: url, size: screen.frame.size)
         }
-        scan = Task.detached(priority: .utility) { [weak self] in
-            let found = screens.compactMap(Self.sample)
-            await MainActor.run {
-                guard let self else { return }
-                self.scan = nil
-                if found != self.colours { self.colours = found }
-            }
+        // The reading runs detached and takes nothing from `self`; only the
+        // publishing, back on the main actor, touches it.
+        scan = Task { @MainActor [weak self] in
+            let found = await Task.detached(priority: .utility) {
+                screens.compactMap(Self.sample)
+            }.value
+            guard let self else { return }
+            self.scan = nil
+            if found != self.colours { self.colours = found }
         }
     }
 
