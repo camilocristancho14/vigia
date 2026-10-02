@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import Network
 
-/// Claude Code running somewhere else — a server, another computer, a bot
+/// Claude Code, Grok Build or any other AI running somewhere else — a server, another computer, a bot
 /// with a machine of its own — tells this Mac when it is working.
 ///
 /// **Why it has to be told.** Everything else Vigía knows about activity is
@@ -32,10 +32,28 @@ struct RemoteActivityLedger: Sendable {
     }
 
     private var entries: [String: Entry] = [:]
+    private var owners: [String: Provider] = [:]
     private(set) var lastEvent: Date?
 
-    mutating func record(source: String, event: String, tool: String?, at now: Date) {
-        let key = String(source.prefix(64))
+    /// Which AI an event is about, from the name a remote machine gives it:
+    /// a provider's identifier or its display name, in any case and with or
+    /// without spaces and dashes ("claudeCode", "Grok Build", "grok-bot").
+    /// Nothing at all means Claude Code, which is what the first version of
+    /// this receiver spoke.
+    static func provider(named name: String?) -> Provider? {
+        guard let name, !name.isEmpty else { return .claudeCode }
+        func squash(_ text: String) -> String {
+            text.lowercased().filter { $0.isLetter || $0.isNumber }
+        }
+        let wanted = squash(name)
+        let aliases: [String: Provider] = ["claude": .claudeCode]
+        return aliases[wanted]
+            ?? Provider.allCases.first { squash($0.rawValue) == wanted || squash($0.displayName) == wanted }
+    }
+
+    mutating func record(provider: Provider = .claudeCode, source: String, event: String, tool: String?, at now: Date) {
+        let key = "\(provider.rawValue)/\(source.prefix(64))"
+        owners[key] = provider
         switch event {
         case "UserPromptSubmit", "PostToolUse":
             entries[key] = Entry(working: true, wait: .model, label: "Thinking…", at: now)
@@ -51,11 +69,12 @@ struct RemoteActivityLedger: Sendable {
         // A handful of sources is the realistic case; bound the table anyway.
         if entries.count > 32 {
             entries = entries.filter { now.timeIntervalSince($0.value.at) < AgentActivity.Wait.tool.grace }
+            owners = owners.filter { entries[$0.key] != nil }
         }
     }
 
-    func state(now: Date) -> (isWorking: Bool, label: String?)? {
-        let live = entries.values.filter {
+    func state(for provider: Provider = .claudeCode, now: Date) -> (isWorking: Bool, label: String?)? {
+        let live = entries.filter { owners[$0.key] == provider }.map(\.value).filter {
             $0.working && now.timeIntervalSince($0.at) <= $0.wait.grace
         }
         guard let newest = live.max(by: { $0.at < $1.at }) else { return nil }
@@ -73,13 +92,21 @@ final class RemoteActivityReceiver: @unchecked Sendable {
     private var listener: NWListener?
     private var ledger = RemoteActivityLedger()
 
-    /// The remote side's current verdict, or nil when nothing is working.
-    func state(now: Date = Date()) -> (isWorking: Bool, label: String?)? {
+    /// Whether the receiver is listening. Marks nobody can observe locally are
+    /// only worth watching for activity while it is.
+    var isEnabled: Bool {
         lock.lock(); defer { lock.unlock() }
-        return ledger.state(now: now)
+        return listener != nil
+    }
+
+    /// The remote side's current verdict, or nil when nothing is working.
+    func state(for provider: Provider = .claudeCode, now: Date = Date()) -> (isWorking: Bool, label: String?)? {
+        lock.lock(); defer { lock.unlock() }
+        return ledger.state(for: provider, now: now)
     }
 
     func apply(enabled: Bool) {
+        defer { NotificationCenter.default.post(name: .remoteActivityChanged, object: nil) }
         lock.lock(); defer { lock.unlock() }
         if enabled {
             guard listener == nil else { return }
@@ -187,10 +214,11 @@ final class RemoteActivityReceiver: @unchecked Sendable {
               let event = json["event"] as? String
         else { return 400 }
 
+        guard let provider = RemoteActivityLedger.provider(named: json["provider"] as? String) else { return 400 }
         let source = (json["source"] as? String) ?? "remote"
         let tool = json["tool"] as? String
         lock.lock()
-        ledger.record(source: source, event: event, tool: tool, at: Date())
+        ledger.record(provider: provider, source: source, event: event, tool: tool, at: Date())
         lock.unlock()
         return 204
     }
@@ -207,4 +235,9 @@ final class RemoteActivityReceiver: @unchecked Sendable {
         let response = "HTTP/1.1 \(status) \(reason)\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
         connection.send(content: Data(response.utf8), completion: .contentProcessed { _ in connection.cancel() })
     }
+}
+
+extension Notification.Name {
+    /// The receiver was switched on or off, so what is being watched changes.
+    static let remoteActivityChanged = Notification.Name("com.pulse.remoteActivityChanged")
 }

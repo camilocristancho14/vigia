@@ -125,8 +125,11 @@ final class MascotHostingView: NSHostingView<MenuBarMascotsView> {
 struct MenuBarMascotsView: View {
     let settings: AppSettings
     let store: UsageStore
+    private let backdrop = MenuBarBackdrop.shared
 
     var body: some View {
+        // Tracked, so the marks re-ink when a wallpaper or a screen changes.
+        let ink = backdrop.inkOverride()
         let accounts = VigiaStatusFace.accounts(settings: settings, store: store)
         // Dealt over the whole rail, as the notch does, so each AI wears the
         // same colour and character in both places.
@@ -150,6 +153,9 @@ struct MenuBarMascotsView: View {
         }
         .fixedSize()
         .frame(height: 22)
+        // Only when the bar's own ink would be lost against a screen's
+        // backdrop; otherwise the system keeps choosing it.
+        .foregroundStyle(ink ?? .primary)
         }
     }
 }
@@ -164,6 +170,7 @@ private struct MenuBarMascotItem: View {
     let now: Date
 
     private static let markSize: CGFloat = 20
+    private let backdrop = MenuBarBackdrop.shared
 
     var body: some View {
         let provider = account.provider
@@ -199,9 +206,15 @@ private struct MenuBarMascotItem: View {
     private func mark(working: Bool, pose: MascotPose, headline: UsageWindow?) -> some View {
         let provider = account.provider
         if settings.showsBotMark(for: account), provider == .claudeCode {
-            ClawdMarkView(pose: pose, colour: settings.menuBarColorMascots, size: Self.markSize)
+            // Claude's orange, unless the bar behind it is orange-ish on some
+            // screen: then Clawd is white or black, whichever shows.
+            let orange = Color(red: 217 / 255, green: 119 / 255, blue: 87 / 255)
+            let legible = backdrop.legible(orange)
+            let keepsOrange = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(orange)
+            ClawdMarkView(pose: pose, colour: keepsOrange, size: Self.markSize)
         } else if settings.showsBotMark(for: account) {
-            let body = tint == .clear ? BotMarkTint.body(for: provider) : tint
+            let wanted = tint == .clear ? BotMarkTint.body(for: provider) : tint
+            let body = backdrop.legible(wanted)
             BotMarkView(
                 mood: BotMarkMood.resolve(
                     isBusy: working,

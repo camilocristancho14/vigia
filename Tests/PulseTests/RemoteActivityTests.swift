@@ -59,4 +59,19 @@ struct RemoteActivityTests {
         #expect(!RemoteActivityReceiver.constantTimeEqual("abc", "abd"))
         #expect(!RemoteActivityReceiver.constantTimeEqual("", ""))
     }
+
+    @Test("Events name their AI loosely, and default to Claude Code")
+    func providers() {
+        #expect(RemoteActivityLedger.provider(named: nil) == .claudeCode)
+        #expect(RemoteActivityLedger.provider(named: "claude") == .claudeCode)
+        #expect(RemoteActivityLedger.provider(named: "Grok Build") == .grok)
+        #expect(RemoteActivityLedger.provider(named: "grok-bot") == .grokBot)
+        #expect(RemoteActivityLedger.provider(named: "codex") == .codex)
+        #expect(RemoteActivityLedger.provider(named: "no such ai") == nil)
+
+        var ledger = RemoteActivityLedger()
+        ledger.record(provider: .grok, source: "box", event: "PreToolUse", tool: "Bash", at: t0)
+        #expect(ledger.state(for: .grok, now: t0.addingTimeInterval(5))?.label == "Running command")
+        #expect(ledger.state(for: .claudeCode, now: t0.addingTimeInterval(5)) == nil)
+    }
 }
