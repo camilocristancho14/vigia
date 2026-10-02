@@ -38,46 +38,57 @@ private func drawLaptop(in context: inout GraphicsContext, size: CGSize, time: T
 
 /// Streaks trailing behind, as if it were off somewhere in a hurry.
 private func drawSpeedLines(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
-    let width = size.width, height = size.height
+    let width: CGFloat = size.width
+    let height: CGFloat = size.height
     for index in 0..<3 {
-        let phase = (time * 1.6 + Double(index) * 0.33).truncatingRemainder(dividingBy: 1)
-        let y = height * (0.34 + 0.16 * Double(index))
-        let start = width * (0.16 - 0.14 * phase)
+        let phase: Double = (time * 1.6 + Double(index) * 0.33).truncatingRemainder(dividingBy: 1)
+        let y: CGFloat = height * (0.34 + 0.16 * CGFloat(index))
+        let start: CGFloat = width * (0.16 - 0.14 * CGFloat(phase))
+        let length: CGFloat = width * (0.12 + 0.05 * CGFloat(index % 2))
         var path = Path()
         path.move(to: CGPoint(x: start, y: y))
-        path.addLine(to: CGPoint(x: start - width * (0.12 + 0.05 * Double(index % 2)), y: y))
-        context.stroke(path, with: .color(overlayInk.opacity(0.55 * (1 - phase))),
+        path.addLine(to: CGPoint(x: start - length, y: y))
+        let fade: Double = 0.55 * (1 - phase)
+        context.stroke(path, with: .color(overlayInk.opacity(fade)),
                        style: StrokeStyle(lineWidth: max(1, width * 0.04), lineCap: .round))
     }
 }
 
 /// A drop of sweat running down the side of the head.
 func drawSweat(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
-    let width = size.width, height = size.height
-    let phase = (time * 0.55).truncatingRemainder(dividingBy: 1)
+    let width: CGFloat = size.width
+    let height: CGFloat = size.height
+    let phase: CGFloat = CGFloat((time * 0.55).truncatingRemainder(dividingBy: 1))
     let centre = CGPoint(x: width * 0.84, y: height * (0.14 + 0.5 * phase))
-    let radius = width * 0.045
+    let radius: CGFloat = width * 0.045
+    let top = CGPoint(x: centre.x, y: centre.y - radius * 2.2)
     var drop = Path()
-    drop.move(to: CGPoint(x: centre.x, y: centre.y - radius * 2.2))
-    drop.addQuadCurve(to: CGPoint(x: centre.x + radius, y: centre.y), control: CGPoint(x: centre.x + radius * 0.4, y: centre.y - radius))
+    drop.move(to: top)
+    drop.addQuadCurve(to: CGPoint(x: centre.x + radius, y: centre.y),
+                      control: CGPoint(x: centre.x + radius * 0.4, y: centre.y - radius))
     drop.addArc(center: centre, radius: radius, startAngle: .degrees(0), endAngle: .degrees(180), clockwise: false)
-    drop.addQuadCurve(to: CGPoint(x: centre.x, y: centre.y - radius * 2.2), control: CGPoint(x: centre.x - radius * 0.4, y: centre.y - radius))
-    context.fill(drop, with: .color(Color(red: 0.47, green: 0.78, blue: 0.96).opacity(1 - phase * 0.5)))
+    drop.addQuadCurve(to: top, control: CGPoint(x: centre.x - radius * 0.4, y: centre.y - radius))
+    let fade: Double = 1 - Double(phase) * 0.5
+    context.fill(drop, with: .color(Color(red: 0.47, green: 0.78, blue: 0.96).opacity(fade)))
 }
 
 /// Stars wheeling round the head: nothing left to give.
 func drawDizzyStars(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
-    let width = size.width, height = size.height
+    let width: CGFloat = size.width
+    let height: CGFloat = size.height
+    let radius: CGFloat = width * 0.05
     for index in 0..<3 {
-        let angle = time * 2.2 + Double(index) * 2 * .pi / 3
-        let centre = CGPoint(x: width * 0.5 + cos(angle) * width * 0.3, y: height * 0.1 + sin(angle) * height * 0.05)
-        let radius = width * 0.05
+        let angle: Double = time * 2.2 + Double(index) * 2 * Double.pi / 3
+        let dx: CGFloat = CGFloat(cos(angle)) * width * 0.3
+        let dy: CGFloat = CGFloat(sin(angle)) * height * 0.05
+        let centre = CGPoint(x: width * 0.5 + dx, y: height * 0.1 + dy)
         var star = Path()
         for point in 0..<8 {
-            let r = point % 2 == 0 ? radius : radius * 0.4
-            let a = Double(point) * .pi / 4 - .pi / 2
-            let p = CGPoint(x: centre.x + cos(a) * r, y: centre.y + sin(a) * r)
-            point == 0 ? star.move(to: p) : star.addLine(to: p)
+            let reach: CGFloat = point % 2 == 0 ? radius : radius * 0.4
+            let turn: Double = Double(point) * Double.pi / 4 - Double.pi / 2
+            let corner = CGPoint(x: centre.x + CGFloat(cos(turn)) * reach,
+                                 y: centre.y + CGFloat(sin(turn)) * reach)
+            if point == 0 { star.move(to: corner) } else { star.addLine(to: corner) }
         }
         star.closeSubpath()
         context.fill(star, with: .color(Color(red: 0.98, green: 0.8, blue: 0.08)))
@@ -86,12 +97,16 @@ func drawDizzyStars(in context: inout GraphicsContext, size: CGSize, time: TimeI
 
 /// Zs drifting up and fading out.
 func drawSleepZs(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
-    let width = size.width, height = size.height
+    let width: CGFloat = size.width
+    let height: CGFloat = size.height
     for index in 0..<3 {
-        let phase = (time * 0.35 + Double(index) / 3).truncatingRemainder(dividingBy: 1)
-        let text = Text("z").font(.system(size: width * (0.14 + 0.06 * phase), weight: .bold, design: .rounded))
-            .foregroundColor(Color(red: 0.55, green: 0.65, blue: 0.95).opacity(1 - phase))
-        context.draw(text, at: CGPoint(x: width * (0.74 + 0.08 * phase), y: height * (0.3 - 0.22 * phase)))
+        let phase: Double = (time * 0.35 + Double(index) / 3).truncatingRemainder(dividingBy: 1)
+        let fontSize: CGFloat = width * (0.14 + 0.06 * CGFloat(phase))
+        let colour = Color(red: 0.55, green: 0.65, blue: 0.95).opacity(1 - phase)
+        let letter = Text("z").font(.system(size: fontSize, weight: .bold, design: .rounded)).foregroundColor(colour)
+        let x: CGFloat = width * (0.74 + 0.08 * CGFloat(phase))
+        let y: CGFloat = height * (0.3 - 0.22 * CGFloat(phase))
+        context.draw(letter, at: CGPoint(x: x, y: y))
     }
 }
 
@@ -121,13 +136,15 @@ func drawCoffeeBreak(in context: inout GraphicsContext, size: CGSize, time: Time
     context.stroke(body, with: .color(ink), lineWidth: line)
 
     for index in 0..<2 {
-        let x = mug.minX + mug.width * (0.32 + 0.36 * Double(index))
+        let x: CGFloat = mug.minX + mug.width * (0.32 + 0.36 * CGFloat(index))
         var steam = Path()
         steam.move(to: CGPoint(x: x, y: mug.minY - 1))
         for step in 1...6 {
-            let progress = Double(step) / 6
-            let wave = sin(time * 2.4 + progress * 4 + Double(index) * 1.7) * width * 0.025
-            steam.addLine(to: CGPoint(x: x + wave, y: mug.minY - 1 - progress * height * 0.2))
+            let progress: Double = Double(step) / 6
+            let phase: Double = time * 2.4 + progress * 4 + Double(index) * 1.7
+            let wave: CGFloat = CGFloat(sin(phase)) * width * 0.025
+            let rise: CGFloat = CGFloat(progress) * height * 0.2
+            steam.addLine(to: CGPoint(x: x + wave, y: mug.minY - 1 - rise))
         }
         context.stroke(steam, with: .color(ink.opacity(0.65)),
                        style: StrokeStyle(lineWidth: line, lineCap: .round, lineJoin: .round))
