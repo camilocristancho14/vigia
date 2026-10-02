@@ -89,7 +89,9 @@ struct BotMarkProgramme {
     /// that look like that work (writing, searching, running something); while
     /// it waits, a break after a turn and sleep after a long quiet. Anything
     /// else keeps the persona's own routine.
-    mutating func apply(pose: MascotPose, activityLabel: String?) {
+    /// `lively` is for marks nobody can observe: awake, they keep up a run of
+    /// playful scenes instead of sitting there looking.
+    mutating func apply(pose: MascotPose, activityLabel: String?, lively: Bool = false) {
         let scene: [(String, ClosedRange<Double>)]
         switch (mood, pose) {
         case (.working, _):
@@ -115,6 +117,10 @@ struct BotMarkProgramme {
             scene = [("searching", 2_800...3_800), ("radar", 2_000...2_800)]
         case (.idle, .coffee):
             scene = [("humming", 3_000...4_000), ("happy", 2_000...3_000), ("bored", 2_000...3_000)]
+        case (.idle, .awake) where lively:
+            scene = [("playful", 1_800...2_600), ("bouncing", 1_400...2_000), ("happy", 1_600...2_200),
+                     ("laughing", 1_400...2_000), ("humming", 2_000...2_800), ("curious", 1_400...2_000),
+                     ("excited", 1_600...2_200), ("proud", 1_400...2_000)]
         case (.idle, .sleep):
             scene = [("drowsy", 3_000...4_000), ("sleeping", 7_000...10_000)]
         default:

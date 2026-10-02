@@ -156,6 +156,8 @@ struct BotMarkView: View {
     /// plays while working, and a break or a nap while it waits.
     var pose: MascotPose?
     var activityLabel: String?
+    /// Keeps an unobservable mark busy with playful scenes while awake.
+    var lively = false
     /// The body colour: the provider's brand, lifted if it would disappear
     /// into the disc behind it. See `BotMarkTint`.
     let tint: Color
@@ -247,7 +249,7 @@ struct BotMarkView: View {
             mood, persona: persona, isQuiet: isQuiet, isPointedAt: isPointedAt, at: date
         )
         programme.event = event
-        if let pose { programme.apply(pose: pose, activityLabel: activityLabel) }
+        if let pose { programme.apply(pose: pose, activityLabel: activityLabel, lively: lively) }
         programme.shape = bodyShape.shape
         programme.gazeBias = gaze.bias
         programme.flipX = gaze.mirrored

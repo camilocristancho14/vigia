@@ -25,7 +25,7 @@ enum MascotPose: Equatable, Sendable {
 
     /// What a mark does when nobody can say what its agent is up to: asleep
     /// through the night, coffee in the early morning, then a change of
-    /// scene every quarter of an hour. Marks with a character (`playful`) also
+    /// scene every five minutes. Marks with a character (`playful`) also
     /// sit down at the laptop and go off for a run; a plain logo only
     /// rests and has its coffee.
     static func ofTheDay(at date: Date, playful: Bool, calendar: Calendar = .current) -> MascotPose {
@@ -34,9 +34,9 @@ enum MascotPose: Equatable, Sendable {
         let minutes = hour * 60 + (parts.minute ?? 0)
         if hour >= 23 || hour < 6 { return .sleep }
         if hour < 9 { return .coffee }
-        let slot = (minutes / 15) % 6
-        let characterful: [MascotPose] = [.awake, .type, .awake, .run, .coffee, .awake]
-        let plain: [MascotPose] = [.awake, .coffee, .awake, .awake, .coffee, .awake]
+        let slot = (minutes / 5) % 8
+        let characterful: [MascotPose] = [.type, .awake, .run, .coffee, .type, .run, .awake, .coffee]
+        let plain: [MascotPose] = [.awake, .coffee, .awake, .awake, .coffee, .awake, .awake, .awake]
         return playful ? characterful[slot] : plain[slot]
     }
 

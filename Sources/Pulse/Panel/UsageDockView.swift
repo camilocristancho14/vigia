@@ -518,11 +518,9 @@ struct UsageDockView: View {
             ? BotMarkTint.deal(over: entries.map(\.usage.provider),
                                chosen: entries.map(\.botColour))
             : []
-        // Dealt by position so the ring beside this one is a different
-        // character; a chosen persona simply wins over the deal.
-        let personas = entries.enumerated().map { index, entry in
-            entry.botPersona ?? BotMarkPersona.automatic(at: index)
-        }
+        // One character for every bot, the liveliest, like Clawd: the pose
+        // says what each is doing, not a temperament picked per ring.
+        let personas = entries.map { _ in BotMarkPersona.playful }
         // Everything worth looking at is away from the edge the rail is on.
         let gaze = BotMarkGaze(edge: edge)
 
