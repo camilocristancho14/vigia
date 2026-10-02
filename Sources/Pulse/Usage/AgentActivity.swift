@@ -595,12 +595,13 @@ final class AgentActivityMonitor {
     init(
         readStates: @escaping @Sendable (Set<Provider>) async -> [Provider: AgentActivity.State] = {
             var states = AgentActivity.states(for: $0)
-            // Claude Code on another machine pushes its own state here.
-            if $0.contains(.claudeCode), let remote = RemoteActivityReceiver.shared.state() {
-                var state = states[.claudeCode] ?? AgentActivity.State(lastWrite: nil, isWorking: false)
+            // Any AI on another machine pushes its own state here.
+            for provider in $0 {
+                guard let remote = RemoteActivityReceiver.shared.state(for: provider) else { continue }
+                var state = states[provider] ?? AgentActivity.State(lastWrite: nil, isWorking: false)
                 if !state.isWorking { state.isWorking = true; state.label = remote.label }
                 state.lastWrite = max(state.lastWrite ?? Date(), Date())
-                states[.claudeCode] = state
+                states[provider] = state
             }
             // Chat in a browser or the desktop app leaves nothing on disk, so
             // Claude's mark also listens to the account's conversation list.
@@ -621,7 +622,7 @@ final class AgentActivityMonitor {
     }
 
     func start(providers: Set<Provider>) {
-        let providers = providers.filter(\.supportsLocalActivity)
+        let providers = providers.filter { $0.supportsLocalActivity || RemoteActivityReceiver.shared.isEnabled }
         guard providers != self.providers || timer == nil else { return }
         stop()
         self.providers = providers

@@ -34,7 +34,9 @@ Las IAs que no se pueden observar (Grok Bot, por ejemplo) no «trabajan»: muest
 
 ## Actividad remota
 
-Claude en el navegador o en la app de Mac se detecta mirando la conversación más reciente de tu cuenta (usa la sesión de la app de escritorio). Para Claude Code en otra máquina, activa **Ajustes > Barra de menú > Actividad remota de Claude Code**: Vigía escucha en el puerto 7717, protegido con un token (botón *Copiar token*), y los hooks de Claude Code del servidor le avisan con un POST a `/activity` (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`). Está apagado por defecto; úsalo solo por una red privada (Tailscale o un túnel SSH).
+Claude en el navegador o en la app de Mac se detecta mirando la conversación más reciente de tu cuenta (usa la sesión de la app de escritorio). Para Claude Code en otra máquina, activa **Ajustes > Barra de menú > Actividad remota de Claude Code**: Vigía escucha en el puerto 7717, protegido con un token (botón *Copiar token*), y los hooks de Claude Code del servidor le avisan con un POST a `/activity` (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`). El cuerpo puede llevar `"provider"` (`claudeCode`, `grok` para Grok Build, `grokBot`, `codex`, …; por defecto `claudeCode`), así que sirve igual para Grok Build y las demás IAs.
+
+**Color de la barra.** Vigía lee el fondo de pantalla bajo la barra de menú de cada pantalla (sin pedir permisos) y, si una mascota se confunde con él —Clawd naranja sobre un fondo naranja, por ejemplo—, la dibuja en blanco o negro, la que se vea en todas tus pantallas a la vez. Está apagado por defecto; úsalo solo por una red privada (Tailscale o un túnel SSH).
 
 ## Capturas
 

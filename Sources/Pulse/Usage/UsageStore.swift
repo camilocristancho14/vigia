@@ -213,10 +213,10 @@ final class UsageStore {
     func mascotPose(_ provider: Provider, usedFraction: Double? = nil, playful: Bool = false,
                     now: Date = Date()) -> MascotPose {
         let seen = provider.supportsLocalActivity
-        if seen {
-            if activity.running.contains(provider) { return .working(label: activity.labels[provider]) }
-            if let finished = activity.finishedAt[provider], now.timeIntervalSince(finished) < 300 { return .coffee }
-        }
+        // Seen on this Mac or reported by another machine: either way it is
+        // a turn that really happened.
+        if activity.running.contains(provider) { return .working(label: activity.labels[provider]) }
+        if let finished = activity.finishedAt[provider], now.timeIntervalSince(finished) < 300 { return .coffee }
         if let used = usedFraction {
             if used >= 1 { return .spent }
             if used >= 0.75 { return .tired }
@@ -1184,6 +1184,9 @@ final class UsageStore {
         let workspace = NSWorkspace.shared.notificationCenter
 
         observers = [
+            observe(.remoteActivityChanged, on: .default) { store in
+                store.updateActivityMonitor()
+            },
             observe(NSWorkspace.screensDidSleepNotification, on: workspace) { store in
                 store.screensAsleep = true
                 store.updateActivityMonitor()
