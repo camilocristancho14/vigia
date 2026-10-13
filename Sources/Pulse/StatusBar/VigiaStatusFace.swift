@@ -172,7 +172,9 @@ private struct MenuBarMascotItem: View {
     /// Moves on every minute, so a pose that follows the clock is re-read.
     let now: Date
 
-    private static let markSize: CGFloat = 22
+    private var markSize: CGFloat {
+        (settings.showsBotMark(for: account) ? settings.mascotCharacter(for: account) : .bot).menuBarSize
+    }
     private let backdrop = MenuBarBackdrop.shared
 
     var body: some View {
@@ -189,9 +191,7 @@ private struct MenuBarMascotItem: View {
 
         HStack(spacing: 4) {
             mark(working: working, pose: pose, headline: headline)
-                // Clawd is wider than the others, and gets the room for it.
-                .frame(width: settings.mascotCharacter(for: account) == .clawd && settings.showsBotMark(for: account)
-                        ? Self.markSize * 17 / 12 : Self.markSize, height: Self.markSize)
+                .frame(width: markSize, height: markSize)
             if working, settings.menuBarActivityText || settings.menuBarTimer {
                 activity(for: provider)
             }
@@ -218,10 +218,10 @@ private struct MenuBarMascotItem: View {
             let legible = backdrop.legible(character.brand)
             let keepsColour = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(character.brand)
             if character == .clawd {
-                ClawdMarkView(pose: pose, colour: keepsColour, size: Self.markSize, width: Self.markSize * 17 / 12)
+                ClawdMarkView(pose: pose, colour: keepsColour, size: markSize)
             } else {
                 VectorMascotView(character: character, pose: pose, colour: keepsColour,
-                                 size: Self.markSize, phase: provider.mascotPhase)
+                                 size: markSize, phase: provider.mascotPhase)
             }
         } else if settings.showsBotMark(for: account) {
             let wanted = tint == .clear ? BotMarkTint.body(for: provider) : tint
@@ -240,10 +240,10 @@ private struct MenuBarMascotItem: View {
                 activityLabel: store.activityLabel(provider),
                 tint: body,
                 eyeTint: BotMarkTint.eyes(on: body),
-                size: Self.markSize
+                size: markSize
             )
         } else {
-            LogoMascotView(provider: provider, pose: pose, size: Self.markSize)
+            LogoMascotView(provider: provider, pose: pose, size: markSize)
         }
     }
 

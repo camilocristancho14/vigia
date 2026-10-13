@@ -36,6 +36,11 @@ enum MascotCharacter: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// What it measures in the menu bar. The vector marks, the bot and the
+    /// logos were enlarged for legibility in 0.5.1; Clawd was not, and is
+    /// exactly the size he was in 0.5.0 — a 20-point box.
+    var menuBarSize: CGFloat { self == .clawd ? 20 : 22 }
+
     static func automatic(for provider: Provider) -> MascotCharacter {
         options(for: provider)[0]
     }

@@ -109,6 +109,17 @@ struct MascotGalleryTests {
         }
     }
 
+    @Test("In the bar Clawd is exactly the size he was in 0.5.0; the other marks are the larger ones")
+    func barSizes() {
+        #expect(MascotCharacter.clawd.menuBarSize == 20)
+        for character in [MascotCharacter.floatBot, .starBuddy, .cloudGhost, .bot] {
+            #expect(character.menuBarSize == 22)
+        }
+        // His sprite is drawn in the same square box and the same grid as
+        // then: 51 x 36 frames, fitted in 20 points.
+        #expect(ClawdFrames.frame(for: .awake, at: 0, colour: true)?.size == NSSize(width: 51, height: 36))
+    }
+
     @Test("Clawd has a frame for every pose on the walking sprite's grid")
     func clawdEveryPose() {
         for pose in MascotPose.allCases {
