@@ -250,6 +250,11 @@ final class UsageStore {
         if activity.waiting.contains(provider) { return .waiting }
         if let failed = activity.failedAt[provider],
            now.timeIntervalSince(failed) < AgentActivity.failureWindow { return .error }
+        // A turn the limit cut short is not one to celebrate: the hit is the
+        // news, so a spent limit the agent ran into shows straight away
+        // instead of after the five-minute break.
+        if let used = usedFraction, used >= 1,
+           let hit = activity.limits[provider], hit.isActive(at: now) { return .spent }
         if let finished = activity.finishedAt[provider] {
             let since = now.timeIntervalSince(finished)
             if since >= 0, since < 20 { return .celebrate }

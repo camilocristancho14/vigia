@@ -221,6 +221,27 @@ struct LiveLimitTests {
         #expect(store.usage(for: account, now: reset.addingTimeInterval(1)).windows[0].usedFraction == 0.14)
     }
 
+    @Test("A session that ran into its limit is spent at once, not on a coffee break")
+    func hitTurnShowsSpent() {
+        let monitor = AgentActivityMonitor { _ in [:] }
+        let store = UsageStore(settings: AppSettings(enabledAccounts: [Provider.claudeCode.rawValue]), activity: monitor)
+        let account = AccountKey(.claudeCode)
+        store.adopt(Self.reading(used: 0.9, observed: Self.now.addingTimeInterval(-1800)))
+        let reset = Self.now.addingTimeInterval(3 * 3600)
+        // The turn ended on the limit a minute ago: before, that read as a
+        // finished turn and Clawd had his coffee for five minutes.
+        monitor.adoptDemo(running: [], finishedAt: [.claudeCode: Self.now.addingTimeInterval(-60)],
+                          limits: [.claudeCode: LimitHit(at: Self.now.addingTimeInterval(-60), resetsAt: reset, window: .session)])
+        let shown = store.usage(for: account, now: Self.now)
+        #expect(UsageTint.isSpent(shown.windows[0]))
+        #expect(store.mascotPose(.claudeCode, usedFraction: 1, now: Self.now) == .spent)
+        // Once it resets, the break is back to what it was.
+        monitor.adoptDemo(running: [], finishedAt: [.claudeCode: reset.addingTimeInterval(60)],
+                          limits: [.claudeCode: LimitHit(at: Self.now.addingTimeInterval(-60), resetsAt: reset, window: .session)])
+        #expect(store.mascotPose(.claudeCode, usedFraction: 1, now: reset.addingTimeInterval(120)) == .celebrate
+                || store.mascotPose(.claudeCode, usedFraction: 1, now: reset.addingTimeInterval(120)) == .coffee)
+    }
+
     @Test("A reading newer than the hit is the provider's own word and stands")
     func newerReadingStands() {
         let hit = LimitHit(at: Self.now.addingTimeInterval(-600), resetsAt: Self.date(2026, 10, 13, 17, 0), window: .session)
