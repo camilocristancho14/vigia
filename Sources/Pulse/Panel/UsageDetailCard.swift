@@ -429,6 +429,9 @@ struct UsageDetailCard: View {
 
     private static func relative(_ date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
+        // The app's language, not the system's: without it a Spanish card
+        // read "Al 3 hours ago".
+        formatter.locale = LocalizationSource.locale
         formatter.unitsStyle = .full
         return formatter.localizedString(for: date, relativeTo: Date())
     }

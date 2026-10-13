@@ -5,8 +5,8 @@ import SwiftUI
 
 @MainActor
 enum VigiaMenuRows {
-    /// One detail card per AI on the rail — the card the notch opens when the
-    /// pointer rests on a ring, with the same figures, in place of a bare row.
+    /// One compact card per AI on the rail, with the figures the notch's card
+    /// shows, laid out to be read down a stack of them. See `MenuUsageCard`.
     static func add(to menu: NSMenu, settings: AppSettings, store: UsageStore) {
         for card in makeCards(settings: settings, store: store) {
             let item = NSMenuItem()
@@ -19,17 +19,12 @@ enum VigiaMenuRows {
     /// copies of its own, as it does for rows.
     static func makeCards(settings: AppSettings, store: UsageStore) -> [NSView] {
         settings.shownAccounts.map { account in
-            let card = UsageDetailCard(
-                usesGlass: false,
+            let card = MenuUsageCard(
                 usage: store.usage(for: account),
                 title: settings.label(for: account),
-                edge: .top,
                 showsRemaining: settings.showsRemaining,
                 showsForecast: settings.showsForecast,
-                resetCredits: account == AccountKey(.codex) ? store.codexResetCredits : nil,
-                isDetailed: settings.showsDetailedCard(for: account),
-                pointerCenter: 0,
-                showsPointer: false
+                resetCredits: account == AccountKey(.codex) ? store.codexResetCredits : nil
             )
             .environment(\.usageWarningThreshold, settings.warningThreshold.fraction)
             // The card is drawn on solid black, as on the notch, and its text
