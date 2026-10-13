@@ -5,8 +5,8 @@ import SwiftUI
 
 @MainActor
 enum VigiaMenuRows {
-    /// One detail card per AI on the rail — the card the notch opens when the
-    /// pointer rests on a ring, with the same figures, in place of a bare row.
+    /// One compact card per AI on the rail, with the figures the notch's card
+    /// shows, laid out to be read down a stack of them. See `MenuUsageCard`.
     static func add(to menu: NSMenu, settings: AppSettings, store: UsageStore) {
         for card in makeCards(settings: settings, store: store) {
             let item = NSMenuItem()
@@ -19,17 +19,12 @@ enum VigiaMenuRows {
     /// copies of its own, as it does for rows.
     static func makeCards(settings: AppSettings, store: UsageStore) -> [NSView] {
         settings.shownAccounts.map { account in
-            let card = UsageDetailCard(
-                usesGlass: false,
+            let card = MenuUsageCard(
                 usage: store.usage(for: account),
                 title: settings.label(for: account),
-                edge: .top,
                 showsRemaining: settings.showsRemaining,
                 showsForecast: settings.showsForecast,
-                resetCredits: account == AccountKey(.codex) ? store.codexResetCredits : nil,
-                isDetailed: settings.showsDetailedCard(for: account),
-                pointerCenter: 0,
-                showsPointer: false
+                resetCredits: account == AccountKey(.codex) ? store.codexResetCredits : nil
             )
             .environment(\.usageWarningThreshold, settings.warningThreshold.fraction)
             // The card is drawn on solid black, as on the notch, and its text
@@ -71,7 +66,7 @@ enum VigiaMenuRows {
             let marked = settings.showsBotMark(for: account)
             row.configure(
                 icon: icon(
-                    for: account, working: working, marked: marked, headline: headline,
+                    for: account, slot: index, working: working, marked: marked, headline: headline,
                     tint: index < tints.count ? tints[index] : .clear,
                     persona: settings.botPersona(for: account) ?? BotMarkPersona.automatic(at: index),
                     settings: settings, store: store
@@ -93,16 +88,21 @@ enum VigiaMenuRows {
     /// The same mark the notch draws, as a still: Clawd, the account's bot, or
     /// its logo.
     private static func icon(
-        for account: AccountKey, working: Bool, marked: Bool, headline: UsageWindow?,
+        for account: AccountKey, slot: Int, working: Bool, marked: Bool, headline: UsageWindow?,
         tint: Color, persona: BotMarkPersona, settings: AppSettings, store: UsageStore
     ) -> NSImage? {
         guard marked else { return MenuBarReading.markImage(for: account.provider, size: 16) }
-        if account.provider == .claudeCode {
-            let image = ClawdFrames.frame(for: store.mascotPose(account.provider, usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
-                             playful: true), at: 0,
-                                          colour: settings.menuBarColorMascots)?.copy() as? NSImage
+        let character = settings.mascotCharacter(for: account)
+        let pose = store.mascotPose(account.provider,
+                                    usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
+                                    slot: slot)
+        if character == .clawd {
+            let image = ClawdFrames.frame(for: pose, at: 0, colour: settings.menuBarColorMascots)?.copy() as? NSImage
             image?.size = NSSize(width: 22, height: 16)
             return image
+        }
+        if character.isVector {
+            return VectorMascots.image(character, pose: pose, size: 18, colour: settings.menuBarColorMascots)
         }
 
         let body = tint == .clear ? BotMarkTint.body(for: account.provider) : tint

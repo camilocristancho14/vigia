@@ -19,6 +19,9 @@ enum AdaptiveRefresh {
     /// it is nobody's idea of hammering.
     static let floor: TimeInterval = 120
     static let ceiling: TimeInterval = 1800
+    /// While an agent is actively writing: the figure moves with every turn,
+    /// and the limit is exactly the thing that can run out between two asks.
+    static let live: TimeInterval = 60
 
     /// The longest to leave a provider whose spending this Mac cannot see.
     ///
@@ -46,6 +49,9 @@ enum AdaptiveRefresh {
         /// When the user last hovered the rail to read a card.
         var lastLooked: Date?
         var isPanelVisible: Bool = true
+        /// Whether the menu bar item is showing, which keeps the figures on
+        /// screen even with the panel hidden.
+        var showsInMenuBar: Bool = false
         /// Low power mode, a hot machine, or the display asleep — all of them
         /// reasons to stop waking the radio every couple of minutes.
         var isConstrained: Bool = false
@@ -59,7 +65,9 @@ enum AdaptiveRefresh {
 
         // Nothing on screen is showing these numbers, so there is nothing to
         // keep current. The panel coming back triggers a refresh of its own.
-        if !signals.isPanelVisible { return ceiling }
+        // The menu bar item counts as on screen: it was left out once, and a
+        // limit reached with the panel hidden sat unseen for half an hour.
+        if !signals.isPanelVisible && !signals.showsInMenuBar { return ceiling }
 
         let cap = isWatched ? ceiling : unwatchedCeiling
 
@@ -71,6 +79,8 @@ enum AdaptiveRefresh {
         guard let quiet = ages.min() else { return cap }
 
         let wait: TimeInterval = switch quiet {
+        // An agent writing right now is a limit being spent right now.
+        case ..<(2 * 60): live
         case ..<(5 * 60): floor
         case ..<(60 * 60): 300
         case ..<(4 * 60 * 60): 900

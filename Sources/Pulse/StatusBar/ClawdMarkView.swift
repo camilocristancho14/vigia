@@ -23,14 +23,22 @@ enum ClawdFrames {
     static func interval(for pose: MascotPose) -> TimeInterval {
         switch pose {
         case .run: 0.05
-        case .type: 0.16
-        case .coffee: 0.25
-        case .awake: 0.2
-        case .sleep: 0.45
-        case .tired: 0.3
-        case .spent: 0.35
+        case .type, .play: 0.16
+        case .coffee, .waiting, .celebrate: 0.25
+        case .awake, .thinking: 0.2
+        case .sleep, .stretch: 0.45
+        case .tired, .waking: 0.3
+        case .spent, .error: 0.35
         }
     }
+
+    /// Each pose's frames and how long each is held, for the ones that simply
+    /// cycle. Coffee and awake keep their own beats below.
+    private static let cycles: [MascotPose: (key: String, step: TimeInterval)] = [
+        .type: ("type", 0.16), .sleep: ("sleep", 0.9), .tired: ("tired", 0.3), .spent: ("spent", 0.35),
+        .thinking: ("thinking", 0.45), .waiting: ("waiting", 0.4), .celebrate: ("celebrate", 0.25),
+        .stretch: ("stretch", 1.1), .play: ("play", 0.22), .error: ("error", 0.7)
+    ]
 
     /// The frame to show `seconds` into a pose.
     static func frame(for pose: MascotPose, at seconds: TimeInterval, colour: Bool) -> NSImage? {
@@ -40,9 +48,6 @@ enum ClawdFrames {
         case .run:
             guard !walk.isEmpty else { return nil }
             return walk[Int(seconds / 0.05) % walk.count]
-        case .type:
-            guard let frames = sets["type"] else { return walk.first }
-            return frames[Int(seconds / 0.16) % frames.count]
         case .coffee:
             guard let frames = sets["coffee"] else { return walk.first }
             // Steam drifts, then a sip, then back to steaming.
@@ -52,15 +57,14 @@ enum ClawdFrames {
             guard let frames = sets["awake"] else { return walk.first }
             // Eyes shut for a moment every four seconds or so.
             return frames[seconds.truncatingRemainder(dividingBy: 4.2) >= 4.0 ? 1 : 0]
-        case .sleep:
-            guard let frames = sets["sleep"] else { return walk.first }
-            return frames[Int(seconds / 0.9) % frames.count]
-        case .tired:
-            guard let frames = sets["tired"] else { return walk.first }
-            return frames[Int(seconds / 0.3) % frames.count]
-        case .spent:
-            guard let frames = sets["spent"] else { return walk.first }
-            return frames[Int(seconds / 0.35) % frames.count]
+        case .waking:
+            guard let frames = sets["waking"] else { return walk.first }
+            // Up from a crouch, eyes opening, once a cycle of three seconds.
+            let beat = seconds.truncatingRemainder(dividingBy: 3)
+            return frames[beat < 1 ? 0 : beat < 1.8 ? 1 : 2]
+        case .type, .sleep, .tired, .spent, .thinking, .waiting, .celebrate, .stretch, .play, .error:
+            guard let cycle = cycles[pose], let frames = sets[cycle.key] else { return walk.first }
+            return frames[Int(seconds / cycle.step) % frames.count]
         }
     }
 }

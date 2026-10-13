@@ -59,6 +59,8 @@ struct BotMarkConfig {
     var color = Color(red: 0.043, green: 0.043, blue: 0.043)
     /// `--bg` upstream: the eyes.
     var eyeColor = Color.white
+    /// Eyes drawn as crosses: a failed turn.
+    var crossedEyes = false
     var badgeColor = Color(red: 0.114, green: 0.608, blue: 0.941)
     var badgeScale = 1.0
 

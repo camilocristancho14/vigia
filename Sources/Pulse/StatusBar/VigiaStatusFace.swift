@@ -139,10 +139,11 @@ struct MenuBarMascotsView: View {
             : []
         TimelineView(.periodic(from: .now, by: 60)) { tick in
         HStack(spacing: 10) {
-            ForEach(accounts) { account in
+            ForEach(Array(accounts.enumerated()), id: \.element) { place, account in
                 let index = rail.firstIndex(of: account) ?? 0
                 MenuBarMascotItem(
                     account: account,
+                    slot: place,
                     tint: index < tints.count ? tints[index] : .clear,
                     persona: settings.botPersona(for: account) ?? BotMarkPersona.automatic(at: index),
                     settings: settings,
@@ -162,6 +163,8 @@ struct MenuBarMascotsView: View {
 
 private struct MenuBarMascotItem: View {
     let account: AccountKey
+    /// Its place among the marks in the bar, which deals the idle poses.
+    let slot: Int
     let tint: Color
     let persona: BotMarkPersona
     let settings: AppSettings
@@ -180,7 +183,7 @@ private struct MenuBarMascotItem: View {
         let pose = store.mascotPose(
             provider,
             usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
-            playful: settings.showsBotMark(for: account),
+            slot: slot,
             now: now
         )
 
@@ -205,13 +208,19 @@ private struct MenuBarMascotItem: View {
     @ViewBuilder
     private func mark(working: Bool, pose: MascotPose, headline: UsageWindow?) -> some View {
         let provider = account.provider
-        if settings.showsBotMark(for: account), provider == .claudeCode {
-            // Claude's orange, unless the bar behind it is orange-ish on some
-            // screen: then Clawd is white or black, whichever shows.
-            let orange = Color(red: 217 / 255, green: 119 / 255, blue: 87 / 255)
-            let legible = backdrop.legible(orange)
-            let keepsOrange = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(orange)
-            ClawdMarkView(pose: pose, colour: keepsOrange, size: Self.markSize)
+        let character = settings.mascotCharacter(for: account)
+        if settings.showsBotMark(for: account), character == .clawd || character.isVector {
+            // Their own colours, unless the bar behind is close enough to
+            // them on some screen to lose them: then one ink, white or black,
+            // whichever shows — Clawd's orange and the others' blues alike.
+            let legible = backdrop.legible(character.brand)
+            let keepsColour = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(character.brand)
+            if character == .clawd {
+                ClawdMarkView(pose: pose, colour: keepsColour, size: Self.markSize)
+            } else {
+                VectorMascotView(character: character, pose: pose, colour: keepsColour,
+                                 size: Self.markSize, phase: provider.mascotPhase)
+            }
         } else if settings.showsBotMark(for: account) {
             let wanted = tint == .clear ? BotMarkTint.body(for: provider) : tint
             let body = backdrop.legible(wanted)

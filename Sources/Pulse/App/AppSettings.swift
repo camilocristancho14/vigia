@@ -772,6 +772,16 @@ final class AppSettings {
         }
     }
 
+    /// The character chosen for an account's mark, keyed by account. A
+    /// missing entry is the provider's own: Float Bot for Antigravity, Cloud
+    /// Ghost for Codex, Clawd for Claude Code, the bot for everyone else.
+    var mascotCharacters: [String: String] {
+        didSet {
+            guard mascotCharacters != oldValue else { return }
+            UserDefaults.standard.set(mascotCharacters, forKey: Key.mascotCharacters)
+        }
+    }
+
     /// Which browser an account's session cookie is read from, keyed by
     /// account. A missing entry means "whichever, starting with the default
     /// one" — the same shape as `sources`, and for the same reason: naming one
@@ -1381,6 +1391,7 @@ final class AppSettings {
         botMarks: [String: Bool] = [:],
         botPersonas: [String: String] = [:],
         botShapes: [String: String] = [:],
+        mascotCharacters: [String: String] = [:],
         botColours: [String: String] = [:],
         refreshInterval: RefreshInterval = .default,
         networkProxy: NetworkProxySettings = .default,
@@ -1432,6 +1443,7 @@ final class AppSettings {
         self.botMarks = botMarks
         self.botPersonas = botPersonas
         self.botShapes = botShapes
+        self.mascotCharacters = mascotCharacters
         self.botColours = botColours
         self.refreshInterval = refreshInterval
         self.networkProxy = networkProxy
@@ -1541,6 +1553,21 @@ final class AppSettings {
     /// names a shape reads as round rather than as a blank ring.
     func botBody(for account: AccountKey) -> BotMarkBody {
         botShapes[account.id].flatMap(BotMarkBody.init(rawValue:)) ?? .default
+    }
+
+    /// Which character an account's mark is. A stored choice the provider
+    /// does not offer — or one from a later version — reads as its default.
+    func mascotCharacter(for account: AccountKey) -> MascotCharacter {
+        let options = MascotCharacter.options(for: account.provider)
+        return mascotCharacters[account.id].flatMap(MascotCharacter.init(rawValue:))
+            .flatMap { options.contains($0) ? $0 : nil } ?? options[0]
+    }
+
+    func setMascotCharacter(_ character: MascotCharacter, for account: AccountKey) {
+        var updated = mascotCharacters
+        // The provider's own is the default, so it is stored as an absence.
+        updated[account.id] = character == .automatic(for: account.provider) ? nil : character.rawValue
+        mascotCharacters = updated
     }
 
     func setBotBody(_ body: BotMarkBody, for account: AccountKey) {
@@ -1731,6 +1758,7 @@ final class AppSettings {
             botMarks: defaults.dictionary(forKey: Key.botMarks) as? [String: Bool] ?? [:],
             botPersonas: defaults.dictionary(forKey: Key.botPersonas) as? [String: String] ?? [:],
             botShapes: defaults.dictionary(forKey: Key.botShapes) as? [String: String] ?? [:],
+            mascotCharacters: defaults.dictionary(forKey: Key.mascotCharacters) as? [String: String] ?? [:],
             botColours: defaults.dictionary(forKey: Key.botColours) as? [String: String] ?? [:],
             refreshInterval: (defaults.object(forKey: Key.refreshInterval) as? Int)
                 .flatMap(RefreshInterval.init(rawValue:)) ?? .default,
@@ -1865,6 +1893,7 @@ final class AppSettings {
         botPersonas[account.id] = nil
         botColours[account.id] = nil
         botShapes[account.id] = nil
+        mascotCharacters[account.id] = nil
         detailedCards.remove(account.id)
         splitAccounts.remove(account.id)
         if menuBarAccount == account.id { menuBarAccount = nil }
@@ -1935,6 +1964,7 @@ final class AppSettings {
         static let botMarks = "settings.botMarks"
         static let botPersonas = "settings.botPersonas"
         static let botShapes = "settings.botShapes"
+        static let mascotCharacters = "settings.mascotCharacters"
         static let botColours = "settings.botColours"
         static let showsRemaining = "settings.showsRemaining"
         static let warningThreshold = "settings.warningThreshold"

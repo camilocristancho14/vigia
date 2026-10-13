@@ -2,10 +2,12 @@ import Foundation
 import Testing
 @testable import Pulse
 
-/// Grok's billing reply is not published API, and nobody here holds a real
-/// SuperGrok account to capture one from. Every fixture below is built by
-/// hand from the field names and behaviour `GrokUsageService` decodes and
-/// from `Docs/providers/grok.md` — not captured from a live account.
+/// Grok's billing reply is not published API. Most fixtures below are built by
+/// hand from the field names and behaviour `GrokUsageService` decodes and from
+/// `Docs/providers/grok.md`. The one exception is `grok-billing-captured-*`:
+/// a real SuperGrok reply, as the Grok CLI itself logged it to
+/// `~/.grok/logs/unified.jsonl` ("billing: fetched credits config"). It
+/// carries no identifiers to strip; the CLI logs `history` as `historyLen`.
 @Suite("Grok parsing")
 struct GrokParsingTests {
     private static func fixtureURL(_ name: String) throws -> URL {
@@ -146,6 +148,26 @@ struct GrokParsingTests {
         let window = try #require(GrokUsageService.window(from: try Self.config("grok-billing-exhausted")))
         #expect(window.usedFraction == 1)
         #expect(window.isExhausted)
+    }
+
+    /// A pool reading 100% was suspected of being a default or a misread, so
+    /// it was checked against the real reply: the CLI's own log shows the
+    /// proxy answering `creditUsagePercent: 100.0` for this period, after 90%
+    /// four days earlier. The full ring is Grok's figure, not ours. The real
+    /// reply also carries six-digit fractions and a `+00:00` offset on both
+    /// stamps, and the extra fields (`onDemandCap`, `prepaidBalance`, …)
+    /// must not upset the decode.
+    @Test("A captured reply at 100% is a spent weekly pool, reset at the stated instant")
+    func capturedExhaustedReply() throws {
+        let window = try #require(GrokUsageService.window(from: try Self.config("grok-billing-captured-exhausted")))
+
+        #expect(window.kind == .weekly)
+        #expect(window.windowSeconds == 7 * 86_400)
+        #expect(window.usedFraction == 1)
+        #expect(window.isExhausted)
+        // 2026-10-14T14:37:47.480350+00:00
+        let reset = try #require(window.resetsAt)
+        #expect(abs(reset.timeIntervalSince1970 - 1_791_988_667.48) < 0.001)
     }
 
     @Test("Just under 100 is not spent, and exactly 100 is", arguments: [(99.9, false), (100.0, true)])

@@ -349,7 +349,9 @@ struct UsageWindow: Identifiable, Equatable, Codable, Sendable {
                 ? .localized("\("\(seconds / 86_400)")-day limit")
                 : .localized("\("\(max(Int((Double(seconds) / 3_600).rounded()), 1))")-hour limit")
         }
-        let scoped = scope.map { "\(base) · \($0)" } ?? base
+        // The scope stays the provider's word everywhere it is a key; only
+        // what is shown goes through the table ("Claude and GPT").
+        let scoped = scope.map { "\(base) · \(String.localized(String.LocalizationValue($0)))" } ?? base
         return estimate.map { "\(scoped) · \($0.title)" } ?? scoped
     }
 

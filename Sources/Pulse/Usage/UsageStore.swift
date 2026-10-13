@@ -105,6 +105,26 @@ final class UsageStore {
         for account in settings.allAccounts {
             usage[account.id] = Self.initialState(for: account)
         }
+        activity.onNewLimit = { [weak self] provider, _ in self?.limitReported(by: provider) }
+    }
+
+    /// Puts a reading on the panel as though a pass had fetched it.
+    func adopt(_ reading: ProviderUsage) { usage[reading.account.id] = reading }
+
+    /// When each provider's agent last announced a limit we reacted to.
+    private var limitRefreshedAt: [Provider: Date] = [:]
+
+    /// An agent just wrote that it hit a limit. The overlay in `usage(for:)`
+    /// already shows it, from the transcript's own words; this asks the
+    /// provider for the exact figures and the reset, now rather than at the
+    /// next tick. Once a half-minute per provider, since a limited agent that
+    /// is prompted again writes the message again.
+    private func limitReported(by provider: Provider) {
+        let now = Date()
+        if let last = limitRefreshedAt[provider], now.timeIntervalSince(last) < 30 { return }
+        limitRefreshedAt[provider] = now
+        signals.lastChange = now
+        refresh()
     }
 
     /// What an account shows before anything has been fetched for it.
@@ -204,32 +224,49 @@ final class UsageStore {
     func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
 
 
-    /// What the mascot is up to. Where Vigía can see the agent's sessions,
-    /// working comes first, then a five-minute break after a turn ends. After
-    /// that, or for an agent it cannot see, a nearly spent limit shows as tired
-    /// (75%) or used up (100%); otherwise the mark follows the time of day.
-    /// `playful` is for marks with a character, which also get busy at the
-    /// laptop or off for a run in the course of the day.
-    func mascotPose(_ provider: Provider, usedFraction: Double? = nil, playful: Bool = false,
+    /// What the mascot is up to. Where Vigía can see the agent's sessions:
+    /// getting up as a turn starts, then working; asking for attention while
+    /// a turn waits for a person; a failed turn; a short celebration and then
+    /// a five-minute break after a turn ends. After that, or for an agent it
+    /// cannot see, a nearly spent limit shows as tired (75%) or used up
+    /// (100%). Otherwise an agent it can see is idle for twenty minutes after
+    /// it last wrote anything and then asleep, and one it cannot see follows
+    /// the time of day.
+    ///
+    /// **Idle never looks like work.** None of the idle rotation is a working
+    /// pose, so a mark at the laptop always means a turn in flight.
+    ///
+    /// `slot` is the mark's place among the marks on the same surface, in the
+    /// rail's order: idle marks are dealt the rotation together so that each
+    /// does something different, two accounts of one provider included.
+    func mascotPose(_ provider: Provider, usedFraction: Double? = nil, slot: Int = 0,
                     now: Date = Date()) -> MascotPose {
-        let seen = provider.supportsLocalActivity
         // Seen on this Mac or reported by another machine: either way it is
         // a turn that really happened.
-        if activity.running.contains(provider) { return .working(label: activity.labels[provider]) }
-        if let finished = activity.finishedAt[provider], now.timeIntervalSince(finished) < 300 { return .coffee }
+        if activity.running.contains(provider) {
+            if let started = activity.startedAt[provider], now.timeIntervalSince(started) < 3 { return .waking }
+            return .working(label: activity.labels[provider])
+        }
+        if activity.waiting.contains(provider) { return .waiting }
+        if let failed = activity.failedAt[provider],
+           now.timeIntervalSince(failed) < AgentActivity.failureWindow { return .error }
+        if let finished = activity.finishedAt[provider] {
+            let since = now.timeIntervalSince(finished)
+            if since >= 0, since < 20 { return .celebrate }
+            if since >= 0, since < 300 { return .coffee }
+        }
         if let used = usedFraction {
             if used >= 1 { return .spent }
             if used >= 0.75 { return .tired }
         }
-        if seen {
-            let written = activity.lastWrite(for: provider) ?? activity.lastWrite
-            if let written, now.timeIntervalSince(written) < 1200 { return .awake }
-            if playful {
-                return MascotPose.ofTheDay(for: provider, at: now, playful: playful)
-            }
-            return .sleep
+        if provider.supportsLocalActivity {
+            // Only this provider's own writes: another agent being busy says
+            // nothing about whether this one is awake.
+            guard let written = activity.lastWrite(for: provider),
+                  now.timeIntervalSince(written) < 1200 else { return .sleep }
+            return MascotPose.idle(slot: slot, at: now)
         }
-        return MascotPose.ofTheDay(for: provider, at: now, playful: playful)
+        return MascotPose.ofTheDay(slot: slot, at: now)
     }
 
     /// What a working provider is doing right now, as an English key.
@@ -1130,8 +1167,25 @@ final class UsageStore {
         if needsRefresh { refresh() }
     }
 
-    func usage(for account: AccountKey) -> ProviderUsage {
-        usage[account.id] ?? .unavailable(account, reason: .loading)
+    /// The reading for an account, with any limit its agent has reported
+    /// hitting laid over it.
+    ///
+    /// **The agent's word beats a poll that is older than it.** A poll can be
+    /// half an hour old and say 14% while the session was blocked ten minutes
+    /// ago; the transcript says so the instant it happens. Only the window the
+    /// message names is changed, and only while the reading is not newer than
+    /// the message — see `UsageWindow.applying(_:readAt:now:)`. The reading's
+    /// own time is left alone, so the card still says how old the rest is.
+    func usage(for account: AccountKey) -> ProviderUsage { usage(for: account, now: Date()) }
+
+    func usage(for account: AccountKey, now: Date) -> ProviderUsage {
+        let reading = usage[account.id] ?? .unavailable(account, reason: .loading)
+        guard account.isPrimary, let hit = activity.limits[account.provider], hit.isActive(at: now),
+              !reading.windows.isEmpty
+        else { return reading }
+        var adjusted = reading
+        adjusted.windows = reading.windows.map { $0.applying(hit, readAt: reading.observedAt, now: now) }
+        return adjusted
     }
 
     // MARK: - The loop
@@ -1141,6 +1195,10 @@ final class UsageStore {
         guard !settings.needsProviderSelection else { return }
 
         signals.isPanelVisible = settings.isPanelVisible
+        // The menu bar shows the marks, and the percentages when asked for,
+        // whether or not the panel is open: a hidden panel is not a reason to
+        // let the figures behind them age.
+        signals.showsInMenuBar = !settings.hidesMenuBarIcon
         signals.isConstrained = screensAsleep
             || ProcessInfo.processInfo.isLowPowerModeEnabled
             || [.serious, .critical].contains(ProcessInfo.processInfo.thermalState)

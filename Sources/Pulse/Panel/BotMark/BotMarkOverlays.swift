@@ -12,6 +12,13 @@ func drawMascotOverlay(pose: MascotPose, mood: BotMarkMood, in context: inout Gr
     case (.tired, .idle): drawSweat(in: &context, size: size, time: time)
     case (.spent, _): drawDizzyStars(in: &context, size: size, time: time)
     case (.sleep, .idle): drawSleepZs(in: &context, size: size, time: time)
+    case (.thinking, _):
+        drawThoughtDots(in: &context, size: size, time: time, ink: overlayInk)
+        drawGoldSparks(in: &context, size: size, time: time)
+    case (.waiting, _): drawQuestionMark(in: &context, size: size, time: time, ink: Color(red: 0.98, green: 0.74, blue: 0.02))
+    case (.celebrate, _): drawConfetti(in: &context, size: size, time: time)
+    case (.play, _): drawPlayBall(in: &context, size: size, time: time, ink: Color(red: 0.98, green: 0.74, blue: 0.02))
+    case (.error, _): drawErrorMark(in: &context, size: size, time: time)
     default: break
     }
 }
@@ -149,4 +156,97 @@ func drawCoffeeBreak(in context: inout GraphicsContext, size: CGSize, time: Time
         context.stroke(steam, with: .color(ink.opacity(0.65)),
                        style: StrokeStyle(lineWidth: line, lineCap: .round, lineJoin: .round))
     }
+}
+
+// MARK: - The newer poses
+
+/// Three dots over the head, counting up and starting again: thinking.
+func drawThoughtDots(in context: inout GraphicsContext, size: CGSize, time: TimeInterval, ink: Color) {
+    let width = size.width, height = size.height
+    let shown = Int(time * 2.2) % 4
+    let radius = max(0.9, width * 0.045)
+    for index in 0..<3 {
+        let lit = index < shown
+        let centre = CGPoint(x: width * (0.64 + 0.13 * CGFloat(index)), y: height * (0.12 - 0.03 * CGFloat(index)))
+        let dot = Path(ellipseIn: CGRect(x: centre.x - radius, y: centre.y - radius, width: radius * 2, height: radius * 2))
+        context.fill(dot, with: .color(ink.opacity(lit ? 0.9 : 0.25)))
+    }
+}
+
+/// Small gold four-point sparks winking round the mark while it thinks.
+func drawGoldSparks(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
+    let gold = Color(red: 0.96, green: 0.76, blue: 0.31)
+    let spots: [(CGFloat, CGFloat, Double)] = [(0.14, 0.22, 0), (0.86, 0.52, 1.3), (0.2, 0.8, 2.4)]
+    for (x, y, offset) in spots {
+        let pulse = max(0, sin(time * 3 + offset))
+        guard pulse > 0.05 else { continue }
+        drawSpark(in: &context, at: CGPoint(x: size.width * x, y: size.height * y),
+                  radius: size.width * 0.08 * CGFloat(pulse), colour: gold.opacity(pulse))
+    }
+}
+
+/// A four-point sparkle, the shape both Gemini marks are made of.
+func drawSpark(in context: inout GraphicsContext, at centre: CGPoint, radius: CGFloat, colour: Color) {
+    var path = Path()
+    let pinch = radius * 0.22
+    path.move(to: CGPoint(x: centre.x, y: centre.y - radius))
+    path.addQuadCurve(to: CGPoint(x: centre.x + radius, y: centre.y), control: CGPoint(x: centre.x + pinch, y: centre.y - pinch))
+    path.addQuadCurve(to: CGPoint(x: centre.x, y: centre.y + radius), control: CGPoint(x: centre.x + pinch, y: centre.y + pinch))
+    path.addQuadCurve(to: CGPoint(x: centre.x - radius, y: centre.y), control: CGPoint(x: centre.x - pinch, y: centre.y + pinch))
+    path.addQuadCurve(to: CGPoint(x: centre.x, y: centre.y - radius), control: CGPoint(x: centre.x - pinch, y: centre.y - pinch))
+    context.fill(path, with: .color(colour))
+}
+
+/// A question mark bobbing beside the head: a person's move.
+func drawQuestionMark(in context: inout GraphicsContext, size: CGSize, time: TimeInterval, ink: Color) {
+    let width = size.width, height = size.height
+    let bob = CGFloat(sin(time * 4)) * height * 0.03
+    let mark = Text("?").font(.system(size: max(7, width * 0.42), weight: .heavy, design: .rounded))
+        .foregroundColor(ink)
+    context.draw(mark, at: CGPoint(x: width * 0.86, y: height * 0.16 + bob))
+}
+
+/// Confetti thrown up and falling: a turn done.
+func drawConfetti(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
+    let colours: [Color] = [Color(red: 0.98, green: 0.74, blue: 0.02), Color(red: 0.99, green: 0.25, blue: 0.24),
+                            Color(red: 0.0, green: 0.73, blue: 0.36), Color(red: 0.19, green: 0.53, blue: 1.0)]
+    for index in 0..<6 {
+        let phase = (time * 0.8 + Double(index) / 6).truncatingRemainder(dividingBy: 1)
+        let x = size.width * (0.1 + 0.16 * CGFloat(index)) + CGFloat(sin(time * 3 + Double(index))) * size.width * 0.03
+        let y = size.height * (0.02 + 0.3 * CGFloat(phase))
+        let side = max(1, size.width * 0.06)
+        let piece = Path(CGRect(x: x, y: y, width: side, height: side * 0.6))
+        context.fill(piece, with: .color(colours[index % colours.count].opacity(1 - phase * 0.6)))
+    }
+}
+
+/// A ball tossed in an arc over the head: idling, playing.
+func drawPlayBall(in context: inout GraphicsContext, size: CGSize, time: TimeInterval, ink: Color) {
+    let phase = (time * 0.9).truncatingRemainder(dividingBy: 2)
+    let across = phase < 1 ? phase : 2 - phase
+    let x = size.width * (0.15 + 0.7 * CGFloat(across))
+    let y = size.height * (0.16 - 0.14 * CGFloat(sin(.pi * across)))
+    let radius = max(1, size.width * 0.07)
+    context.fill(Path(ellipseIn: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2)),
+                 with: .color(ink))
+}
+
+/// A cross badge in the corner and a wisp of smoke: the turn failed.
+func drawErrorMark(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
+    let width = size.width, height = size.height
+    let red = Color(red: 0.92, green: 0.26, blue: 0.24)
+    let centre = CGPoint(x: width * 0.82, y: height * 0.2)
+    let radius = width * 0.14
+    context.fill(Path(ellipseIn: CGRect(x: centre.x - radius, y: centre.y - radius, width: radius * 2, height: radius * 2)),
+                 with: .color(red))
+    var cross = Path()
+    let arm = radius * 0.5
+    cross.move(to: CGPoint(x: centre.x - arm, y: centre.y - arm)); cross.addLine(to: CGPoint(x: centre.x + arm, y: centre.y + arm))
+    cross.move(to: CGPoint(x: centre.x + arm, y: centre.y - arm)); cross.addLine(to: CGPoint(x: centre.x - arm, y: centre.y + arm))
+    context.stroke(cross, with: .color(.white), style: StrokeStyle(lineWidth: max(1, width * 0.04), lineCap: .round))
+    let rise = (time * 0.5).truncatingRemainder(dividingBy: 1)
+    let puff = width * (0.05 + 0.04 * CGFloat(rise))
+    let at = CGPoint(x: width * 0.3, y: height * (0.18 - 0.14 * CGFloat(rise)))
+    context.fill(Path(ellipseIn: CGRect(x: at.x - puff, y: at.y - puff, width: puff * 2, height: puff * 2)),
+                 with: .color(Color(white: 0.55).opacity(0.6 * (1 - rise))))
 }

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+<path id="ar" d="M54.33,54.67C57.41,56.98 62.03,55.43 57.8,51.2C45.09,38.88 47.78,5 32,5C16.22,5 18.91,38.88 6.2,51.2C1.58,55.82 6.59,56.98 9.67,54.67C20.6,47.34 21.26,38.37 32,38.37C42.74,38.37 43.4,47.34 54.33,54.67Z"/>
+<clipPath id="clip"><path d="M54.33,54.67C57.41,56.98 62.03,55.43 57.8,51.2C45.09,38.88 47.78,5 32,5C16.22,5 18.91,38.88 6.2,51.2C1.58,55.82 6.59,56.98 9.67,54.67C20.6,47.34 21.26,38.37 32,38.37C42.74,38.37 43.4,47.34 54.33,54.67Z"/></clipPath>
+<path id="sp" d="M0,-1C.07,-.45 .45,-.07 1,0C.45,.07 .07,.45 0,1C-.07,.45 -.45,.07 -1,0C-.45,-.07 -.07,-.45 0,-1Z"/>
+</defs>
+<ellipse cx="32" cy="61.5" rx="15.6" ry="1.9" fill="#1d3c8f" opacity=".22"/>
+<use href="#sp" xlink:href="#sp" transform="translate(27.3 54.8) scale(1.64)" fill="#FC413D" opacity=".73"/>
+<use href="#sp" xlink:href="#sp" transform="translate(32 44.1) scale(2.44)" fill="#FBBC04" opacity=".58"/>
+<use href="#sp" xlink:href="#sp" transform="translate(35.4 49.5) scale(2.04)" fill="#00B95C"/>
+<g fill="none" stroke="#4893FC" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+<path d="M7,25.6L3.6,29L7,32.4" opacity=".8"/>
+<path d="M57,25.6L60.4,29L57,32.4" opacity=".55"/>
+</g>
+<g transform="translate(0 .02)">
+<g clip-path="url(#clip)">
+<use href="#ar" xlink:href="#ar" fill="#3186FF"/>
+<path d="M43.6,21C44.2,26 45.8,32.5 51.2,38.5L62,38.5L62,21Z" fill="#749BFF" opacity=".9"/>
+<path d="M4,26.5C14,25.6 22,21.5 28.5,13.5L28.5,0L4,0Z" fill="#00B95C"/>
+<path d="M14,15C20,13.6 28,13.4 37.2,16.2L31,0L14,0Z" fill="#FBBC04"/>
+<path d="M31,0L37.2,16.2C40.5,17.6 44,20.2 46.6,23.6L62,27L62,0Z" fill="#FC413D"/>
+<ellipse cx="26.5" cy="10.5" rx="3" ry="1.5" fill="#fff" opacity=".45" transform="rotate(-35 26.5 10.5)"/>
+</g>
+<ellipse cx="21.4" cy="31.1" rx="2.6" ry="1.7" fill="#ff9fb8" opacity=".75"/>
+<ellipse cx="42.6" cy="31.1" rx="2.6" ry="1.7" fill="#ff9fb8" opacity=".75"/>
+<ellipse cx="25.8" cy="27.3" rx="3" ry="4" fill="#231f4a"/><ellipse cx="38.2" cy="27.3" rx="3" ry="4" fill="#231f4a"/>
+<circle cx="26.8" cy="25.8" r="1.1" fill="#fff"/><circle cx="39.2" cy="25.8" r="1.1" fill="#fff"/>
+<path d="M30.2,34.1H33.8" stroke="#231f4a" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+</g>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 64 64" width="64" height="64">
+<defs>
+<linearGradient id="g" x1="0" y1="11" x2="0" y2="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#B1A7FF"/><stop offset=".5" stop-color="#7A9DFF"/><stop offset="1" stop-color="#3941FF"/></linearGradient>
+<g id="cl"><path d="M10,35H54V50Q48.5,58 43,50Q37.5,58 32,50Q26.5,58 21,50Q15.5,58 10,50Z"/><circle cx="17.5" cy="34" r="8.5"/><circle cx="25" cy="23" r="10"/><circle cx="39" cy="22" r="10.5"/><circle cx="47" cy="33" r="8.5"/><circle cx="32" cy="30" r="12"/></g>
+</defs>
+<g transform="translate(0 3) translate(32 56) scale(1 1) translate(-32 -56)">
+<use href="#cl" xlink:href="#cl" fill="#262394" stroke="#262394" stroke-width="4.6" stroke-linejoin="round"/>
+<use href="#cl" xlink:href="#cl" fill="url(#g)"/>
+<ellipse cx="22" cy="20" rx="4.6" ry="2.4" fill="#fff" opacity=".55" transform="rotate(-35 22 20)"/>
+<circle cx="29" cy="15.5" r="1.3" fill="#fff" opacity=".5"/>
+<ellipse cx="19.4" cy="43.2" rx="2.6" ry="1.7" fill="#FF9FD6" opacity=".85"/>
+<ellipse cx="44.6" cy="43.2" rx="2.6" ry="1.7" fill="#FF9FD6" opacity=".85"/>
+<path d="M21,37Q24,41.2 27,37M37,37Q40,41.2 43,37" stroke="#1A1866" stroke-width="2" stroke-linecap="round" fill="none"/>
+<ellipse cx="32" cy="45.5" rx="1.4" ry="1.7" fill="#1A1866"/>
+</g>
+<g fill="none" stroke="#3941FF" stroke-linecap="round" stroke-linejoin="round">
+<path d="M50.9,13.3H54.5L50.9,16.9H54.5" stroke-width="2" opacity=".56"/>
+<path d="M54.4,6.3H58L54.4,9.9H58" stroke-width="1.8" opacity=".95"/>
+</g>
+</svg>

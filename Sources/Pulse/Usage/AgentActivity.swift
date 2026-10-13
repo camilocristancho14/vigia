@@ -39,7 +39,24 @@ enum AgentActivity {
         /// What the turn is doing right now, as an English key for
         /// `String.localized` ("Thinking…", "Reading", …). Nil when idle.
         var label: String?
+        /// A turn is open but its next move is a person's: a question put to
+        /// them, a plan waiting for approval. Never true while working.
+        var isWaiting = false
+        /// When the newest turn failed or its session died mid-turn, if that
+        /// happened recently enough to still be news. See `failureWindow`.
+        var failedAt: Date?
+        /// A limit the agent reported hitting that has not lifted yet. See
+        /// `LimitHit`.
+        var limit: LimitHit?
     }
+
+    /// How long an open question keeps a mark waiting. A person may take a
+    /// while to answer; a session left asking for half an hour has been left.
+    static let waitingWindow: TimeInterval = 30 * 60
+    /// How long a failure is shown before the mark gets on with its day.
+    static let failureWindow: TimeInterval = 15 * 60
+    /// Tools whose call hands the turn to a person rather than to a process.
+    static let personTools: Set<String> = ["AskUserQuestion", "ExitPlanMode"]
 
     /// What a turn in flight is waiting for, which is what decides how long
     /// its claim to be working may outlive the record that made it. A single
@@ -83,6 +100,7 @@ enum AgentActivity {
             guard !Task.isCancelled else { break }
             let files = transcripts(for: provider, home: home)
             var state = State(lastWrite: lastActivity(in: files.first, provider: provider), isWorking: false)
+            let newest = files.first?.url
 
             // Any live session counts: two terminals can be running at once,
             // and the newest file is not necessarily the busy one. The filter
@@ -100,9 +118,21 @@ enum AgentActivity {
                     // did anything. Timing the grace off that let a session
                     // that died mid-turn look freshly written for ever, and the
                     // ring turned for as long as the file kept being poked.
-                    state.isWorking = now.timeIntervalSince(at ?? file.modified) <= wait.grace
+                    let since = now.timeIntervalSince(at ?? file.modified)
+                    state.isWorking = since <= wait.grace
                     if state.isWorking {
                         state.label = activityLabel(for: file.url, provider: provider, wait: wait)
+                    } else if wait == .model, file.url == newest, since <= wait.grace + failureWindow {
+                        // The model's move outlived its grace: the session
+                        // died mid-turn. Only the model's wait says so
+                        // reliably; a tool can legitimately run for longer.
+                        state.failedAt = (at ?? file.modified).addingTimeInterval(wait.grace)
+                    }
+                case .waiting(let at):
+                    if now.timeIntervalSince(at ?? file.modified) <= waitingWindow { state.isWaiting = true }
+                case .failed(let at):
+                    if file.url == newest, now.timeIntervalSince(at ?? file.modified) <= failureWindow {
+                        state.failedAt = at ?? file.modified
                     }
                 case .finished:
                     continue
@@ -110,6 +140,18 @@ enum AgentActivity {
                     state.isWorking = now.timeIntervalSince(file.modified) <= unknownFormatWindow
                 }
                 if state.isWorking { break }
+            }
+            if state.isWorking {
+                state.isWaiting = false
+                state.failedAt = nil
+            }
+            // Read from the newest transcript whatever its age: a limit lasts
+            // hours, and the verdict loop above only opens files written to
+            // in the last five minutes. A limit is not a failure of the
+            // session — the pose for it is the spent one — so it replaces one.
+            if let newest, let hit = limit(for: newest, provider: provider, now: now), hit.isActive(at: now) {
+                state.limit = hit
+                state.failedAt = nil
             }
 
             states[provider] = state
@@ -136,6 +178,95 @@ enum AgentActivity {
         }
 
         return states
+    }
+
+    // MARK: - Limits the agent reported
+
+    /// The limit the newest transcript's tail ends on, or nil when its last
+    /// word on the subject is that there is none.
+    ///
+    /// Reading backwards for the first record that decides: for Claude Code a
+    /// limit message, or a real answer after it (the limit has lifted, or it
+    /// never bound this session); for Codex the `rate_limits` of the newest
+    /// `token_count`; for Grok Build the outcome of the last turn.
+    static func limit(for url: URL, provider: Provider, now: Date = Date(),
+                      calendar: Calendar = .current) -> LimitHit? {
+        guard let written = provider.handWritten else { return nil }
+        let lines = tail(of: url)
+        for line in lines.reversed() {
+            guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
+            switch written {
+            case .claudeCode:
+                guard record["type"] as? String == "assistant" else { continue }
+                if let hit = claudeLimit(in: record, calendar: calendar) { return hit }
+                // Any other assistant record is the agent answering, which it
+                // cannot do while it is limited — except a subagent's inline
+                // record, which says nothing about the account.
+                if record["isApiErrorMessage"] as? Bool == true { continue }
+                if (record["message"] as? [String: Any])?["stop_reason"] == nil { continue }
+                return nil
+
+            case .codex:
+                let payload = record["payload"] as? [String: Any]
+                switch payload?["type"] as? String {
+                case "token_count":
+                    guard let limits = payload?["rate_limits"] as? [String: Any] else { continue }
+                    return LimitHit.parseCodex(limits, at: stamp(of: record) ?? now)
+                case "error":
+                    let text = (payload?["message"] as? String) ?? ""
+                    if LimitHit.looksLikeLimit(text) {
+                        return LimitHit(at: stamp(of: record) ?? now,
+                                        resetsAt: LimitHit.resetTime(in: text, after: stamp(of: record) ?? now, calendar: calendar),
+                                        window: .other)
+                    }
+                    continue
+                default:
+                    continue
+                }
+
+            case .grok:
+                let update = (record["params"] as? [String: Any])?["update"] as? [String: Any]
+                switch update?["sessionUpdate"] as? String {
+                case "turn_failed":
+                    let text = String(data: (try? JSONSerialization.data(withJSONObject: update ?? [:])) ?? Data(), encoding: .utf8) ?? ""
+                    guard LimitHit.looksLikeLimit(text) else { return nil }
+                    // Grok Build's allowance is weekly.
+                    return LimitHit(at: stamp(of: record) ?? now, resetsAt: nil, window: .weekly)
+                case "turn_completed", "agent_message_chunk":
+                    return nil
+                default:
+                    continue
+                }
+
+            default:
+                return nil
+            }
+        }
+        return nil
+    }
+
+    /// The limit an assistant record announces, if it does: the `error` field
+    /// says `rate_limit` (or `apiError` says `usage_limit_reached`), and the
+    /// text says which limit and when it lifts.
+    private static func claudeLimit(in record: [String: Any], calendar: Calendar) -> LimitHit? {
+        guard record["isApiErrorMessage"] as? Bool == true else { return nil }
+        let content = (record["message"] as? [String: Any])?["content"]
+        let text: String = switch content {
+        case let plain as String: plain
+        case let blocks as [[String: Any]]: blocks.compactMap { $0["text"] as? String }.joined(separator: "\n")
+        default: ""
+        }
+        let flagged = record["error"] as? String == "rate_limit" || record["apiError"] as? String == "usage_limit_reached"
+        let at = stamp(of: record) ?? Date()
+        // The record carries the answer itself — `quotaLimits`, or the same
+        // under `apiErrorParams.rate_limit_info` — with the reset as an epoch
+        // and the window by name. That is exact where the sentence is only
+        // "5pm" in a zone, so it is preferred and the sentence is the fallback.
+        let info = record["quotaLimits"] as? [String: Any]
+            ?? (record["apiErrorParams"] as? [String: Any])?["rate_limit_info"] as? [String: Any]
+        if let info, let hit = LimitHit.parseClaudeInfo(info, at: at) { return hit }
+        if let hit = LimitHit.parseClaude(text, at: at, calendar: calendar) { return hit }
+        return flagged ? LimitHit(at: at, resetsAt: nil, window: .other) : nil
     }
 
     // MARK: - What the turn is doing
@@ -188,6 +319,10 @@ enum AgentActivity {
         /// that says so was written. That stamp is nil only for a record which
         /// carries none, which in practice means a format we half-recognise.
         case working(Wait, at: Date?)
+        /// A turn is open, but the move is a person's.
+        case waiting(at: Date?)
+        /// The turn ended in a failure.
+        case failed(at: Date?)
         case finished
         case unknown
     }
@@ -210,6 +345,13 @@ enum AgentActivity {
             case .claudeCode:
                 switch record["type"] as? String {
                 case "assistant":
+                    // An API error is written as an assistant record that
+                    // says so, and it ends the turn. A limit is its own
+                    // thing — see `limit(for:)` — and is not a failure.
+                    if record["isApiErrorMessage"] as? Bool == true {
+                        return claudeLimit(in: record, calendar: .current) == nil
+                            ? .failed(at: stamp(of: record)) : .finished
+                    }
                     let stop = (record["message"] as? [String: Any])?["stop_reason"] as? String
                     guard let stop else {
                         // No stop reason at all is what a subagent's records
@@ -221,9 +363,13 @@ enum AgentActivity {
                         // for an agent that had already answered.
                         return .working(.model, at: stamp(of: record))
                     }
-                    return stop == "tool_use"
-                        ? .working(.tool, at: stamp(of: record))
-                        : .finished
+                    guard stop == "tool_use" else { return .finished }
+                    // A question or a plan put to the person is a tool call
+                    // too, but nothing runs until they answer.
+                    if let tool = lastToolName(in: [line]), personTools.contains(tool) {
+                        return .waiting(at: stamp(of: record))
+                    }
+                    return .working(.tool, at: stamp(of: record))
                 case "user":
                     // Pressing escape ends the turn and says so in the record
                     // it leaves behind. Read as an ordinary prompt it means the
@@ -270,8 +416,8 @@ enum AgentActivity {
                     return .working(.tool, at: stamp(of: record))
                 case "pending_interaction":
                     // The turn is open but is waiting for a person, not doing
-                    // work. Do not animate a provider that needs attention.
-                    return .finished
+                    // work: the mark asks for attention instead of working.
+                    return .waiting(at: stamp(of: record))
                 default:
                     break
                 }
@@ -294,7 +440,9 @@ enum AgentActivity {
                 // still the agent's move. Hook rows are bookkeeping.
                 let update = (record["params"] as? [String: Any])?["update"] as? [String: Any]
                 switch update?["sessionUpdate"] as? String {
-                case "turn_completed", "turn_failed", "turn_cancelled", "session_end":
+                case "turn_failed":
+                    return .failed(at: stamp(of: record))
+                case "turn_completed", "turn_cancelled", "session_end":
                     return .finished
                 case "tool_call", "tool_call_update", "plan":
                     return .working(.tool, at: stamp(of: record))
@@ -325,6 +473,8 @@ enum AgentActivity {
     private static func zcodeVerdict(in lines: [Data]) -> Verdict {
         var completed: Set<String> = []
         var latest: [String: (wait: Wait, at: Date?)] = [:]
+        /// Whether the newest turn to end ended in failure, and when.
+        var newestEnd: (failed: Bool, at: Date?)?
 
         for line in lines.reversed() {
             guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
@@ -335,6 +485,7 @@ enum AgentActivity {
             switch event {
             case "turn.completed", "turn.failed", "turn.cancelled":
                 completed.insert(turn)
+                if newestEnd == nil { newestEnd = (event == "turn.failed", stamp(of: record)) }
             case "tool.call.started":
                 if completed.contains(turn) { continue }
                 latest[turn] = latest[turn] ?? (.tool, stamp(of: record))
@@ -364,6 +515,7 @@ enum AgentActivity {
         }
         // The same log also receives process heartbeat records while ZCode is
         // idle. Their fresh file timestamp is not evidence of a working turn.
+        if let newestEnd, newestEnd.failed { return .failed(at: newestEnd.at) }
         return .finished
     }
 
@@ -581,6 +733,18 @@ final class AgentActivityMonitor {
     private(set) var labels: [Provider: String] = [:]
     private(set) var startedAt: [Provider: Date] = [:]
 
+    /// The limit each provider's agent reported hitting, while it still binds.
+    private(set) var limits: [Provider: LimitHit] = [:]
+    /// Called, on the main actor, the moment a provider reports a limit it had
+    /// not reported before — so whoever owns the readings can ask for the
+    /// exact figures now instead of at their next tick.
+    var onNewLimit: (@MainActor (Provider, LimitHit) -> Void)?
+
+    /// Providers whose open turn is waiting for a person.
+    private(set) var waiting: Set<Provider> = []
+    /// When each provider's newest turn failed, while that is still news.
+    private(set) var failedAt: [Provider: Date] = [:]
+
     /// Fast enough that the spinner starts and stops with the turn rather than
     /// lagging it noticeably, slow enough to be free.
     private static let interval: TimeInterval = 2
@@ -654,20 +818,38 @@ final class AgentActivityMonitor {
         finishedAt = [:]
         labels = [:]
         startedAt = [:]
+        waiting = []
+        failedAt = [:]
+        limits = [:]
     }
 
     /// Demo screenshots name who is working without reading this Mac's sessions.
     /// `stop()` clears `running`; the set is applied after that, and the timer
     /// stays down so the next scan cannot replace it.
     func adoptDemo(running providers: Set<Provider>, labels: [Provider: String] = [:],
-                   startedAt: [Provider: Date] = [:], finishedAt: [Provider: Date] = [:]) {
+                   startedAt: [Provider: Date] = [:], finishedAt: [Provider: Date] = [:],
+                   waiting: Set<Provider> = [], failedAt: [Provider: Date] = [:],
+                   limits: [Provider: LimitHit] = [:],
+                   lastWrites: [Provider: Date]? = nil) {
         stop()
         running = providers
+        self.waiting = waiting
+        self.failedAt = failedAt
+        self.limits = limits
         self.labels = labels
         self.startedAt = startedAt
         self.finishedAt = finishedAt
         lastWrite = Date()
-        lastWrites = Dictionary(uniqueKeysWithValues: providers.map { ($0, Date()) })
+        self.lastWrites = lastWrites ?? Dictionary(uniqueKeysWithValues: providers.map { ($0, Date()) })
+    }
+
+    /// Assigns only on a change, and tells `onNewLimit` about each limit that
+    /// was not there before. Internal so the rule can be driven directly.
+    func publish(limits hits: [Provider: LimitHit]) {
+        guard hits != limits else { return }
+        let fresh = hits.filter { limits[$0.key] != $0.value }
+        limits = hits
+        for (provider, hit) in fresh { onNewLimit?(provider, hit) }
     }
 
     /// Internal, with the task returned, so tests can await a complete scan
@@ -701,6 +883,12 @@ final class AgentActivityMonitor {
             for provider in running.subtracting(active) { startedAt[provider] = nil }
             running = active
         }
+        let waiting = Set(states.filter { $0.value.isWaiting && !$0.value.isWorking }.keys)
+        if waiting != self.waiting { self.waiting = waiting }
+        let failed = states.compactMapValues(\.failedAt)
+        if failed != failedAt { failedAt = failed }
+        publish(limits: states.compactMapValues(\.limit))
+
         let labels = states.compactMapValues { $0.isWorking ? $0.label : nil }
         if labels != self.labels { self.labels = labels }
 

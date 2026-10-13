@@ -326,6 +326,9 @@ struct RailEntry: Identifiable, Equatable {
     var botPersona: BotMarkPersona?
     /// The shape this ring's mark wears.
     var botBody: BotMarkBody = .default
+    /// Which character the mark is: Clawd, one of the vector characters, or
+    /// the bot that wears the persona, colour and body above.
+    var mascot: MascotCharacter = .bot
     /// Something that just happened to this account and is worth a one-shot.
     var botEvent: BotMarkEvent?
     /// A colour chosen for this ring's mark, or nil for its brand colour.
@@ -518,8 +521,8 @@ struct UsageDockView: View {
             ? BotMarkTint.deal(over: entries.map(\.usage.provider),
                                chosen: entries.map(\.botColour))
             : []
-        // One character for every bot, the liveliest, like Clawd: the pose
-        // says what each is doing, not a temperament picked per ring.
+        // The persona chosen for the account, or one dealt by its place on
+        // the rail so neighbouring bots do not share a temperament.
         let personas = entries.enumerated().map { index, entry in entry.botPersona ?? BotMarkPersona.automatic(at: index) }
         // Everything worth looking at is away from the edge the rail is on.
         let gaze = BotMarkGaze(edge: edge)
@@ -643,6 +646,7 @@ private struct UsageDockItem: View {
             isRefreshing: entry.isRefreshing,
             animatesActivity: animatesActivity,
             showsBotMark: entry.showsBotMark,
+            mascot: entry.mascot,
             botTint: botTint,
             botPersona: botPersona,
             botBody: botBody,
