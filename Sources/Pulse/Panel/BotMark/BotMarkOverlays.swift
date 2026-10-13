@@ -164,7 +164,7 @@ func drawCoffeeBreak(in context: inout GraphicsContext, size: CGSize, time: Time
 func drawThoughtDots(in context: inout GraphicsContext, size: CGSize, time: TimeInterval, ink: Color) {
     let width = size.width, height = size.height
     let shown = Int(time * 2.2) % 4
-    let radius = max(0.9, width * 0.045)
+    let radius = max(1.3, width * 0.065)
     for index in 0..<3 {
         let lit = index < shown
         let centre = CGPoint(x: width * (0.64 + 0.13 * CGFloat(index)), y: height * (0.12 - 0.03 * CGFloat(index)))
@@ -210,13 +210,15 @@ func drawQuestionMark(in context: inout GraphicsContext, size: CGSize, time: Tim
 func drawConfetti(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
     let colours: [Color] = [Color(red: 0.98, green: 0.74, blue: 0.02), Color(red: 0.99, green: 0.25, blue: 0.24),
                             Color(red: 0.0, green: 0.73, blue: 0.36), Color(red: 0.19, green: 0.53, blue: 1.0)]
-    for index in 0..<6 {
-        let phase = (time * 0.8 + Double(index) / 6).truncatingRemainder(dividingBy: 1)
-        let x = size.width * (0.1 + 0.16 * CGFloat(index)) + CGFloat(sin(time * 3 + Double(index))) * size.width * 0.03
+    // Fewer and bigger when the mark is small: a pixel of confetti is noise.
+    let count = size.width <= 34 ? 4 : 6
+    for index in 0..<count {
+        let phase = (time * 0.8 + Double(index) / Double(count)).truncatingRemainder(dividingBy: 1)
+        let x = size.width * (0.08 + (0.84 / CGFloat(count)) * CGFloat(index)) + CGFloat(sin(time * 3 + Double(index))) * size.width * 0.03
         let y = size.height * (0.02 + 0.3 * CGFloat(phase))
-        let side = max(1, size.width * 0.06)
-        let piece = Path(CGRect(x: x, y: y, width: side, height: side * 0.6))
-        context.fill(piece, with: .color(colours[index % colours.count].opacity(1 - phase * 0.6)))
+        let side = max(2, size.width * 0.07)
+        let piece = Path(CGRect(x: x, y: y, width: side, height: side * 0.7))
+        context.fill(piece, with: .color(colours[index % colours.count].opacity(1 - phase * 0.4)))
     }
 }
 

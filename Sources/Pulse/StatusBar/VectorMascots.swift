@@ -90,7 +90,20 @@ enum VectorMascots {
         var grey = false
     }
 
-    static func moment(for pose: MascotPose, character: MascotCharacter, at time: TimeInterval) -> Moment {
+    /// `gain` widens the motion for a mark drawn small: a two-unit bob is half
+    /// a pixel at menu-bar size, which is no bob at all.
+    static func moment(for pose: MascotPose, character: MascotCharacter, at time: TimeInterval,
+                       gain: Double = 1) -> Moment {
+        var moment = momentAtFullGain(for: pose, character: character, at: time)
+        guard gain != 1 else { return moment }
+        moment.offset = CGSize(width: moment.offset.width * gain, height: moment.offset.height * gain)
+        // Wider, but never a tilt that reads as a different shape.
+        moment.rotation = max(-10, min(10, moment.rotation * gain))
+        moment.scale = CGSize(width: 1 + (moment.scale.width - 1) * gain, height: 1 + (moment.scale.height - 1) * gain)
+        return moment
+    }
+
+    private static func momentAtFullGain(for pose: MascotPose, character: MascotCharacter, at time: TimeInterval) -> Moment {
         var moment = Moment()
         let blink = time.truncatingRemainder(dividingBy: 4.2) >= 4.05
         switch pose {
@@ -188,22 +201,64 @@ enum VectorMascots {
 
     // MARK: - Drawing
 
+    /// How a mark is drawn at the size it is shown.
+    ///
+    /// **A menu-bar mark is twenty-odd pixels**, and everything finer than a
+    /// pixel and a half is mush there: the blush, the eye glints, the soft
+    /// flares, the shine, the small orbiting sparkles. So at that size the
+    /// mark is a simple one — flat colour, a face of two big eyes and a thick
+    /// mouth, a body that fills its box, and cues for work big enough to see.
+    struct Style: Equatable {
+        /// Flat and bold, for a mark small enough that detail is noise.
+        let simple: Bool
+        /// The thinnest stroke worth drawing, in the drawing's own units.
+        let minStroke: Double
+
+        static func of(size: CGSize) -> Style {
+            let extent = min(size.width, size.height)
+            return Style(simple: extent <= 34, minStroke: extent <= 34 ? 1.5 / (extent / 64) : 0)
+        }
+
+        func stroke(_ width: Double) -> Double { max(width, minStroke) }
+    }
+
+    /// Scales a body about the middle of what it occupies so it fills its
+    /// box. The designs leave a margin for orbiting sparkles that a small
+    /// mark cannot afford.
+    private static func fit(_ character: MascotCharacter) -> (scale: Double, centre: CGPoint) {
+        switch character {
+        case .starBuddy: (1.12, CGPoint(x: 32, y: 32))
+        case .cloudGhost: (1.12, CGPoint(x: 31, y: 33.5))
+        default: (1.04, CGPoint(x: 32, y: 30.5))
+        }
+    }
+
     static func draw(_ character: MascotCharacter, pose: MascotPose, time: TimeInterval, colour: Bool,
                      in context: inout GraphicsContext, size: CGSize) {
-        let moment = moment(for: pose, character: character, at: time)
+        let style = Style.of(size: size)
+        let moment = moment(for: pose, character: character, at: time, gain: style.simple ? 1.8 : 1)
         let unit = min(size.width, size.height) / 64
         let face = Face.of(character)
         let ink = GraphicsContext.Shading.foreground
+        // Working leaves room for the cue: the body steps back a little.
+        let room = style.simple && pose.isWorking ? 0.86 : 1.0
+        let placed = fit(character)
+        let fitScale = style.simple ? placed.scale * room : 1
+        let fitCentre = style.simple ? placed.centre : CGPoint(x: 32, y: 32)
+        // Feet stay where they were: stepping back is stepping back, not up.
+        let fitLift = style.simple && pose.isWorking ? (1 - room) * 32 * 0.9 : 0
 
-        // Behind the body: the effects the design puts there.
-        if pose.isWorking {
+        if pose.isWorking, !style.simple {
             drawWork(character, pose: pose, time: time, colour: colour, in: &context, unit: unit, front: false)
         }
 
         context.drawLayer { layer in
             layer.scaleBy(x: unit, y: unit)
             var body = layer
-            let pivot = moment.fromFeet ? CGPoint(x: 32, y: face.feet) : CGPoint(x: 32, y: 32)
+            body.translateBy(x: 32, y: 32 + fitLift)
+            body.scaleBy(x: fitScale, y: fitScale)
+            body.translateBy(x: -fitCentre.x, y: -fitCentre.y)
+            let pivot = moment.fromFeet ? CGPoint(x: 32, y: face.feet) : fitCentre
             body.translateBy(x: moment.offset.width + pivot.x, y: moment.offset.height + pivot.y)
             body.rotate(by: .degrees(moment.rotation))
             body.scaleBy(x: moment.scale.width, y: moment.scale.height)
@@ -211,19 +266,23 @@ enum VectorMascots {
             if moment.grey { body.addFilter(.grayscale(1)) }
 
             if colour {
-                drawBody(character, in: &body)
-                drawFace(face, moment: moment, colour: true, in: &body)
+                drawBody(character, style: style, in: &body)
+                drawFace(face, moment: moment, colour: true, style: style, in: &body)
             } else {
                 // One ink, the face cut out of it, as Clawd's template frames.
                 body.fill(outline(character), with: ink)
                 body.blendMode = .destinationOut
-                drawFace(face, moment: moment, colour: false, in: &body)
+                drawFace(face, moment: moment, colour: false, style: style, in: &body)
                 body.blendMode = .normal
             }
         }
 
         if pose.isWorking {
-            drawWork(character, pose: pose, time: time, colour: colour, in: &context, unit: unit, front: true)
+            if style.simple {
+                drawBarWork(character, pose: pose, time: time, colour: colour, in: &context, unit: unit)
+            } else {
+                drawWork(character, pose: pose, time: time, colour: colour, in: &context, unit: unit, front: true)
+            }
         }
         drawAccessory(character, pose: pose, time: time, colour: colour, in: &context, size: size, unit: unit)
     }
@@ -300,7 +359,8 @@ enum VectorMascots {
                          .init(color: Color(hex: hex, opacity: 0), location: 1)])
     }
 
-    private static func drawBody(_ character: MascotCharacter, in context: inout GraphicsContext) {
+    private static func drawBody(_ character: MascotCharacter, style: Style, in context: inout GraphicsContext) {
+        if style.simple { drawFlatBody(character, in: &context); return }
         switch character {
         case .starBuddy:
             let shape = sparkle
@@ -382,6 +442,51 @@ enum VectorMascots {
         }
     }
 
+    /// The bar-size body: flat colour, hard edges, no gradient to blur and no
+    /// shine to speck. The brand's colours stay, as blocks.
+    private static func drawFlatBody(_ character: MascotCharacter, in context: inout GraphicsContext) {
+        switch character {
+        case .starBuddy:
+            let shape = sparkle
+            context.fill(shape, with: .color(Color(hex: 0x3186FF)))
+            var tips = context
+            tips.clip(to: shape)
+            // The three flares, as the logo's tips: red above, yellow to the
+            // left, green below — each big enough to be a colour, not a speck.
+            tips.fill(Path(CGRect(x: 0, y: 0, width: 64, height: 17.5)), with: .color(Color(hex: 0xFC413D)))
+            tips.fill(Path(CGRect(x: 0, y: 0, width: 17.5, height: 64)), with: .color(Color(hex: 0xFBBC04)))
+            tips.fill(Path(CGRect(x: 0, y: 46.5, width: 64, height: 20)), with: .color(Color(hex: 0x00B95C)))
+
+        case .floatBot:
+            let shape = arch
+            context.fill(shape, with: .color(Color(hex: 0x3186FF)))
+            var inside = context
+            inside.clip(to: shape)
+            inside.translateBy(x: 0, y: -1)
+            var green = Path()
+            green.move(to: CGPoint(x: 0, y: 29)); green.addLine(to: CGPoint(x: 20, y: 22))
+            green.addLine(to: CGPoint(x: 27, y: 10)); green.addLine(to: CGPoint(x: 0, y: 4)); green.closeSubpath()
+            inside.fill(green, with: .color(Color(hex: 0x00B95C)))
+            var yellow = Path()
+            yellow.move(to: CGPoint(x: 14, y: 17)); yellow.addLine(to: CGPoint(x: 38, y: 17))
+            yellow.addLine(to: CGPoint(x: 32, y: 0)); yellow.addLine(to: CGPoint(x: 14, y: 0)); yellow.closeSubpath()
+            inside.fill(yellow, with: .color(Color(hex: 0xFBBC04)))
+            var red = Path()
+            red.move(to: CGPoint(x: 32, y: 0)); red.addLine(to: CGPoint(x: 38, y: 17))
+            red.addLine(to: CGPoint(x: 48, y: 25)); red.addLine(to: CGPoint(x: 64, y: 26)); red.addLine(to: CGPoint(x: 64, y: 0))
+            red.closeSubpath()
+            inside.fill(red, with: .color(Color(hex: 0xFC413D)))
+
+        default:
+            let shape = cloud
+            context.stroke(shape, with: .color(Color(hex: 0x262394)), style: StrokeStyle(lineWidth: 5.6, lineJoin: .round))
+            context.fill(shape, with: .color(Color(hex: 0x262394)))
+            context.fill(shape, with: .linearGradient(
+                Gradient(colors: [Color(hex: 0xA9A4FF), Color(hex: 0x5C7BFF)]),
+                startPoint: CGPoint(x: 32, y: 11), endPoint: CGPoint(x: 32, y: 56)))
+        }
+    }
+
     // MARK: Faces
 
     struct Face {
@@ -411,11 +516,15 @@ enum VectorMascots {
 
     /// The face for a moment. In one-ink mode it is drawn with
     /// `.destinationOut` already set, so everything here cuts the body.
-    private static func drawFace(_ face: Face, moment: Moment, colour: Bool, in context: inout GraphicsContext) {
+    private static func drawFace(_ face: Face, moment: Moment, colour: Bool, style: Style,
+                                 in context: inout GraphicsContext) {
         let ink = GraphicsContext.Shading.color(colour ? face.ink : .black)
-        let line = StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+        let line = StrokeStyle(lineWidth: style.stroke(style.simple ? 3 : 2), lineCap: .round, lineJoin: .round)
+        // Bigger features at bar size: two wide eyes and a thick mouth are
+        // what survive twenty pixels.
+        let grow = style.simple ? 1.3 : 1.0
 
-        if colour, moment.eyes != .cross {
+        if colour, !style.simple, moment.eyes != .cross {
             for x in [face.blushX.0, face.blushX.1] {
                 context.fill(ellipse(x, face.blushY, 2.6, 1.7), with: .color(face.blush.opacity(0.8)))
             }
@@ -426,8 +535,8 @@ enum VectorMascots {
             case .open(let look), .wide(let look):
                 let wide = { if case .wide = moment.eyes { return true } else { return false } }()
                 let centre = CGPoint(x: eye.x + look.x, y: eye.y + look.y)
-                context.fill(ellipse(centre.x, centre.y, wide ? 3.3 : 3, wide ? 4.4 : 4), with: ink)
-                if colour {
+                context.fill(ellipse(centre.x, centre.y, (wide ? 3.3 : 3) * grow, (wide ? 4.4 : 4) * grow), with: ink)
+                if colour, !style.simple {
                     context.fill(ellipse(centre.x + 1, centre.y - 1.5, 1.1, 1.1), with: .color(.white))
                 }
             case .closed:
@@ -440,7 +549,7 @@ enum VectorMascots {
                 var brow = Path()
                 brow.move(to: CGPoint(x: eye.x - 3.2, y: eye.y - 1.4))
                 brow.addLine(to: CGPoint(x: eye.x + 3.2, y: eye.y - 1.4))
-                context.stroke(brow, with: ink, style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
+                context.stroke(brow, with: ink, style: StrokeStyle(lineWidth: style.stroke(1.2), lineCap: .round))
             case .happy:
                 var arc = Path()
                 arc.move(to: CGPoint(x: eye.x - 3, y: eye.y + 1.2))
@@ -450,7 +559,7 @@ enum VectorMascots {
                 var cross = Path()
                 cross.move(to: CGPoint(x: eye.x - 2.6, y: eye.y - 2.6)); cross.addLine(to: CGPoint(x: eye.x + 2.6, y: eye.y + 2.6))
                 cross.move(to: CGPoint(x: eye.x + 2.6, y: eye.y - 2.6)); cross.addLine(to: CGPoint(x: eye.x - 2.6, y: eye.y + 2.6))
-                context.stroke(cross, with: ink, style: StrokeStyle(lineWidth: 2.2, lineCap: .round))
+                context.stroke(cross, with: ink, style: StrokeStyle(lineWidth: style.stroke(2.2), lineCap: .round))
             case .squeezed:
                 // > <
                 let side: Double = index == 0 ? 1 : -1
@@ -467,12 +576,12 @@ enum VectorMascots {
                 chevron.move(to: CGPoint(x: 22.5, y: 34))
                 chevron.addLine(to: CGPoint(x: 28, y: 38.5))
                 chevron.addLine(to: CGPoint(x: 22.5, y: 43))
-                context.stroke(chevron, with: white, style: StrokeStyle(lineWidth: 2.8, lineCap: .round, lineJoin: .round))
+                context.stroke(chevron, with: white, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 3.8 : 2.8), lineCap: .round, lineJoin: .round))
                 if cursor {
                     var bar = Path()
                     bar.move(to: CGPoint(x: 33, y: 43))
                     bar.addLine(to: CGPoint(x: 41.5, y: 43))
-                    context.stroke(bar, with: white, style: StrokeStyle(lineWidth: 2.8, lineCap: .round))
+                    context.stroke(bar, with: white, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 3.8 : 2.8), lineCap: .round))
                 }
             }
         }
@@ -484,13 +593,13 @@ enum VectorMascots {
         case .smile:
             mouth.move(to: CGPoint(x: 29.6, y: y - 0.6))
             mouth.addQuadCurve(to: CGPoint(x: 34.4, y: y - 0.6), control: CGPoint(x: 32, y: y + 2.2))
-            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
         case .flat:
             mouth.move(to: CGPoint(x: 30.2, y: y))
             mouth.addLine(to: CGPoint(x: 33.8, y: y))
-            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
         case .small:
-            context.fill(ellipse(32, y + 0.4, 1.4, 1.7), with: ink)
+            context.fill(ellipse(32, y + 0.4, 1.4 * grow, 1.7 * grow), with: ink)
         case .open:
             mouth.move(to: CGPoint(x: 29.4, y: y - 0.8))
             mouth.addQuadCurve(to: CGPoint(x: 34.6, y: y - 0.8), control: CGPoint(x: 32, y: y + 4.2))
@@ -499,7 +608,7 @@ enum VectorMascots {
         case .frown:
             mouth.move(to: CGPoint(x: 29.6, y: y + 1.2))
             mouth.addQuadCurve(to: CGPoint(x: 34.4, y: y + 1.2), control: CGPoint(x: 32, y: y - 1.6))
-            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: 1.8, lineCap: .round))
+            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
         }
     }
 
@@ -560,17 +669,63 @@ enum VectorMascots {
         }
     }
 
+    /// Work at bar size: the body has stepped back to leave room, and each
+    /// character's cue from its design is drawn once, big and bold, in that
+    /// room — two sparkles round the star, chevrons at either side of the arch,
+    /// bits rising either side of the cloud.
+    private static func drawBarWork(_ character: MascotCharacter, pose: MascotPose, time: TimeInterval, colour: Bool,
+                                    in context: inout GraphicsContext, unit: CGFloat) {
+        let speed = pose == .run ? 1.8 : 1.0
+        func tone(_ hex: UInt32, _ opacity: Double = 1) -> Color {
+            colour ? Color(hex: hex, opacity: opacity) : Color.primary.opacity(opacity)
+        }
+        var layer = context
+        layer.scaleBy(x: unit, y: unit)
+        switch character {
+        case .starBuddy:
+            let hues: [UInt32] = [0xFC413D, 0xFBBC04, 0x00B95C]
+            for index in 0..<2 {
+                let angle = time * 3.2 * speed + Double(index) * .pi
+                let hue = hues[(Int(time * 0.8 * speed) + index) % hues.count]
+                let centre = CGPoint(x: 32 + 25 * cos(angle), y: 33 + 22 * sin(angle))
+                drawSpark(in: &layer, at: centre, radius: 7.5, colour: tone(hue))
+            }
+        case .floatBot:
+            for (index, side) in [-1.0, 1.0].enumerated() {
+                let pulse = (sin(time * 5 * speed + Double(index) * .pi) + 1) / 2
+                let x = 32 + side * 28
+                var chevron = Path()
+                chevron.move(to: CGPoint(x: x - side * 3, y: 22))
+                chevron.addLine(to: CGPoint(x: x + side * 2, y: 29))
+                chevron.addLine(to: CGPoint(x: x - side * 3, y: 36))
+                layer.stroke(chevron, with: .color(tone(0x4893FC, 0.35 + 0.65 * pulse)),
+                             style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+            }
+        default:
+            for index in 0..<2 {
+                let rise = (time * 0.8 * speed + Double(index) * 0.5).truncatingRemainder(dividingBy: 1)
+                let x = index == 0 ? 0.0 : 57.0
+                layer.fill(Path(roundedRect: CGRect(x: x, y: 50 - 36 * rise, width: 7, height: 7), cornerRadius: 1.5),
+                           with: .color(tone(index == 0 ? 0x3941FF : 0x7A9DFF, 1 - rise * 0.6)))
+            }
+        }
+    }
+
     /// The props each pose shares with the other marks: the cup, the Zs, the
     /// sweat, the stars, the dots, the question mark, the confetti, the ball.
     private static func drawAccessory(_ character: MascotCharacter, pose: MascotPose, time: TimeInterval, colour: Bool,
                                       in context: inout GraphicsContext, size: CGSize, unit: CGFloat) {
         let mono = Color.primary
+        let style = Style.of(size: size)
         switch pose {
         case .coffee: drawCoffeeBreak(in: &context, size: size, time: time)
         case .tired: drawSweat(in: &context, size: size, time: time)
         case .spent: drawDizzyStars(in: &context, size: size, time: time)
         case .thinking:
-            drawThoughtDots(in: &context, size: size, time: time, ink: colour ? Face.of(character).ink : mono)
+            // The bar's own ink at bar size: the face's navy is invisible on a
+            // dark bar.
+            drawThoughtDots(in: &context, size: size, time: time,
+                            ink: colour && !style.simple ? Face.of(character).ink : mono)
             drawGoldSparks(in: &context, size: size, time: time)
         case .waiting:
             drawQuestionMark(in: &context, size: size, time: time, ink: colour ? Color(hex: 0xFBBC04) : mono)
@@ -584,15 +739,15 @@ enum VectorMascots {
             let hex: UInt32 = character == .cloudGhost ? 0x3941FF : 0x4893FC
             for index in 0..<2 {
                 let phase = (time * 0.35 + Double(index) / 2).truncatingRemainder(dividingBy: 1)
-                let side = 3 + 2 * phase
-                let origin = CGPoint(x: 49 + 6 * phase, y: 17 - 11 * phase)
+                let side = style.simple ? 9 + 3 * phase : 3 + 2 * phase
+                let origin = CGPoint(x: (style.simple ? 46 : 49) + 5 * phase, y: (style.simple ? 19 : 17) - 12 * phase)
                 var z = Path()
                 z.move(to: origin)
                 z.addLine(to: CGPoint(x: origin.x + side, y: origin.y))
                 z.addLine(to: CGPoint(x: origin.x, y: origin.y + side))
                 z.addLine(to: CGPoint(x: origin.x + side, y: origin.y + side))
                 layer.stroke(z, with: .color(colour ? Color(hex: hex, opacity: 1 - phase) : mono.opacity(1 - phase)),
-                             style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                             style: StrokeStyle(lineWidth: style.stroke(style.simple ? 3 : 2), lineCap: .round, lineJoin: .round))
             }
         case .run, .type, .waking, .awake, .stretch: break
         }
