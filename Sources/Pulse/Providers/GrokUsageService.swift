@@ -28,9 +28,12 @@ import Foundation
 ///
 /// Two caveats, both shared with the other borrowed routes. Neither endpoint
 /// is public API — they are what the CLI itself calls, and can change without
-/// notice. And the stored token lasts about six hours: the CLI renews it while
-/// you use Grok, and nothing renews it for Pulse, so an aged-out login is
-/// reported rather than worked around.
+/// notice. And the stored token lasts about six hours. The CLI renews it while
+/// you use Grok; when it has aged out, or the proxy refuses it, this renews it
+/// itself from the entry's `refresh_token` (see `GrokLoginRenewal`) and writes
+/// the result back to `~/.grok/auth.json`, so the CLI never has to be started
+/// just to keep Pulse reading. Only a refresh the issuer itself rejects is
+/// reported as an expired login.
 struct GrokUsageService: Sendable {
     var authFile: URL = URL(fileURLWithPath: NSHomeDirectory())
         .appending(path: ".grok/auth.json")
@@ -40,14 +43,36 @@ struct GrokUsageService: Sendable {
     /// The plan's name comes from here, not from the billing reply.
     var settingsEndpoint = URL(string: "https://cli-chat-proxy.grok.com/v1/settings")!
 
+    /// How the renewal reaches the issuer. Injectable so a test can answer
+    /// for it instead of the network.
+    var send: @Sendable (URLRequest) async throws -> (Data, URLResponse) = { request in
+        try await NetworkSession.shared.data(for: request)
+    }
+
     func fetch() async -> ProviderUsage {
         switch storedLogin() {
         case .none:
             return .unavailable(.grok, reason: .grokSignInRequired)
         case .expired:
-            return .unavailable(.grok, reason: .grokLoginExpired)
+            return await renewedFetch(rejecting: nil)
         case .usable(let token):
-            return await fetch(token: token)
+            let usage = await fetch(token: token)
+            // The file's date said it was good and the proxy disagreed — a
+            // token revoked early, or a clock that is off. One renewal, and
+            // one more try: never a loop.
+            if usage.state == .unavailable(.grokLoginExpired) {
+                return await renewedFetch(rejecting: token)
+            }
+            return usage
+        }
+    }
+
+    /// Renews the stored login from its refresh token, then reads with it.
+    private func renewedFetch(rejecting rejected: String?) async -> ProviderUsage {
+        switch await GrokLoginRenewal.shared.renew(authFile: authFile, rejecting: rejected, send: send) {
+        case .renewed(let token): return await fetch(token: token)
+        case .rejected: return .unavailable(.grok, reason: .grokLoginExpired)
+        case .unreachable: return .unavailable(.grok, reason: .unreachable)
         }
     }
 
