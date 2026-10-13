@@ -32,6 +32,10 @@ jobs:
           sudo xcode-select -s "$picked"
           swift --version
 
+      # A release is never cut from a tree whose tests fail.
+      - name: Test
+        run: swift test
+
       - name: Build and package
         run: bash scripts/make-app.sh
 
