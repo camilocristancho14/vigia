@@ -352,8 +352,17 @@ struct UsageDetailCard: View {
     /// to say so rather than pass for current.
     private var footnote: String? {
         switch usage.state {
-        case .live, .unavailable:
+        case .unavailable:
             nil
+        // A live reading that has gone quiet — the loop is slow with nothing
+        // happening — still says how old it is, in the colour of the rest of
+        // the footnote rather than in alarm.
+        case .live where isDetailed:
+            nil // the header already says it
+        case .live:
+            usage.observedAt.flatMap { observed in
+                Date().timeIntervalSince(observed) >= MenuCardLayout.freshFor ? Self.updatedText(observed) : nil
+            }
         case .stale:
             usage.observedAt.map { String.localized("As of \(Self.relative($0))") }
                 ?? String.localized("Reading may be out of date")

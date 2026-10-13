@@ -105,6 +105,26 @@ final class UsageStore {
         for account in settings.allAccounts {
             usage[account.id] = Self.initialState(for: account)
         }
+        activity.onNewLimit = { [weak self] provider, _ in self?.limitReported(by: provider) }
+    }
+
+    /// Puts a reading on the panel as though a pass had fetched it.
+    func adopt(_ reading: ProviderUsage) { usage[reading.account.id] = reading }
+
+    /// When each provider's agent last announced a limit we reacted to.
+    private var limitRefreshedAt: [Provider: Date] = [:]
+
+    /// An agent just wrote that it hit a limit. The overlay in `usage(for:)`
+    /// already shows it, from the transcript's own words; this asks the
+    /// provider for the exact figures and the reset, now rather than at the
+    /// next tick. Once a half-minute per provider, since a limited agent that
+    /// is prompted again writes the message again.
+    private func limitReported(by provider: Provider) {
+        let now = Date()
+        if let last = limitRefreshedAt[provider], now.timeIntervalSince(last) < 30 { return }
+        limitRefreshedAt[provider] = now
+        signals.lastChange = now
+        refresh()
     }
 
     /// What an account shows before anything has been fetched for it.
@@ -1147,8 +1167,25 @@ final class UsageStore {
         if needsRefresh { refresh() }
     }
 
-    func usage(for account: AccountKey) -> ProviderUsage {
-        usage[account.id] ?? .unavailable(account, reason: .loading)
+    /// The reading for an account, with any limit its agent has reported
+    /// hitting laid over it.
+    ///
+    /// **The agent's word beats a poll that is older than it.** A poll can be
+    /// half an hour old and say 14% while the session was blocked ten minutes
+    /// ago; the transcript says so the instant it happens. Only the window the
+    /// message names is changed, and only while the reading is not newer than
+    /// the message — see `UsageWindow.applying(_:readAt:now:)`. The reading's
+    /// own time is left alone, so the card still says how old the rest is.
+    func usage(for account: AccountKey) -> ProviderUsage { usage(for: account, now: Date()) }
+
+    func usage(for account: AccountKey, now: Date) -> ProviderUsage {
+        let reading = usage[account.id] ?? .unavailable(account, reason: .loading)
+        guard account.isPrimary, let hit = activity.limits[account.provider], hit.isActive(at: now),
+              !reading.windows.isEmpty
+        else { return reading }
+        var adjusted = reading
+        adjusted.windows = reading.windows.map { $0.applying(hit, readAt: reading.observedAt, now: now) }
+        return adjusted
     }
 
     // MARK: - The loop
@@ -1158,6 +1195,10 @@ final class UsageStore {
         guard !settings.needsProviderSelection else { return }
 
         signals.isPanelVisible = settings.isPanelVisible
+        // The menu bar shows the marks, and the percentages when asked for,
+        // whether or not the panel is open: a hidden panel is not a reason to
+        // let the figures behind them age.
+        signals.showsInMenuBar = !settings.hidesMenuBarIcon
         signals.isConstrained = screensAsleep
             || ProcessInfo.processInfo.isLowPowerModeEnabled
             || [.serious, .critical].contains(ProcessInfo.processInfo.thermalState)
