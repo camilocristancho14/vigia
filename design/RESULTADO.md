@@ -167,3 +167,7 @@ La barra de menú de este Mac es de 1× (1080p), así que cada marca mide **20 p
 - **Verificación:**
   - La barra real no se pudo capturar porque otra app a pantalla completa la mantiene oculta y no quise tocar la pantalla. En su lugar se renderiza `MenuBarMascotsView`, el mismo código del item, dentro de un `NSHostingView`, a 1× y 2×, en reposo, trabajando y pensando (`item-real-*.png` en `~/vigia-capturas/`).
   - Pruebas medibles a 22 px: cada pose de cada personaje se mueve y ninguna pose se confunde con otra, y el cuerpo ocupa al menos un tercio de la caja.
+
+## v0.5.2: Clawd vuelve a su tamaño de 0.5.0
+
+En la 0.5.1 Clawd quedó demasiado grande en la barra (marca de 22 pt y una caja más ancha). Vuelve exactamente a lo de la 0.5.0: caja cuadrada de 20 pt y el mismo sprite (`ClawdMarkView` y `ClawdSprites` son idénticos a los de la v0.5.0). Las demás marcas siguen en 22 pt. El tamaño por personaje vive en `MascotCharacter.menuBarSize`, con una prueba que lo fija.
