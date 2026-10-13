@@ -74,6 +74,10 @@ struct ClawdMarkView: View {
     /// Claude's own orange, rather than the ink of the surface behind it.
     var colour = false
     var size: CGFloat
+    /// A wider box than `size` for the sprite, which is wider than it is
+    /// tall (17 × 12 cells): in a square box it is drawn at two thirds of the
+    /// room there is.
+    var width: CGFloat?
 
     var body: some View {
         TimelineView(.animation(minimumInterval: ClawdFrames.interval(for: pose))) { context in
@@ -84,9 +88,9 @@ struct ClawdMarkView: View {
                     .resizable()
                     .interpolation(.none)
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: size, height: size)
+                    .frame(width: width ?? size, height: size)
             } else {
-                Color.clear.frame(width: size, height: size)
+                Color.clear.frame(width: width ?? size, height: size)
             }
         }
     }

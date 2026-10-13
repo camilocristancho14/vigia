@@ -172,7 +172,7 @@ private struct MenuBarMascotItem: View {
     /// Moves on every minute, so a pose that follows the clock is re-read.
     let now: Date
 
-    private static let markSize: CGFloat = 20
+    private static let markSize: CGFloat = 22
     private let backdrop = MenuBarBackdrop.shared
 
     var body: some View {
@@ -189,7 +189,9 @@ private struct MenuBarMascotItem: View {
 
         HStack(spacing: 4) {
             mark(working: working, pose: pose, headline: headline)
-                .frame(width: Self.markSize, height: Self.markSize)
+                // Clawd is wider than the others, and gets the room for it.
+                .frame(width: settings.mascotCharacter(for: account) == .clawd && settings.showsBotMark(for: account)
+                        ? Self.markSize * 17 / 12 : Self.markSize, height: Self.markSize)
             if working, settings.menuBarActivityText || settings.menuBarTimer {
                 activity(for: provider)
             }
@@ -216,7 +218,7 @@ private struct MenuBarMascotItem: View {
             let legible = backdrop.legible(character.brand)
             let keepsColour = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(character.brand)
             if character == .clawd {
-                ClawdMarkView(pose: pose, colour: keepsColour, size: Self.markSize)
+                ClawdMarkView(pose: pose, colour: keepsColour, size: Self.markSize, width: Self.markSize * 17 / 12)
             } else {
                 VectorMascotView(character: character, pose: pose, colour: keepsColour,
                                  size: Self.markSize, phase: provider.mascotPhase)

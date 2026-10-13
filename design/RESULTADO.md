@@ -151,3 +151,19 @@ Tarjeta propia para el menú, `StatusBar/MenuUsageCard.swift`. La burbuja del no
 - **Refresco:** resuelto, ver «Cambio de las 13:15». Con la barra de menú oculta *y* el panel oculto sigue siendo de 30 min, porque entonces nada muestra las cifras.
 - **Grok Bot y Antigravity** no tienen ninguna señal local de límite alcanzado; su frescura depende solo de la cadencia de refresco.
 - **Nombres de plan:** «Default Raven» en Claude Code es un `rate_limit_tier` que el código no reconoce y pasa tal cual. No afecta a las cifras.
+
+## v0.5.1: marcas legibles en la barra de menú
+
+La barra de menú de este Mac es de 1× (1080p), así que cada marca mide **20 píxeles reales**. A ese tamaño el diseño detallado se emborronaba: rubor y brillos de un píxel, flares degradados, orbitas de chispas minúsculas y ninguna diferencia visible entre poses salvo el accesorio.
+
+- **Modo barra** para los personajes vectoriales (tamaños ≤ 34 pt):
+  - Cuerpo que llena su caja, con formas planas de color en lugar de degradados (Star Buddy: azul con puntas roja, amarilla y verde; Float Bot: capucha de tres colores; Cloud Ghost: nube con contorno añil).
+  - Cara de dos ojos grandes y boca gruesa, sin rubor ni brillos.
+  - Trazos nunca más finos que 1,5 px.
+  - Movimiento 1,8 veces más amplio (con inclinación limitada a ±10°).
+  - Señales de trabajo grandes en el hueco que deja el cuerpo al retroceder un poco: dos chispas que giran, chevrones laterales o bits que suben.
+  - «Z» de dormir, confeti y puntos de pensar más grandes.
+- Marca de la barra de 22 pt (antes 20), y Clawd con una caja más ancha porque su sprite lo es.
+- **Verificación:**
+  - La barra real no se pudo capturar porque otra app a pantalla completa la mantiene oculta y no quise tocar la pantalla. En su lugar se renderiza `MenuBarMascotsView`, el mismo código del item, dentro de un `NSHostingView`, a 1× y 2×, en reposo, trabajando y pensando (`item-real-*.png` en `~/vigia-capturas/`).
+  - Pruebas medibles a 22 px: cada pose de cada personaje se mueve y ninguna pose se confunde con otra, y el cuerpo ocupa al menos un tercio de la caja.
