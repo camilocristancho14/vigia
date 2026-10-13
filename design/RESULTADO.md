@@ -2,6 +2,25 @@
 
 Base: `main` v0.4.5 (`772ee6a`). Sin PR, sin release, sin tag y sin cambiar `VERSION`.
 
+## Cambio de las 13:15 (prioridad): uso en vivo
+
+Vigía tardaba en reflejar que Claude Code había llegado al 100 % del límite de 5 h. La causa era doble: el modo automático refrescaba cada 30 min cuando el panel estaba oculto (aunque la barra de menú siguiera mostrando cifras), y nada leía el aviso de «límite alcanzado» que el propio agente escribe. Ahora (`a5d58bb`):
+
+- **Detección instantánea, sin ejecutar comandos ni abrir apps.** El monitor de actividad ya lee las transcripciones cada 2 s; ahora también reconoce el límite alcanzado.
+  - **Claude Code:** el registro del asistente con `error: "rate_limit"`. Trae un bloque `quotaLimits` con la ventana (`five_hour` o `seven_day`) y el reinicio exacto en epoch, que tiene prioridad; la frase «You've hit your session limit · resets 5pm (America/Bogota)» queda como respaldo, interpretada en la zona horaria que dice el mensaje. Comprobado contra registros reales de este Mac.
+  - **Codex:** el bloque `rate_limits` del último `token_count` (ventana por `window_minutes` y reinicio por `resets_at`).
+  - **Grok Build:** un turno fallido cuyo texto dice que se agotó el límite. No tenía ejemplos reales para confirmar este formato, así que es el menos seguro de los tres.
+  - Se lee la transcripción más reciente sin importar su antigüedad, porque un límite dura horas. No cuenta como «turno fallido»: la pose es la de agotado.
+- **Se superpone al instante sobre la lectura.** `UsageStore.usage(for:)` marca como agotada la ventana que nombra el aviso, en rojo y con la hora de reinicio del propio mensaje.
+  - Una lectura posterior al aviso manda, porque es la palabra del proveedor.
+  - La antigüedad de la lectura no se toca, así que la tarjeta sigue diciendo cuántos datos son viejos.
+  - Con el límite activo, la mascota pasa a la pose de agotado.
+- **Refresco inmediato:** un límite nuevo pide las cifras exactas al proveedor al momento (como máximo una vez cada 30 s por proveedor).
+- **Cadencia:** la barra de menú cuenta como «cifras en pantalla», así que un panel oculto ya no significa 30 min. Con un agente escribiendo en los últimos 2 min se pregunta cada 60 s (antes 120 s).
+- **Antigüedad del dato:** la tarjeta del notch dice «Actualizado hace …» cuando una lectura «live» pasa de 15 min. Las tarjetas del menú ya lo hacían.
+- **Tests (`LiveLimitTests`, 12):** frases de límite en varios formatos y zonas horarias, `quotaLimits` y `rate_limit_info`, Codex, transcripciones con y sin límite levantado, otros errores que no son límite, la superposición, la lectura posterior que gana, el refresco único y la cadencia. Probado además en seco contra las transcripciones reales de este Mac: sin falsos positivos, porque el último límite ya había vencido.
+- **Sin señal local, solo cadencia más rápida:** Grok Bot (cuota en el servidor del proveedor) y Antigravity (no deja nada que leer con la app cerrada).
+
 ## Commits
 
 | Commit | Qué |
@@ -12,7 +31,8 @@ Base: `main` v0.4.5 (`772ee6a`). Sin PR, sin release, sin tag y sin cambiar `VER
 | `793fcae` | CI: `swift test` en cada push y PR, y también antes de empaquetar una release. |
 | `87a84bf` | Rediseño de las tarjetas del menú de la barra, y textos relativos en el idioma de la app. |
 | `65371b2`, `6965e5e` | Tests de lectura de uso con respuestas reales anonimizadas (Grok Build y Antigravity). |
-| (este) | Este `RESULTADO.md` y la sección «CAMBIO (12:38)» del brief. |
+| `4fa6017` | Este `RESULTADO.md` y la sección «CAMBIO (12:38)» del brief. |
+| `a5d58bb` | Uso en vivo: límite alcanzado al instante, refresco inmediato y cadencia más rápida. |
 
 ## 1. Mascotas nuevas
 
@@ -107,7 +127,7 @@ Tarjeta propia para el menú, `StatusBar/MenuUsageCard.swift`. La burbuja del no
 
 ## Tests y verificación
 
-- `swift build` correcto. `swift test` completo en verde: **1587 tests en 187 suites**, frente a 1571 en la base.
+- `swift build` correcto. `swift test` completo en verde: **1601 tests en 188 suites**, frente a 1571 en la base.
 - **Tests nuevos o reescritos:**
   - `MascotPoseTests`: 1, 2, 3, 4 y 5 mascotas, el mismo proveedor dos veces, inactividad de más de 20 min a cualquier hora y en cualquier slot, ningún fallback entre proveedores, variedad matinal, esperando y error, hash estable, y escenas de BotMark para cada pose nueva.
   - `AgentWaitingTests`: transcripciones con pregunta a la persona, error de API, `pending_interaction`, `turn_failed` y sesión muerta.
@@ -128,5 +148,6 @@ Tarjeta propia para el menú, `StatusBar/MenuUsageCard.swift`. La burbuja del no
 - **No verificado en la barra de menú real** con la app instalada. Las animaciones se revisaron en la hoja de contacto y las vistas son las mismas que usa la barra.
 - **Esperando input en Claude Code:** solo se detecta en preguntas y planes (`AskUserQuestion` y `ExitPlanMode`). Los diálogos de permisos de herramientas no dejan rastro en la transcripción, y Codex y Grok no tienen todavía un registro equivalente identificado.
 - **Sin traducir a ja, ko y zh:** las cadenas nuevas (mascota, «Agotado hasta el reinicio», «Claude y GPT») solo existen en en y es. En el resto de idiomas se muestran en inglés.
-- **Refresco con el panel oculto:** es de 30 min. Puede ser mucho para Claude Code cuando el uso sube deprisa; habría que valorarlo.
+- **Refresco:** resuelto, ver «Cambio de las 13:15». Con la barra de menú oculta *y* el panel oculto sigue siendo de 30 min, porque entonces nada muestra las cifras.
+- **Grok Bot y Antigravity** no tienen ninguna señal local de límite alcanzado; su frescura depende solo de la cadencia de refresco.
 - **Nombres de plan:** «Default Raven» en Claude Code es un `rate_limit_tier` que el código no reconoce y pasa tal cual. No afecta a las cifras.
