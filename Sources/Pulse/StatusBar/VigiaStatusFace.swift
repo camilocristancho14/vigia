@@ -139,10 +139,11 @@ struct MenuBarMascotsView: View {
             : []
         TimelineView(.periodic(from: .now, by: 60)) { tick in
         HStack(spacing: 10) {
-            ForEach(accounts) { account in
+            ForEach(Array(accounts.enumerated()), id: \.element) { place, account in
                 let index = rail.firstIndex(of: account) ?? 0
                 MenuBarMascotItem(
                     account: account,
+                    slot: place,
                     tint: index < tints.count ? tints[index] : .clear,
                     persona: settings.botPersona(for: account) ?? BotMarkPersona.automatic(at: index),
                     settings: settings,
@@ -162,6 +163,8 @@ struct MenuBarMascotsView: View {
 
 private struct MenuBarMascotItem: View {
     let account: AccountKey
+    /// Its place among the marks in the bar, which deals the idle poses.
+    let slot: Int
     let tint: Color
     let persona: BotMarkPersona
     let settings: AppSettings
@@ -180,7 +183,7 @@ private struct MenuBarMascotItem: View {
         let pose = store.mascotPose(
             provider,
             usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
-            playful: settings.showsBotMark(for: account),
+            slot: slot,
             now: now
         )
 

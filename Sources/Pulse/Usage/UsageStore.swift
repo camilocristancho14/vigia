@@ -204,32 +204,49 @@ final class UsageStore {
     func isRunning(_ provider: Provider) -> Bool { activity.running.contains(provider) }
 
 
-    /// What the mascot is up to. Where Vigía can see the agent's sessions,
-    /// working comes first, then a five-minute break after a turn ends. After
-    /// that, or for an agent it cannot see, a nearly spent limit shows as tired
-    /// (75%) or used up (100%); otherwise the mark follows the time of day.
-    /// `playful` is for marks with a character, which also get busy at the
-    /// laptop or off for a run in the course of the day.
-    func mascotPose(_ provider: Provider, usedFraction: Double? = nil, playful: Bool = false,
+    /// What the mascot is up to. Where Vigía can see the agent's sessions:
+    /// getting up as a turn starts, then working; asking for attention while
+    /// a turn waits for a person; a failed turn; a short celebration and then
+    /// a five-minute break after a turn ends. After that, or for an agent it
+    /// cannot see, a nearly spent limit shows as tired (75%) or used up
+    /// (100%). Otherwise an agent it can see is idle for twenty minutes after
+    /// it last wrote anything and then asleep, and one it cannot see follows
+    /// the time of day.
+    ///
+    /// **Idle never looks like work.** None of the idle rotation is a working
+    /// pose, so a mark at the laptop always means a turn in flight.
+    ///
+    /// `slot` is the mark's place among the marks on the same surface, in the
+    /// rail's order: idle marks are dealt the rotation together so that each
+    /// does something different, two accounts of one provider included.
+    func mascotPose(_ provider: Provider, usedFraction: Double? = nil, slot: Int = 0,
                     now: Date = Date()) -> MascotPose {
-        let seen = provider.supportsLocalActivity
         // Seen on this Mac or reported by another machine: either way it is
         // a turn that really happened.
-        if activity.running.contains(provider) { return .working(label: activity.labels[provider]) }
-        if let finished = activity.finishedAt[provider], now.timeIntervalSince(finished) < 300 { return .coffee }
+        if activity.running.contains(provider) {
+            if let started = activity.startedAt[provider], now.timeIntervalSince(started) < 3 { return .waking }
+            return .working(label: activity.labels[provider])
+        }
+        if activity.waiting.contains(provider) { return .waiting }
+        if let failed = activity.failedAt[provider],
+           now.timeIntervalSince(failed) < AgentActivity.failureWindow { return .error }
+        if let finished = activity.finishedAt[provider] {
+            let since = now.timeIntervalSince(finished)
+            if since >= 0, since < 20 { return .celebrate }
+            if since >= 0, since < 300 { return .coffee }
+        }
         if let used = usedFraction {
             if used >= 1 { return .spent }
             if used >= 0.75 { return .tired }
         }
-        if seen {
-            let written = activity.lastWrite(for: provider) ?? activity.lastWrite
-            if let written, now.timeIntervalSince(written) < 1200 { return .awake }
-            if playful {
-                return MascotPose.ofTheDay(for: provider, at: now, playful: playful)
-            }
-            return .sleep
+        if provider.supportsLocalActivity {
+            // Only this provider's own writes: another agent being busy says
+            // nothing about whether this one is awake.
+            guard let written = activity.lastWrite(for: provider),
+                  now.timeIntervalSince(written) < 1200 else { return .sleep }
+            return MascotPose.idle(slot: slot, at: now)
         }
-        return MascotPose.ofTheDay(for: provider, at: now, playful: playful)
+        return MascotPose.ofTheDay(slot: slot, at: now)
     }
 
     /// What a working provider is doing right now, as an English key.

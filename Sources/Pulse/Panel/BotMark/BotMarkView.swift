@@ -59,7 +59,22 @@ func drawBotMark(_ frame: BotMarkFrame, config: BotMarkConfig,
     for eye in frame.eyes where eye.visible {
         var eyeTransform = eye.transform.concatenating(combined)
         guard let path = eye.path.copy(using: &eyeTransform) else { continue }
-        eyeLayer.fill(Path(path), with: .color(config.eyeColor))
+        if config.crossedEyes {
+            // An X the size of the eye it replaces, so it sits and moves
+            // exactly where the eye would.
+            let box = path.boundingBoxOfPath
+            let arm = max(box.width, box.height) * 0.5
+            let centre = CGPoint(x: box.midX, y: box.midY)
+            var cross = Path()
+            cross.move(to: CGPoint(x: centre.x - arm, y: centre.y - arm))
+            cross.addLine(to: CGPoint(x: centre.x + arm, y: centre.y + arm))
+            cross.move(to: CGPoint(x: centre.x + arm, y: centre.y - arm))
+            cross.addLine(to: CGPoint(x: centre.x - arm, y: centre.y + arm))
+            eyeLayer.stroke(cross, with: .color(config.eyeColor),
+                            style: StrokeStyle(lineWidth: max(1, arm * 0.55), lineCap: .round))
+        } else {
+            eyeLayer.fill(Path(path), with: .color(config.eyeColor))
+        }
     }
 
     paint(frame.frontParticles, in: &context)
@@ -221,7 +236,7 @@ struct BotMarkView: View {
                         drawBotMark(step.frame, config: step.config,
                                     in: &context, size: canvasSize)
                         if let pose {
-                            let phaseOffset = Double(abs(persona.rawValue.hashValue ^ bodyShape.rawValue.hashValue) % 100) * 0.35
+                            let phaseOffset = StableHash.phase(persona.rawValue + "/" + bodyShape.rawValue)
                             drawMascotOverlay(pose: pose, mood: mood, in: &context, size: canvasSize,
                                               time: timeline.date.timeIntervalSinceReferenceDate + phaseOffset)
                         }
@@ -251,11 +266,12 @@ struct BotMarkView: View {
         )
         programme.event = event
         if let pose { programme.apply(pose: pose, activityLabel: activityLabel, lively: lively, persona: persona) }
-        programme.shape = bodyShape.shape
+        programme.shape = programme.poseShape ?? bodyShape.shape
         programme.gazeBias = gaze.bias
         programme.flipX = gaze.mirrored
-        programme.color = tint
-        programme.eyeColor = eyeTint
+        // A failed turn drains the colour out of the mark.
+        programme.color = pose == .error ? Color(white: 0.58) : tint
+        programme.eyeColor = pose == .error ? Color(white: 0.12) : eyeTint
         programme.viewWidth = size
         // No size gate: busy/event ribbons stay visible even at 25pt. The
         // programme fences them by mood/event, so an idle spin is just play.

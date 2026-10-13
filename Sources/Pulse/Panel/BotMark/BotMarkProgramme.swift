@@ -31,6 +31,11 @@ struct BotMarkProgramme {
     var mood: BotMarkMood = .idle
 
     var shape: String = BotMarkBody.default.shape
+    /// A body the pose itself calls for — melted to a teardrop by a failure,
+    /// a star for a finished turn — over the one chosen in settings.
+    var poseShape: String?
+    /// Eyes drawn as crosses. See `BotMarkConfig.crossedEyes`.
+    var crossedEyes = false
     var tempo = 1.0
     var motionScale = 1.0
     var gazeScale = 1.0
@@ -94,6 +99,15 @@ struct BotMarkProgramme {
     mutating func apply(pose: MascotPose, activityLabel: String?, lively: Bool = false, persona: BotMarkPersona = .calm) {
         let scene: [(String, ClosedRange<Double>)]
         switch (mood, pose) {
+        case (_, .error):
+            // Melted to a teardrop, grey, eyes crossed out.
+            poseShape = "teardrop"
+            crossedEyes = true
+            scene = [("sad", 3_000...4_000), ("powering-down", 3_500...4_500)]
+        case (_, .waking):
+            // Getting up as the turn starts: the upstream's own wake-up, after
+            // the gather it does when it spawns.
+            scene = [("spawning", 1_200...1_600), ("waking", 2_400...3_000)]
         case (.working, _):
             switch activityLabel {
             case "Reading", "Searching", "Searching web", "Browsing web":
@@ -150,6 +164,17 @@ struct BotMarkProgramme {
                      ("excited", 1_600...2_200), ("proud", 1_400...2_000)]
         case (.idle, .sleep):
             scene = [("drowsy", 3_000...4_000), ("sleeping", 7_000...10_000)]
+        case (.idle, .waiting):
+            // A hop for attention under the question mark, then looking out
+            // for the answer.
+            scene = [("notifying", 1_400...1_800), ("curious", 1_800...2_400), ("listening", 2_200...3_000)]
+        case (.idle, .celebrate):
+            poseShape = "star"
+            scene = [("celebrate", 6_200...6_400), ("bouncing", 1_800...2_400), ("happy", 2_000...2_600)]
+        case (.idle, .stretch):
+            scene = [("proud", 2_400...3_200), ("humming", 2_400...3_200)]
+        case (.idle, .play):
+            scene = [("playful", 1_800...2_600), ("bouncing", 1_600...2_200), ("laughing", 1_400...2_000)]
         default:
             return
         }
@@ -183,6 +208,7 @@ struct BotMarkProgramme {
         config.viewWidth = viewWidth
         config.color = color
         config.eyeColor = eyeColor
+        config.crossedEyes = crossedEyes
         return config
     }
 }

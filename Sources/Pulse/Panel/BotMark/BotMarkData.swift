@@ -18,6 +18,8 @@ struct BotMarkLibrary {
     let starPath: CGPath
     let starGold: Color
     let shapes: [String: BotMarkShape]
+    /// Not one of the picker's bodies: only a celebration morphs into it.
+    let star: BotMarkShape
     let shapeOrder: [String]
     let shapeLabels: [String: BotMarkLabel]
     /// 25 expressions, each a pair of eye rings.
@@ -39,7 +41,7 @@ struct BotMarkLibrary {
     }()
 
     func shape(_ identifier: String) -> BotMarkShape {
-        shapes[identifier] ?? shapes["blob"]!
+        shapes[identifier] ?? (identifier == "star" ? star : shapes["blob"]!)
     }
 
     func state(_ identifier: String) -> BotMarkStateInfo {
@@ -194,6 +196,31 @@ extension BotMarkLibrary {
                     samples.map { ($0[0], $0[1]) }
                 })
         }
+        star = BotMarkLibrary.star(from: shapes["blob"]!)
+    }
+
+    /// A five-point star for the celebration to morph into, which the
+    /// upstream table does not carry. Built from the blob's own 96-point ring
+    /// — each point pushed out or pulled in by its angle — so it blends with
+    /// every other shape point by point, and keeps the blob's face.
+    static func star(from blob: BotMarkShape) -> BotMarkShape {
+        let xs = blob.ring.map(\.x), ys = blob.ring.map(\.y)
+        let centre = CGPoint(x: (xs.min()! + xs.max()!) / 2, y: (ys.min()! + ys.max()!) / 2)
+        let ring = blob.ring.map { point -> CGPoint in
+            let dx = point.x - centre.x, dy = point.y - centre.y
+            let angle = atan2(dy, dx) + .pi / 2
+            // Sharp tips, deep valleys, one tip straight up.
+            let reach = 0.62 + 0.5 * pow((cos(5 * angle) + 1) / 2, 2.2)
+            return CGPoint(x: centre.x + dx * reach, y: centre.y + dy * reach)
+        }
+        let path = CGMutablePath()
+        path.addLines(between: ring)
+        path.closeSubpath()
+        let top = ring.map { Double($0.y) }.min() ?? blob.top
+        let bottom = ring.map { Double($0.y) }.max() ?? blob.bottom
+        return BotMarkShape(ring: ring, path: path, face: blob.face, tiltScale: blob.tiltScale,
+                            beltRadius: blob.beltRadius, radius: blob.radius, top: top, bottom: bottom,
+                            sides: 0, solid: nil, spanSamples: nil)
     }
 
     private static func point(_ pair: [Double]) -> CGPoint {

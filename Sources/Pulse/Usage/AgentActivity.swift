@@ -39,7 +39,21 @@ enum AgentActivity {
         /// What the turn is doing right now, as an English key for
         /// `String.localized` ("Thinking…", "Reading", …). Nil when idle.
         var label: String?
+        /// A turn is open but its next move is a person's: a question put to
+        /// them, a plan waiting for approval. Never true while working.
+        var isWaiting = false
+        /// When the newest turn failed or its session died mid-turn, if that
+        /// happened recently enough to still be news. See `failureWindow`.
+        var failedAt: Date?
     }
+
+    /// How long an open question keeps a mark waiting. A person may take a
+    /// while to answer; a session left asking for half an hour has been left.
+    static let waitingWindow: TimeInterval = 30 * 60
+    /// How long a failure is shown before the mark gets on with its day.
+    static let failureWindow: TimeInterval = 15 * 60
+    /// Tools whose call hands the turn to a person rather than to a process.
+    static let personTools: Set<String> = ["AskUserQuestion", "ExitPlanMode"]
 
     /// What a turn in flight is waiting for, which is what decides how long
     /// its claim to be working may outlive the record that made it. A single
@@ -83,6 +97,7 @@ enum AgentActivity {
             guard !Task.isCancelled else { break }
             let files = transcripts(for: provider, home: home)
             var state = State(lastWrite: lastActivity(in: files.first, provider: provider), isWorking: false)
+            let newest = files.first?.url
 
             // Any live session counts: two terminals can be running at once,
             // and the newest file is not necessarily the busy one. The filter
@@ -100,9 +115,21 @@ enum AgentActivity {
                     // did anything. Timing the grace off that let a session
                     // that died mid-turn look freshly written for ever, and the
                     // ring turned for as long as the file kept being poked.
-                    state.isWorking = now.timeIntervalSince(at ?? file.modified) <= wait.grace
+                    let since = now.timeIntervalSince(at ?? file.modified)
+                    state.isWorking = since <= wait.grace
                     if state.isWorking {
                         state.label = activityLabel(for: file.url, provider: provider, wait: wait)
+                    } else if wait == .model, file.url == newest, since <= wait.grace + failureWindow {
+                        // The model's move outlived its grace: the session
+                        // died mid-turn. Only the model's wait says so
+                        // reliably; a tool can legitimately run for longer.
+                        state.failedAt = (at ?? file.modified).addingTimeInterval(wait.grace)
+                    }
+                case .waiting(let at):
+                    if now.timeIntervalSince(at ?? file.modified) <= waitingWindow { state.isWaiting = true }
+                case .failed(let at):
+                    if file.url == newest, now.timeIntervalSince(at ?? file.modified) <= failureWindow {
+                        state.failedAt = at ?? file.modified
                     }
                 case .finished:
                     continue
@@ -110,6 +137,10 @@ enum AgentActivity {
                     state.isWorking = now.timeIntervalSince(file.modified) <= unknownFormatWindow
                 }
                 if state.isWorking { break }
+            }
+            if state.isWorking {
+                state.isWaiting = false
+                state.failedAt = nil
             }
 
             states[provider] = state
@@ -188,6 +219,10 @@ enum AgentActivity {
         /// that says so was written. That stamp is nil only for a record which
         /// carries none, which in practice means a format we half-recognise.
         case working(Wait, at: Date?)
+        /// A turn is open, but the move is a person's.
+        case waiting(at: Date?)
+        /// The turn ended in a failure.
+        case failed(at: Date?)
         case finished
         case unknown
     }
@@ -210,6 +245,9 @@ enum AgentActivity {
             case .claudeCode:
                 switch record["type"] as? String {
                 case "assistant":
+                    // An API error is written as an assistant record that
+                    // says so, and it ends the turn.
+                    if record["isApiErrorMessage"] as? Bool == true { return .failed(at: stamp(of: record)) }
                     let stop = (record["message"] as? [String: Any])?["stop_reason"] as? String
                     guard let stop else {
                         // No stop reason at all is what a subagent's records
@@ -221,9 +259,13 @@ enum AgentActivity {
                         // for an agent that had already answered.
                         return .working(.model, at: stamp(of: record))
                     }
-                    return stop == "tool_use"
-                        ? .working(.tool, at: stamp(of: record))
-                        : .finished
+                    guard stop == "tool_use" else { return .finished }
+                    // A question or a plan put to the person is a tool call
+                    // too, but nothing runs until they answer.
+                    if let tool = lastToolName(in: [line]), personTools.contains(tool) {
+                        return .waiting(at: stamp(of: record))
+                    }
+                    return .working(.tool, at: stamp(of: record))
                 case "user":
                     // Pressing escape ends the turn and says so in the record
                     // it leaves behind. Read as an ordinary prompt it means the
@@ -270,8 +312,8 @@ enum AgentActivity {
                     return .working(.tool, at: stamp(of: record))
                 case "pending_interaction":
                     // The turn is open but is waiting for a person, not doing
-                    // work. Do not animate a provider that needs attention.
-                    return .finished
+                    // work: the mark asks for attention instead of working.
+                    return .waiting(at: stamp(of: record))
                 default:
                     break
                 }
@@ -294,7 +336,9 @@ enum AgentActivity {
                 // still the agent's move. Hook rows are bookkeeping.
                 let update = (record["params"] as? [String: Any])?["update"] as? [String: Any]
                 switch update?["sessionUpdate"] as? String {
-                case "turn_completed", "turn_failed", "turn_cancelled", "session_end":
+                case "turn_failed":
+                    return .failed(at: stamp(of: record))
+                case "turn_completed", "turn_cancelled", "session_end":
                     return .finished
                 case "tool_call", "tool_call_update", "plan":
                     return .working(.tool, at: stamp(of: record))
@@ -325,6 +369,8 @@ enum AgentActivity {
     private static func zcodeVerdict(in lines: [Data]) -> Verdict {
         var completed: Set<String> = []
         var latest: [String: (wait: Wait, at: Date?)] = [:]
+        /// Whether the newest turn to end ended in failure, and when.
+        var newestEnd: (failed: Bool, at: Date?)?
 
         for line in lines.reversed() {
             guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
@@ -335,6 +381,7 @@ enum AgentActivity {
             switch event {
             case "turn.completed", "turn.failed", "turn.cancelled":
                 completed.insert(turn)
+                if newestEnd == nil { newestEnd = (event == "turn.failed", stamp(of: record)) }
             case "tool.call.started":
                 if completed.contains(turn) { continue }
                 latest[turn] = latest[turn] ?? (.tool, stamp(of: record))
@@ -364,6 +411,7 @@ enum AgentActivity {
         }
         // The same log also receives process heartbeat records while ZCode is
         // idle. Their fresh file timestamp is not evidence of a working turn.
+        if let newestEnd, newestEnd.failed { return .failed(at: newestEnd.at) }
         return .finished
     }
 
@@ -581,6 +629,11 @@ final class AgentActivityMonitor {
     private(set) var labels: [Provider: String] = [:]
     private(set) var startedAt: [Provider: Date] = [:]
 
+    /// Providers whose open turn is waiting for a person.
+    private(set) var waiting: Set<Provider> = []
+    /// When each provider's newest turn failed, while that is still news.
+    private(set) var failedAt: [Provider: Date] = [:]
+
     /// Fast enough that the spinner starts and stops with the turn rather than
     /// lagging it noticeably, slow enough to be free.
     private static let interval: TimeInterval = 2
@@ -654,20 +707,26 @@ final class AgentActivityMonitor {
         finishedAt = [:]
         labels = [:]
         startedAt = [:]
+        waiting = []
+        failedAt = [:]
     }
 
     /// Demo screenshots name who is working without reading this Mac's sessions.
     /// `stop()` clears `running`; the set is applied after that, and the timer
     /// stays down so the next scan cannot replace it.
     func adoptDemo(running providers: Set<Provider>, labels: [Provider: String] = [:],
-                   startedAt: [Provider: Date] = [:], finishedAt: [Provider: Date] = [:]) {
+                   startedAt: [Provider: Date] = [:], finishedAt: [Provider: Date] = [:],
+                   waiting: Set<Provider> = [], failedAt: [Provider: Date] = [:],
+                   lastWrites: [Provider: Date]? = nil) {
         stop()
         running = providers
+        self.waiting = waiting
+        self.failedAt = failedAt
         self.labels = labels
         self.startedAt = startedAt
         self.finishedAt = finishedAt
         lastWrite = Date()
-        lastWrites = Dictionary(uniqueKeysWithValues: providers.map { ($0, Date()) })
+        self.lastWrites = lastWrites ?? Dictionary(uniqueKeysWithValues: providers.map { ($0, Date()) })
     }
 
     /// Internal, with the task returned, so tests can await a complete scan
@@ -701,6 +760,11 @@ final class AgentActivityMonitor {
             for provider in running.subtracting(active) { startedAt[provider] = nil }
             running = active
         }
+        let waiting = Set(states.filter { $0.value.isWaiting && !$0.value.isWorking }.keys)
+        if waiting != self.waiting { self.waiting = waiting }
+        let failed = states.compactMapValues(\.failedAt)
+        if failed != failedAt { failedAt = failed }
+
         let labels = states.compactMapValues { $0.isWorking ? $0.label : nil }
         if labels != self.labels { self.labels = labels }
 

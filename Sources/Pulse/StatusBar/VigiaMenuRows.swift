@@ -71,7 +71,7 @@ enum VigiaMenuRows {
             let marked = settings.showsBotMark(for: account)
             row.configure(
                 icon: icon(
-                    for: account, working: working, marked: marked, headline: headline,
+                    for: account, slot: index, working: working, marked: marked, headline: headline,
                     tint: index < tints.count ? tints[index] : .clear,
                     persona: settings.botPersona(for: account) ?? BotMarkPersona.automatic(at: index),
                     settings: settings, store: store
@@ -93,14 +93,15 @@ enum VigiaMenuRows {
     /// The same mark the notch draws, as a still: Clawd, the account's bot, or
     /// its logo.
     private static func icon(
-        for account: AccountKey, working: Bool, marked: Bool, headline: UsageWindow?,
+        for account: AccountKey, slot: Int, working: Bool, marked: Bool, headline: UsageWindow?,
         tint: Color, persona: BotMarkPersona, settings: AppSettings, store: UsageStore
     ) -> NSImage? {
         guard marked else { return MenuBarReading.markImage(for: account.provider, size: 16) }
         if account.provider == .claudeCode {
-            let image = ClawdFrames.frame(for: store.mascotPose(account.provider, usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
-                             playful: true), at: 0,
-                                          colour: settings.menuBarColorMascots)?.copy() as? NSImage
+            let pose = store.mascotPose(account.provider,
+                                        usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
+                                        slot: slot)
+            let image = ClawdFrames.frame(for: pose, at: 0, colour: settings.menuBarColorMascots)?.copy() as? NSImage
             image?.size = NSSize(width: 22, height: 16)
             return image
         }

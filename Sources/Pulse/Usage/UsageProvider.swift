@@ -360,22 +360,12 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
-    /// Offset for mascot daytime routine slots so multiple mascots on screen
-    /// execute distinct animations rather than synchronizing in lockstep.
-    var mascotSlotOffset: Int {
-        switch self {
-        case .claudeCode: 0
-        case .antigravity: 1
-        case .codex: 2
-        case .grok: 3
-        case .cursor: 4
-        case .grokBot: 5
-        case .kiro: 6
-        case .gemini: 7
-        default:
-            (abs(rawValue.hashValue) % 7) + 1
-        }
-    }
+    /// Seconds a mark's animation clock is set ahead by, so two marks on
+    /// screen do not bob and blink in lockstep. Stable across launches: it is
+    /// hashed from the raw value, not from `hashValue`, which Swift seeds per
+    /// process. Which *pose* each mark is in is dealt jointly instead — see
+    /// `MascotPose.ofTheDay(slot:at:)`.
+    var mascotPhase: Double { StableHash.phase(rawValue) }
 
     /// Whether this provider's limits can be drawn as one ring per model
     /// group.

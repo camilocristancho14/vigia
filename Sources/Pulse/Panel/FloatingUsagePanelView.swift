@@ -296,11 +296,12 @@ struct FloatingUsagePanelView: View {
             for: settings.shownAccounts,
             isSplit: settings.isSplit,
             groups: { RailSlot.modelGroups(of: store.usage(for: $0)) }
-        ).map { slot in
+        ).enumerated().map { index, slot in
             let usage = store.usage(for: slot.account)
             return entry(
                 for: slot,
-                usage: slot.group.map { Self.usage(usage, keeping: $0) } ?? usage
+                usage: slot.group.map { Self.usage(usage, keeping: $0) } ?? usage,
+                index: index
             )
         }
     }
@@ -319,7 +320,9 @@ struct FloatingUsagePanelView: View {
         )
     }
 
-    private func entry(for slot: RailSlot, usage: ProviderUsage) -> RailEntry {
+    /// `index` is the ring's place on the rail, which deals the idle marks
+    /// their poses together. See `UsageStore.mascotPose`.
+    private func entry(for slot: RailSlot, usage: ProviderUsage, index: Int) -> RailEntry {
         let account = slot.account
         let label = settings.label(for: account)
         let pinned = settings.pinnedWindow(for: account)
@@ -349,7 +352,7 @@ struct FloatingUsagePanelView: View {
             pose: store.mascotPose(
                 account.provider,
                 usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
-                playful: settings.showsBotMark(for: account)
+                slot: index
             ),
             activityLabel: store.activityLabel(account.provider),
             isRefreshing: store.isRefreshing(account),

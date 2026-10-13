@@ -5,50 +5,98 @@
 import AppKit
 
 /// What the mascot is up to, which is what decides how it moves.
-enum MascotPose: Equatable, Sendable {
+enum MascotPose: Equatable, Sendable, CaseIterable {
     /// Busy at something that moves around: a command, a search, a sub-agent.
     case run
-    /// Busy at something done sitting down: thinking, reading, editing.
+    /// Busy at something done sitting down: reading, editing, running a tool.
     case type
-    /// A turn just ended: a short break with a cup of coffee.
+    /// Busy, and it is the model's move: thinking the answer through.
+    case thinking
+    /// A turn just started: still getting up.
+    case waking
+    /// A turn is open but waiting for a person: a question, a permission.
+    case waiting
+    /// A turn just finished, for a few seconds.
+    case celebrate
+    /// A turn ended a little while ago: a short break with a cup of coffee.
     case coffee
     /// Idle but recently active; blinks now and then.
     case awake
+    /// Idle: a stretch between jobs.
+    case stretch
+    /// Idle: a little game to pass the time.
+    case play
     /// Idle for a long while.
     case sleep
     /// Three quarters of a limit gone: worn out, sweating.
     case tired
     /// A limit used up: nothing more to give.
     case spent
+    /// The turn failed, or the session died in the middle of one.
+    case error
 
-    var isWorking: Bool { self == .run || self == .type }
+    var isWorking: Bool { self == .run || self == .type || self == .thinking }
+
+    /// What an idle mark does through the working day, rotated every five
+    /// minutes. None of these is a working pose: a mark that is not working
+    /// must never look as though it were.
+    static let daytime: [MascotPose] = [.awake, .coffee, .play, .stretch]
+    /// Early in the morning: getting up and going, not yet at play.
+    static let morning: [MascotPose] = [.waking, .coffee, .stretch, .awake]
 
     /// What a mark does when nobody can say what its agent is up to: asleep
-    /// through the night, coffee in the early morning, then a change of
-    /// scene every five minutes. Marks with a character (`playful`) also
-    /// sit down at the laptop and go off for a run; a plain logo only
-    /// rests and has its coffee.
-    static func ofTheDay(for provider: Provider? = nil, at date: Date, playful: Bool, calendar: Calendar = .current) -> MascotPose {
+    /// through the night, then a change of scene every five minutes.
+    ///
+    /// `slot` is the mark's place among the marks on screen, in the order of
+    /// the rail. The marks are dealt the rotation together, so on any one
+    /// surface they all do something different; past four of them the
+    /// rotation repeats, each pose as few times as it can.
+    static func ofTheDay(slot: Int = 0, at date: Date, calendar: Calendar = .current) -> MascotPose {
+        let hour = calendar.component(.hour, from: date)
+        if hour >= 23 || hour < 6 { return .sleep }
+        return idle(slot: slot, at: date, calendar: calendar)
+    }
+
+    /// The idle rotation without the night: for a mark whose agent was busy
+    /// minutes ago, whatever the hour.
+    static func idle(slot: Int = 0, at date: Date, calendar: Calendar = .current) -> MascotPose {
         let parts = calendar.dateComponents([.hour, .minute], from: date)
         let hour = parts.hour ?? 12
         let minutes = hour * 60 + (parts.minute ?? 0)
-        if hour >= 23 || hour < 6 { return .sleep }
-        let offset = provider?.mascotSlotOffset ?? 0
-        if hour < 9 { return (offset % 2 == 0) ? .coffee : .awake }
-        let slot = ((minutes / 5) + offset) % 8
-        let characterful: [MascotPose] = [.type, .awake, .run, .coffee, .type, .run, .awake, .coffee]
-        let plain: [MascotPose] = [.awake, .coffee, .awake, .awake, .coffee, .awake, .awake, .awake]
-        return playful ? characterful[(slot + 8) % 8] : plain[(slot + 8) % 8]
+        let scenes = (6..<9).contains(hour) ? morning : daytime
+        let turn = minutes / 5 + max(0, slot)
+        return scenes[turn % scenes.count]
     }
 
     /// The pose for a turn in flight, from the word the status bar shows:
-    /// at the laptop for commands, edits and thinking, on the move for
-    /// looking things up and handing work out.
+    /// thinking while it is the model's move, at the laptop for commands and
+    /// edits, on the move for looking things up and handing work out.
     static func working(label: String?) -> MascotPose {
         switch label {
         case "Reading", "Searching", "Browsing web", "Searching web", "Delegating": .run
+        case "Thinking…", nil: .thinking
         default: .type
         }
+    }
+}
+
+/// A hash that is the same in every run of the app.
+///
+/// Swift's `hashValue` is seeded per process, so anything keyed off it — a
+/// mark's animation phase — came out different every launch. FNV-1a, 64-bit.
+enum StableHash {
+    static func fnv1a(_ text: String) -> UInt64 {
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in text.utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x0000_0100_0000_01b3
+        }
+        return hash
+    }
+
+    /// A phase offset in seconds, spread over `span`, for a mark's clock.
+    static func phase(_ text: String, span: Double = 37) -> Double {
+        Double(fnv1a(text) % 1000) / 1000 * span
     }
 }
 
@@ -270,6 +318,279 @@ enum ClawdSprites {
         "...O..O...O..O..."
     ]
 
+    // Thinking, getting up, waiting on a person, celebrating, stretching,
+    // playing and a failed turn, in the same 17 × 12 grid and palette.
+
+    static let thinking0: [String] = [
+        "...W.............",
+        "...OOOOOOOOOOO...",
+        "...OOKKOOOOKKO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOOOOO.",
+        "...OOOOOOOOOOOOO.",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let thinking1: [String] = [
+        "...W...W.........",
+        "...OOOOOOOOOOO...",
+        "...OOKKOOOOKKO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOOOOO.",
+        "...OOOOOOOOOOOOO.",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let thinking2: [String] = [
+        "...W...W...W.....",
+        "...OOOOOOOOOOO...",
+        "...OOKKOOOOKKO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOOOOO.",
+        "...OOOOOOOOOOOOO.",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let waking0: [String] = [
+        ".................",
+        ".................",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "OOOOKKOOOOOKKOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "................."
+    ]
+
+    static let waking1: [String] = [
+        "..............S..",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "OOOOKKOOOOOKKOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let waking2: [String] = [
+        "........Y........",
+        "...OOOOOOOOOOO...",
+        "...OWKOOOOOWKO...",
+        "OOOOKKOOOOOKKOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let waiting0: [String] = [
+        "..............YYY",
+        "...OOOOOOOOOOO..Y",
+        "...OKKOOOOOKKO.Y.",
+        "OOOOKKOOOOOKKO...",
+        "OOOOOOOOOOOOOO.Y.",
+        "OOOOOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let waiting1: [String] = [
+        "...OOOOOOOOOOOYYY",
+        "...OKKOOOOOKKO..Y",
+        "OOOOKKOOOOOKKO.Y.",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOOO.Y.",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "................."
+    ]
+
+    static let celebrate0: [String] = [
+        ".Y......Z......C.",
+        "OOOOOOOOOOOOOOOOO",
+        ".O.OOKOOOOOOKO.O.",
+        "...OKOKOOOOKOK...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let celebrate1: [String] = [
+        "O..OOOOOOOOOOO..Z",
+        "OOOOOKOOOOOOKOOOO",
+        "...OKOKOOOOKOK...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "................."
+    ]
+
+    static let stretch0: [String] = [
+        ".................",
+        "...OOOOOOOOOOO...",
+        ".OOOKKOOOOOKKOOO.",
+        "..OOKKOOOOOKKOO..",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let stretch1: [String] = [
+        "..O...........O..",
+        "..OOOOOOOOOOOOO..",
+        "..OOOOOOOOOOOOO..",
+        "...OKKOOOOOKKO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let play0: [String] = [
+        ".Y...............",
+        "...OOOOOOOOOOO...",
+        "...OKKOOOOOKKO...",
+        "OOOOKKOOOOOKKOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let play1: [String] = [
+        "...OOOOOYOOOOO...",
+        "...OKKOOOOOKKO...",
+        "OOOOKKOOOOOKKOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "................."
+    ]
+
+    static let play2: [String] = [
+        "...............Y.",
+        "...OOOOOOOOOOO...",
+        "...OKKOOOOOKKO...",
+        "OOOOKKOOOOOKKOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let play3: [String] = [
+        "...OOOOOYOOOOO...",
+        "...OKKOOOOOKKO...",
+        "OOOOKKOOOOOKKOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "................."
+    ]
+
+    static let error0: [String] = [
+        "..g..........g...",
+        "...DDDDDDDDDDD...",
+        "...DKDKDDDKDKD...",
+        "DDDDDKDDDDDKDDDDD",
+        "DDDDKDKDDDKDKDDDD",
+        "DDDDDDDDDDDDDDDDD",
+        "...DDDDDDDDDDD...",
+        "...DDDDDDDDDDD...",
+        "...DDDDDDDDDDD...",
+        "...D..D...D..D...",
+        "...D..D...D..D...",
+        "...D..D...D..D..."
+    ]
+
+    static let error1: [String] = [
+        ".................",
+        "...g........S....",
+        "...DDDDDDDDDDD...",
+        "...DKDKDDDKDKD...",
+        "DDDDDKDDDDDKDDDDD",
+        "DDDDKDKDDDKDKDDDD",
+        "DDDDDDDDDDDDDDDDD",
+        "...DDDDDDDDDDD...",
+        "...DDDDDDDDDDD...",
+        "...DDDDDDDDDDD...",
+        "...O..O...O..O...",
+        "................."
+    ]
+
     /// Full-colour frames for a pose, in the order they play.
     @MainActor
     static let frames: [String: [NSImage]] = [
@@ -278,7 +599,14 @@ enum ClawdSprites {
         "coffee": [coffee0, coffee1, coffee2].map(render),
         "type": [type0, type1].map(render),
         "tired": [tired0, tired1, tired2, tired1].map(render),
-        "spent": [spent0, spent1].map(render)
+        "spent": [spent0, spent1].map(render),
+        "thinking": [thinking0, thinking1, thinking2].map(render),
+        "waking": [waking0, waking1, waking2].map(render),
+        "waiting": [waiting0, waiting1].map(render),
+        "celebrate": [celebrate0, celebrate1].map(render),
+        "stretch": [stretch0, stretch1].map(render),
+        "play": [play0, play1, play2, play3].map(render),
+        "error": [error0, error1].map(render)
     ]
 
     private static func render(_ rows: [String]) -> NSImage {

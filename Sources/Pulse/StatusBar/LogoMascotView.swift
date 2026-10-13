@@ -5,7 +5,10 @@ import SwiftUI
 /// out looking things up, shimmers while it works at its keys, steams on its
 /// break, breathes while it waits, sleeps under floating Zs, droops with a
 /// bead of sweat when the limit is nearly gone and shakes among stars when it
-/// is gone.
+/// is gone. It also thinks under counting dots, rises as a turn starts, hops
+/// under a question mark when a person has to answer, jumps in confetti when a
+/// turn is done, stretches and plays catch while idle, and greys out under a
+/// red cross when a turn failed.
 struct LogoMascotView: View {
     let provider: Provider
     let pose: MascotPose
@@ -16,8 +19,8 @@ struct LogoMascotView: View {
     /// A waiting logo moves slowly, so it is redrawn slowly.
     private var interval: TimeInterval {
         switch pose {
-        case .awake: 1.0 / 8
-        case .sleep, .tired: 1.0 / 10
+        case .awake, .stretch: 1.0 / 8
+        case .sleep, .tired, .error: 1.0 / 10
         default: 1.0 / 24
         }
     }
@@ -32,7 +35,7 @@ struct LogoMascotView: View {
     }
 
     private var animated: some View {
-        let phaseOffset = Double(abs(provider.rawValue.hashValue) % 100) * 0.37
+        let phaseOffset = provider.mascotPhase
         return TimelineView(.animation(minimumInterval: interval)) { context in
             let time = context.date.timeIntervalSinceReferenceDate + phaseOffset
             ZStack {
@@ -66,6 +69,23 @@ struct LogoMascotView: View {
                 .offset(y: size * 0.04).opacity(0.8)
         case .spent:
             mark.opacity(0.5).offset(x: size * 0.04 * sin(time * 28))
+        case .thinking:
+            mark.scaleEffect(0.9 + 0.03 * sin(time * 2.4)).rotationEffect(.degrees(-4))
+        case .waking:
+            let rise = min(1, time.truncatingRemainder(dividingBy: 3) / 1.6)
+            mark.scaleEffect(0.75 + 0.25 * rise, anchor: .bottom).opacity(0.45 + 0.55 * rise)
+        case .waiting:
+            mark.scaleEffect(0.86).offset(y: -size * 0.08 * abs(sin(time * 3.2)))
+        case .celebrate:
+            mark.scaleEffect(0.86).offset(y: -size * 0.1 * abs(sin(time * 5)))
+                .rotationEffect(.degrees(8 * sin(time * 10)))
+        case .stretch:
+            let reach = (sin(time * 1.1) + 1) / 2
+            mark.scaleEffect(x: 1 - 0.06 * reach, y: 1 + 0.1 * reach, anchor: .bottom)
+        case .play:
+            mark.scaleEffect(0.86).offset(x: size * 0.05 * sin(time * 2.8))
+        case .error:
+            mark.grayscale(1).opacity(0.45).rotationEffect(.degrees(-6), anchor: .bottom)
         }
     }
 
@@ -116,7 +136,12 @@ struct LogoMascotView: View {
         case .sleep: drawSleepZs(in: &canvas, size: canvasSize, time: time)
         case .tired: drawSweat(in: &canvas, size: canvasSize, time: time)
         case .spent: drawDizzyStars(in: &canvas, size: canvasSize, time: time)
-        default: break
+        case .thinking: drawThoughtDots(in: &canvas, size: canvasSize, time: time, ink: .primary)
+        case .waiting: drawQuestionMark(in: &canvas, size: canvasSize, time: time, ink: .primary)
+        case .celebrate: drawConfetti(in: &canvas, size: canvasSize, time: time)
+        case .play: drawPlayBall(in: &canvas, size: canvasSize, time: time, ink: .primary)
+        case .error: drawErrorMark(in: &canvas, size: canvasSize, time: time)
+        case .type, .awake, .waking, .stretch: break
         }
     }
 }
