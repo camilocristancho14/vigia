@@ -326,6 +326,9 @@ struct RailEntry: Identifiable, Equatable {
     var botPersona: BotMarkPersona?
     /// The shape this ring's mark wears.
     var botBody: BotMarkBody = .default
+    /// Which character the mark is: Clawd, one of the vector characters, or
+    /// the bot that wears the persona, colour and body above.
+    var mascot: MascotCharacter = .bot
     /// Something that just happened to this account and is worth a one-shot.
     var botEvent: BotMarkEvent?
     /// A colour chosen for this ring's mark, or nil for its brand colour.
@@ -643,6 +646,7 @@ private struct UsageDockItem: View {
             isRefreshing: entry.isRefreshing,
             animatesActivity: animatesActivity,
             showsBotMark: entry.showsBotMark,
+            mascot: entry.mascot,
             botTint: botTint,
             botPersona: botPersona,
             botBody: botBody,

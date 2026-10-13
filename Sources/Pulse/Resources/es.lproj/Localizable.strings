@@ -826,3 +826,10 @@
 "Lets Claude Code on a server or another computer report when it is working. Listens on port 7717 with a secret token; use a private network." = "Permite que Claude Code en un servidor u otro computador avise cuando está trabajando. Escucha en el puerto 7717 con un token secreto; usa una red privada.";
 "Remote activity token" = "Token de actividad remota";
 "Copy token" = "Copiar token";
+
+/* Mascot characters */
+"Mascot" = "Mascota";
+"Which character draws this account's mark." = "Qué personaje dibuja la marca de esta cuenta.";
+"Bot" = "Bot";
+"Draw Float Bot or Star Buddy instead of the Antigravity logo. They get to work while Antigravity is working." = "Dibuja a Float Bot o a Star Buddy en lugar del logo de Antigravity. Se ponen a trabajar mientras Antigravity trabaja.";
+"Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Dibuja a Cloud Ghost en lugar del logo de Codex. Sus ojos se vuelven un prompt mientras Codex trabaja.";

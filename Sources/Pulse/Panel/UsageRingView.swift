@@ -59,6 +59,8 @@ struct UsageRingView: View {
     /// Whether this ring's logo is replaced by an animated mark, which is a
     /// per-account choice — see `AppSettings.botMarks`.
     var showsBotMark: Bool = false
+    /// Which character the mark is, when it is drawn.
+    var mascot: MascotCharacter = .bot
     /// The mark's body colour, dealt across the rail so no two rings next to
     /// each other look alike. Nil falls back to this provider's own colour,
     /// for the places that draw one ring on its own.
@@ -277,10 +279,13 @@ struct UsageRingView: View {
 
             if isRefreshing && animatesActivity { refreshMark }
 
-            if showsBotMark, provider == .claudeCode {
+            if showsBotMark, mascot == .clawd {
                 // Clawd, Claude Code's pixel crab, in place of the blob.
                 // Modified for Vigía from Pulse (Apache-2.0).
                 ClawdMarkView(pose: mascotPose, size: centreDiameter * Self.botScale)
+            } else if showsBotMark, mascot.isVector {
+                VectorMascotView(character: mascot, pose: mascotPose,
+                                 size: centreDiameter * Self.botScale, phase: provider.mascotPhase)
             } else if showsBotMark {
                 // The mark has its own unavailable expression; keep it legible
                 // instead of dimming the face into the dark disc.

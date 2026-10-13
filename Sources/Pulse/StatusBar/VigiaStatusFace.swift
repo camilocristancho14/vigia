@@ -208,13 +208,19 @@ private struct MenuBarMascotItem: View {
     @ViewBuilder
     private func mark(working: Bool, pose: MascotPose, headline: UsageWindow?) -> some View {
         let provider = account.provider
-        if settings.showsBotMark(for: account), provider == .claudeCode {
-            // Claude's orange, unless the bar behind it is orange-ish on some
-            // screen: then Clawd is white or black, whichever shows.
-            let orange = Color(red: 217 / 255, green: 119 / 255, blue: 87 / 255)
-            let legible = backdrop.legible(orange)
-            let keepsOrange = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(orange)
-            ClawdMarkView(pose: pose, colour: keepsOrange, size: Self.markSize)
+        let character = settings.mascotCharacter(for: account)
+        if settings.showsBotMark(for: account), character == .clawd || character.isVector {
+            // Their own colours, unless the bar behind is close enough to
+            // them on some screen to lose them: then one ink, white or black,
+            // whichever shows — Clawd's orange and the others' blues alike.
+            let legible = backdrop.legible(character.brand)
+            let keepsColour = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(character.brand)
+            if character == .clawd {
+                ClawdMarkView(pose: pose, colour: keepsColour, size: Self.markSize)
+            } else {
+                VectorMascotView(character: character, pose: pose, colour: keepsColour,
+                                 size: Self.markSize, phase: provider.mascotPhase)
+            }
         } else if settings.showsBotMark(for: account) {
             let wanted = tint == .clear ? BotMarkTint.body(for: provider) : tint
             let body = backdrop.legible(wanted)

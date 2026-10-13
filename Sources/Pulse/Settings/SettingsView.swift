@@ -1818,9 +1818,30 @@ struct SettingsView: View {
                     .toggleStyle(.switch)
                 }
 
-                // Only when there is a mark to give a character to. Shown
+                // A choice of character only where there is one to make.
+                if settings.showsBotMark(for: account), MascotCharacter.options(for: account.provider).count > 1 {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Mascot"),
+                        subtitle: String.localized("Which character draws this account's mark.")
+                    ) {
+                        Picker("", selection: Binding(
+                            get: { settings.mascotCharacter(for: account) },
+                            set: { settings.setMascotCharacter($0, for: account) }
+                        )) {
+                            ForEach(MascotCharacter.options(for: account.provider)) { character in
+                                Text(verbatim: character.title).tag(character)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                    }
+                }
+
+                // Only when there is a bot to give a character to. Shown
                 // otherwise it is a control over something invisible.
-                if settings.showsBotMark(for: account), account.provider != .claudeCode {
+                if settings.showsBotMark(for: account), settings.mascotCharacter(for: account) == .bot {
                     SettingsRowDivider()
 
                     SettingsRow(
@@ -2226,6 +2247,10 @@ struct SettingsView: View {
             .localized("Draw Clawd, the pixel crab, instead of the Claude logo. It walks while Claude Code is working.")
         case .grok:
             .localized("Draw the round mascot with eyes instead of the Grok logo. It looks around while Grok Build is working.")
+        case .antigravity:
+            .localized("Draw Float Bot or Star Buddy instead of the Antigravity logo. They get to work while Antigravity is working.")
+        case .codex:
+            .localized("Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working.")
         default:
             .localized("Draw a bot that reacts to this account instead of the provider's logo.")
         }

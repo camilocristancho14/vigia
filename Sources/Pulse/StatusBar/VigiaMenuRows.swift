@@ -97,13 +97,17 @@ enum VigiaMenuRows {
         tint: Color, persona: BotMarkPersona, settings: AppSettings, store: UsageStore
     ) -> NSImage? {
         guard marked else { return MenuBarReading.markImage(for: account.provider, size: 16) }
-        if account.provider == .claudeCode {
-            let pose = store.mascotPose(account.provider,
-                                        usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
-                                        slot: slot)
+        let character = settings.mascotCharacter(for: account)
+        let pose = store.mascotPose(account.provider,
+                                    usedFraction: UsageTint.isSpent(headline) ? 1 : headline?.usedFraction,
+                                    slot: slot)
+        if character == .clawd {
             let image = ClawdFrames.frame(for: pose, at: 0, colour: settings.menuBarColorMascots)?.copy() as? NSImage
             image?.size = NSSize(width: 22, height: 16)
             return image
+        }
+        if character.isVector {
+            return VectorMascots.image(character, pose: pose, size: 18, colour: settings.menuBarColorMascots)
         }
 
         let body = tint == .clear ? BotMarkTint.body(for: account.provider) : tint

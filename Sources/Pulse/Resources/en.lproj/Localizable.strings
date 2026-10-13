@@ -951,3 +951,10 @@
 "Lets Claude Code on a server or another computer report when it is working. Listens on port 7717 with a secret token; use a private network." = "Lets Claude Code on a server or another computer report when it is working. Listens on port 7717 with a secret token; use a private network.";
 "Remote activity token" = "Remote activity token";
 "Copy token" = "Copy token";
+
+/* Mascot characters */
+"Mascot" = "Mascot";
+"Which character draws this account's mark." = "Which character draws this account's mark.";
+"Bot" = "Bot";
+"Draw Float Bot or Star Buddy instead of the Antigravity logo. They get to work while Antigravity is working." = "Draw Float Bot or Star Buddy instead of the Antigravity logo. They get to work while Antigravity is working.";
+"Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working.";
