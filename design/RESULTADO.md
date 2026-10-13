@@ -1,6 +1,6 @@
 # Resultado: mascotas nuevas, fixes de poses, lectura de uso y panel (rama `feat/mascotas-y-uso`)
 
-Base: `main` v0.4.5 (`772ee6a`). Sin PR, sin release, sin tag y sin cambiar `VERSION`.
+Base: `main` v0.4.5 (`772ee6a`). Publicada como v0.5.0 por aprobación posterior (PR a main y release con el DMG).
 
 ## Cambio de las 13:15 (prioridad): uso en vivo
 
