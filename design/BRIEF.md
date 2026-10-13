@@ -39,3 +39,6 @@ Al terminar, escribe un resumen en `design/RESULTADO.md` (qué se hizo, tests, p
 
 ## CAMBIO (12:38): Star Buddy y Float Bot son de Antigravity
 No existe en la práctica un proveedor Gemini independiente. Star Buddy y Float Bot pertenecen ambos al proveedor **Antigravity** como dos opciones de mascota seleccionables en Ajustes (por defecto: Float Bot). No asocies Star Buddy a un proveedor Gemini separado. Cloud Ghost sigue siendo de Codex.
+
+## CAMBIO (13 oct, 1:15 PM) — PRIORIDAD: uso en vivo
+Juank reporta que Vigía no toma el uso en vivo de ninguna IA: ahora Claude Code está al 100% del límite de 5 h (sesión bloqueada hasta las 5 PM) y Vigía todavía muestra que queda uso. Arreglar como prioridad para TODOS los proveedores (Claude Code, Grok Bot, Grok Build, Antigravity, Codex): refresco frecuente/en vivo (vigilar archivos/estado local y eventos de los hooks, no solo polling lento), detectar al instante "limit reached" (p. ej. por los mensajes/estado de sesión o hooks Notification/Stop), marcar el límite agotado en rojo con hora de reinicio, y mostrar claramente la antigüedad del dato. Sin correr comandos del usuario ni abrir apps. Agregar pruebas.
