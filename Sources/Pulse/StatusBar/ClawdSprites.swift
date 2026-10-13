@@ -28,16 +28,17 @@ enum MascotPose: Equatable, Sendable {
     /// scene every five minutes. Marks with a character (`playful`) also
     /// sit down at the laptop and go off for a run; a plain logo only
     /// rests and has its coffee.
-    static func ofTheDay(at date: Date, playful: Bool, calendar: Calendar = .current) -> MascotPose {
+    static func ofTheDay(for provider: Provider? = nil, at date: Date, playful: Bool, calendar: Calendar = .current) -> MascotPose {
         let parts = calendar.dateComponents([.hour, .minute], from: date)
         let hour = parts.hour ?? 12
         let minutes = hour * 60 + (parts.minute ?? 0)
         if hour >= 23 || hour < 6 { return .sleep }
-        if hour < 9 { return .coffee }
-        let slot = (minutes / 5) % 8
+        let offset = provider?.mascotSlotOffset ?? 0
+        if hour < 9 { return (offset % 2 == 0) ? .coffee : .awake }
+        let slot = ((minutes / 5) + offset) % 8
         let characterful: [MascotPose] = [.type, .awake, .run, .coffee, .type, .run, .awake, .coffee]
         let plain: [MascotPose] = [.awake, .coffee, .awake, .awake, .coffee, .awake, .awake, .awake]
-        return playful ? characterful[slot] : plain[slot]
+        return playful ? characterful[(slot + 8) % 8] : plain[(slot + 8) % 8]
     }
 
     /// The pose for a turn in flight, from the word the status bar shows:

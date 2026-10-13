@@ -32,8 +32,9 @@ struct LogoMascotView: View {
     }
 
     private var animated: some View {
-        TimelineView(.animation(minimumInterval: interval)) { context in
-            let time = context.date.timeIntervalSinceReferenceDate
+        let phaseOffset = Double(abs(provider.rawValue.hashValue) % 100) * 0.37
+        return TimelineView(.animation(minimumInterval: interval)) { context in
+            let time = context.date.timeIntervalSinceReferenceDate + phaseOffset
             ZStack {
                 logo(at: time)
                 Canvas { canvas, canvasSize in

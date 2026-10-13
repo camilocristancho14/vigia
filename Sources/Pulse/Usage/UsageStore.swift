@@ -222,10 +222,14 @@ final class UsageStore {
             if used >= 0.75 { return .tired }
         }
         if seen {
-            if let written = activity.lastWrite, now.timeIntervalSince(written) < 1200 { return .awake }
+            let written = activity.lastWrite(for: provider) ?? activity.lastWrite
+            if let written, now.timeIntervalSince(written) < 1200 { return .awake }
+            if playful {
+                return MascotPose.ofTheDay(for: provider, at: now, playful: playful)
+            }
             return .sleep
         }
-        return MascotPose.ofTheDay(at: now, playful: playful)
+        return MascotPose.ofTheDay(for: provider, at: now, playful: playful)
     }
 
     /// What a working provider is doing right now, as an English key.

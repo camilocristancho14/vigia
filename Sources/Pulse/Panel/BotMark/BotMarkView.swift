@@ -221,8 +221,9 @@ struct BotMarkView: View {
                         drawBotMark(step.frame, config: step.config,
                                     in: &context, size: canvasSize)
                         if let pose {
+                            let phaseOffset = Double(abs(persona.rawValue.hashValue ^ bodyShape.rawValue.hashValue) % 100) * 0.35
                             drawMascotOverlay(pose: pose, mood: mood, in: &context, size: canvasSize,
-                                              time: timeline.date.timeIntervalSinceReferenceDate)
+                                              time: timeline.date.timeIntervalSinceReferenceDate + phaseOffset)
                         }
                     }
                 }
@@ -249,7 +250,7 @@ struct BotMarkView: View {
             mood, persona: persona, isQuiet: isQuiet, isPointedAt: isPointedAt, at: date
         )
         programme.event = event
-        if let pose { programme.apply(pose: pose, activityLabel: activityLabel, lively: lively) }
+        if let pose { programme.apply(pose: pose, activityLabel: activityLabel, lively: lively, persona: persona) }
         programme.shape = bodyShape.shape
         programme.gazeBias = gaze.bias
         programme.flipX = gaze.mirrored

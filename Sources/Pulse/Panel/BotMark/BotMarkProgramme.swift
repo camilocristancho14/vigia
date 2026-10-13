@@ -91,7 +91,7 @@ struct BotMarkProgramme {
     /// else keeps the persona's own routine.
     /// `lively` is for marks nobody can observe: awake, they keep up a run of
     /// playful scenes instead of sitting there looking.
-    mutating func apply(pose: MascotPose, activityLabel: String?, lively: Bool = false) {
+    mutating func apply(pose: MascotPose, activityLabel: String?, lively: Bool = false, persona: BotMarkPersona = .calm) {
         let scene: [(String, ClosedRange<Double>)]
         switch (mood, pose) {
         case (.working, _):
@@ -112,11 +112,38 @@ struct BotMarkProgramme {
         case (.idle, .tired):
             scene = [("drowsy", 3_000...4_000), ("bored", 2_500...3_500), ("sad", 2_000...3_000)]
         case (.idle, .type):
-            scene = [("writing", 3_000...4_000), ("working", 2_000...3_000)]
+            switch persona {
+            case .eager, .playful:
+                scene = [("writing", 2_500...3_500), ("excited", 1_800...2_400), ("working", 2_000...3_000)]
+            case .curious:
+                scene = [("writing", 3_000...4_000), ("curious", 2_000...2_800), ("thinking", 2_200...3_000)]
+            case .steady, .stoic:
+                scene = [("working", 3_500...4_500), ("writing", 2_500...3_500)]
+            default:
+                scene = [("writing", 3_000...4_000), ("working", 2_000...3_000)]
+            }
         case (.idle, .run):
-            scene = [("searching", 2_800...3_800), ("radar", 2_000...2_800)]
+            switch persona {
+            case .playful, .eager:
+                scene = [("bouncing", 1_800...2_500), ("radar", 2_000...2_800), ("orbit", 1_800...2_400)]
+            case .curious:
+                scene = [("searching", 3_000...4_000), ("curious", 2_000...2_800), ("radar", 2_000...2_800)]
+            case .steady, .stoic:
+                scene = [("searching", 3_200...4_200), ("working", 2_500...3_500)]
+            default:
+                scene = [("searching", 2_800...3_800), ("radar", 2_000...2_800)]
+            }
         case (.idle, .coffee):
-            scene = [("humming", 3_000...4_000), ("happy", 2_000...3_000), ("bored", 2_000...3_000)]
+            switch persona {
+            case .playful, .eager:
+                scene = [("humming", 2_500...3_500), ("laughing", 1_600...2_200), ("happy", 2_000...2_800)]
+            case .curious:
+                scene = [("curious", 2_200...3_000), ("humming", 2_800...3_600), ("happy", 2_000...2_800)]
+            case .steady, .stoic:
+                scene = [("humming", 3_500...4_500), ("listening", 2_500...3_500), ("happy", 2_000...3_000)]
+            default:
+                scene = [("humming", 3_000...4_000), ("happy", 2_000...3_000), ("bored", 2_000...3_000)]
+            }
         case (.idle, .awake) where lively:
             scene = [("playful", 1_800...2_600), ("bouncing", 1_400...2_000), ("happy", 1_600...2_200),
                      ("laughing", 1_400...2_000), ("humming", 2_000...2_800), ("curious", 1_400...2_000),

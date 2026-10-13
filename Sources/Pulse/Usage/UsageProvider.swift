@@ -360,6 +360,23 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         }
     }
 
+    /// Offset for mascot daytime routine slots so multiple mascots on screen
+    /// execute distinct animations rather than synchronizing in lockstep.
+    var mascotSlotOffset: Int {
+        switch self {
+        case .claudeCode: 0
+        case .antigravity: 1
+        case .codex: 2
+        case .grok: 3
+        case .cursor: 4
+        case .grokBot: 5
+        case .kiro: 6
+        case .gemini: 7
+        default:
+            (abs(rawValue.hashValue) % 7) + 1
+        }
+    }
+
     /// Whether this provider's limits can be drawn as one ring per model
     /// group.
     ///

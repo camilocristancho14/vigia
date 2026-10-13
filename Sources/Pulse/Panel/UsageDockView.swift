@@ -520,7 +520,7 @@ struct UsageDockView: View {
             : []
         // One character for every bot, the liveliest, like Clawd: the pose
         // says what each is doing, not a temperament picked per ring.
-        let personas = entries.map { _ in BotMarkPersona.playful }
+        let personas = entries.enumerated().map { index, entry in entry.botPersona ?? BotMarkPersona.automatic(at: index) }
         // Everything worth looking at is away from the edge the rail is on.
         let gaze = BotMarkGaze(edge: edge)
 

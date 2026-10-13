@@ -563,6 +563,9 @@ final class AgentActivityMonitor {
     /// The most recent write from a monitored provider, which also paces the
     /// adaptive refresh interval.
     private(set) var lastWrite: Date?
+    private(set) var lastWrites: [Provider: Date] = [:]
+
+    func lastWrite(for provider: Provider) -> Date? { lastWrites[provider] }
 
     /// When each provider's turn last *ended*, which is a different fact from
     /// "is it running" and is not derivable from it after the event.
@@ -647,6 +650,7 @@ final class AgentActivityMonitor {
         // celebration here would fire every time the panel was hidden.
         running = []
         lastWrite = nil
+        lastWrites = [:]
         finishedAt = [:]
         labels = [:]
         startedAt = [:]
@@ -663,6 +667,7 @@ final class AgentActivityMonitor {
         self.startedAt = startedAt
         self.finishedAt = finishedAt
         lastWrite = Date()
+        lastWrites = Dictionary(uniqueKeysWithValues: providers.map { ($0, Date()) })
     }
 
     /// Internal, with the task returned, so tests can await a complete scan
@@ -701,6 +706,8 @@ final class AgentActivityMonitor {
 
         let newest = states.values.compactMap(\.lastWrite).max()
         if newest != lastWrite { lastWrite = newest }
+        let writes = states.compactMapValues(\.lastWrite)
+        if writes != lastWrites { lastWrites = writes }
     }
 }
 

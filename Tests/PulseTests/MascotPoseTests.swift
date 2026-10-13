@@ -53,7 +53,7 @@ struct MascotPoseTests {
         let noon = Self.date(hour: 10, minute: 20)
         #expect(store.mascotPose(.grokBot, usedFraction: 1, playful: true, now: noon) == .spent)
         #expect(store.mascotPose(.grokBot, usedFraction: 0.8, playful: true, now: noon) == .tired)
-        #expect(store.mascotPose(.grokBot, usedFraction: 0.3, playful: true, now: noon) == MascotPose.ofTheDay(at: noon, playful: true))
+        #expect(store.mascotPose(.grokBot, usedFraction: 0.3, playful: true, now: noon) == MascotPose.ofTheDay(for: .grokBot, at: noon, playful: true))
         // Even a session somewhere else cannot make it "work".
         monitor.adoptDemo(running: [.grok], labels: [.grok: "Searching"])
         #expect(!store.isRunning(.grokBot))
@@ -107,5 +107,13 @@ struct MascotPoseTests {
         let before = untouched.states
         untouched.apply(pose: .awake, activityLabel: nil)
         #expect(untouched.states == before)
+    }
+    @Test("Different providers receive distinct daytime slots and desynchronized poses")
+    func desynchronizedPoses() {
+        #expect(Provider.antigravity.mascotSlotOffset != Provider.grok.mascotSlotOffset)
+        let now = Self.date(hour: 14, minute: 15)
+        let poseAntigravity = MascotPose.ofTheDay(for: .antigravity, at: now, playful: true)
+        let poseGrok = MascotPose.ofTheDay(for: .grok, at: now, playful: true)
+        #expect(poseAntigravity != poseGrok)
     }
 }
