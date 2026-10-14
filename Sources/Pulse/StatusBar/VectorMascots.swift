@@ -241,7 +241,7 @@ enum VectorMascots {
         let face = Face.of(character)
         let ink = GraphicsContext.Shading.foreground
         // Working leaves room for the cue: the body steps back a little.
-        let room = style.simple && pose.isWorking ? 0.86 : 1.0
+        let room = style.simple && pose.isWorking ? 0.95 : 1.0
         let placed = fit(character)
         let fitScale = style.simple ? placed.scale * room : 1
         let fitCentre = style.simple ? placed.centre : CGPoint(x: 32, y: 32)
@@ -270,7 +270,7 @@ enum VectorMascots {
                 drawFace(face, moment: moment, colour: true, style: style, in: &body)
             } else {
                 // One ink, the face cut out of it, as Clawd's template frames.
-                body.fill(outline(character), with: ink)
+                body.fill(outline(character, simple: style.simple), with: ink)
                 body.blendMode = .destinationOut
                 drawFace(face, moment: moment, colour: false, style: style, in: &body)
                 body.blendMode = .normal
@@ -308,6 +308,40 @@ enum VectorMascots {
         return path.copy(using: &place) ?? path
     }())
 
+    /// The sparkle for a small mark: the same four tips with the sides
+    /// pulled out toward a diamond, so the body is plump and the face has
+    /// room. The logo's own curve is so concave that at twenty pixels the
+    /// star is four needles round a speck.
+    private static let sparkleBar = Path({ () -> CGPath in
+        let path = CGMutablePath()
+        let c = 32.45, far = 64.9, reach = 10.5
+        let tips = [CGPoint(x: c, y: 0), CGPoint(x: far, y: c), CGPoint(x: c, y: far), CGPoint(x: 0, y: c)]
+        let controls = [CGPoint(x: c + reach, y: c - reach), CGPoint(x: c + reach, y: c + reach),
+                        CGPoint(x: c - reach, y: c + reach), CGPoint(x: c - reach, y: c - reach)]
+        path.move(to: tips[0])
+        for index in 0..<4 { path.addQuadCurve(to: tips[(index + 1) % 4], control: controls[index]) }
+        path.closeSubpath()
+        var place = CGAffineTransform(translationX: 32, y: 32).scaledBy(x: 0.84, y: 0.84)
+            .translatedBy(x: -c, y: -c)
+        return path.copy(using: &place) ?? path
+    }())
+
+    /// The arch for a small mark: the same outer curve, with the hollow
+    /// under it raised so the legs are heavy instead of two thin strokes.
+    private static let archBar = Path({ () -> CGPath in
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: 54.33, y: 54.67))
+        path.addCurve(to: CGPoint(x: 57.8, y: 51.2), control1: CGPoint(x: 57.41, y: 56.98), control2: CGPoint(x: 62.03, y: 55.43))
+        path.addCurve(to: CGPoint(x: 32, y: 5), control1: CGPoint(x: 45.09, y: 38.88), control2: CGPoint(x: 47.78, y: 5))
+        path.addCurve(to: CGPoint(x: 6.2, y: 51.2), control1: CGPoint(x: 16.22, y: 5), control2: CGPoint(x: 18.91, y: 38.88))
+        path.addCurve(to: CGPoint(x: 9.67, y: 54.67), control1: CGPoint(x: 1.58, y: 55.82), control2: CGPoint(x: 6.59, y: 56.98))
+        path.addCurve(to: CGPoint(x: 32, y: 45), control1: CGPoint(x: 19, y: 50), control2: CGPoint(x: 21, y: 45))
+        path.addCurve(to: CGPoint(x: 54.33, y: 54.67), control1: CGPoint(x: 43, y: 45), control2: CGPoint(x: 45, y: 50))
+        path.closeSubpath()
+        var lift = CGAffineTransform(translationX: 0, y: -1)
+        return path.copy(using: &lift) ?? path
+    }())
+
     /// Antigravity's arch, traced from the official icon, lifted one unit.
     private static let arch = Path({ () -> CGPath in
         let path = CGMutablePath()
@@ -339,11 +373,11 @@ enum VectorMascots {
         return path
     }())
 
-    static func outline(_ character: MascotCharacter) -> Path {
+    static func outline(_ character: MascotCharacter, simple: Bool = false) -> Path {
         switch character {
-        case .starBuddy: sparkle
+        case .starBuddy: simple ? sparkleBar : sparkle
         case .cloudGhost: cloud
-        default: arch
+        default: simple ? archBar : arch
         }
     }
 
@@ -447,7 +481,7 @@ enum VectorMascots {
     private static func drawFlatBody(_ character: MascotCharacter, in context: inout GraphicsContext) {
         switch character {
         case .starBuddy:
-            let shape = sparkle
+            let shape = sparkleBar
             context.fill(shape, with: .color(Color(hex: 0x3186FF)))
             var tips = context
             tips.clip(to: shape)
@@ -458,7 +492,7 @@ enum VectorMascots {
             tips.fill(Path(CGRect(x: 0, y: 46.5, width: 64, height: 20)), with: .color(Color(hex: 0x00B95C)))
 
         case .floatBot:
-            let shape = arch
+            let shape = archBar
             context.fill(shape, with: .color(Color(hex: 0x3186FF)))
             var inside = context
             inside.clip(to: shape)
@@ -518,7 +552,9 @@ enum VectorMascots {
     /// `.destinationOut` already set, so everything here cuts the body.
     private static func drawFace(_ face: Face, moment: Moment, colour: Bool, style: Style,
                                  in context: inout GraphicsContext) {
-        let ink = GraphicsContext.Shading.color(colour ? face.ink : .black)
+        // Darker still at bar size: navy on the blue body is the contrast the
+        // whole face rests on.
+        let ink = GraphicsContext.Shading.color(colour ? (style.simple ? Color(hex: 0x0E0B30) : face.ink) : .black)
         let line = StrokeStyle(lineWidth: style.stroke(style.simple ? 3 : 2), lineCap: .round, lineJoin: .round)
         // Bigger features at bar size: two wide eyes and a thick mouth are
         // what survive twenty pixels.
@@ -687,17 +723,17 @@ enum VectorMascots {
             for index in 0..<2 {
                 let angle = time * 3.2 * speed + Double(index) * .pi
                 let hue = hues[(Int(time * 0.8 * speed) + index) % hues.count]
-                let centre = CGPoint(x: 32 + 25 * cos(angle), y: 33 + 22 * sin(angle))
-                drawSpark(in: &layer, at: centre, radius: 7.5, colour: tone(hue))
+                let centre = CGPoint(x: 32 + 23 * cos(angle), y: 33 + 20 * sin(angle))
+                drawSpark(in: &layer, at: centre, radius: 7, colour: tone(hue))
             }
         case .floatBot:
             for (index, side) in [-1.0, 1.0].enumerated() {
                 let pulse = (sin(time * 5 * speed + Double(index) * .pi) + 1) / 2
-                let x = 32 + side * 28
+                let x = 32 + side * 29
                 var chevron = Path()
-                chevron.move(to: CGPoint(x: x - side * 3, y: 22))
-                chevron.addLine(to: CGPoint(x: x + side * 2, y: 29))
-                chevron.addLine(to: CGPoint(x: x - side * 3, y: 36))
+                chevron.move(to: CGPoint(x: x - side * 2.5, y: 23))
+                chevron.addLine(to: CGPoint(x: x + side * 1.5, y: 29))
+                chevron.addLine(to: CGPoint(x: x - side * 2.5, y: 35))
                 layer.stroke(chevron, with: .color(tone(0x4893FC, 0.35 + 0.65 * pulse)),
                              style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
             }
