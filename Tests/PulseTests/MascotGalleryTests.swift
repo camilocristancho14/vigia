@@ -100,9 +100,9 @@ struct MascotGalleryTests {
             let image = Self.pixels(character, .awake, at: 0.5)
             let inked = image.filter { $0 != 0 }.count
             // The arch is the airiest of the three, with a hollow under it;
-            // even so a third of the box, where the old drawing's margins
+            // even so a bit over a third of the box, where the first drawing's margins
             // left it under a quarter.
-            #expect(Double(inked) / Double(22 * 22) > 0.32, "\(character) fills \(Double(inked) / 484)")
+            #expect(Double(inked) / Double(22 * 22) > 0.38, "\(character) fills \(Double(inked) / 484)")
             // Rows and columns it reaches: nearly the whole box both ways.
             let rows = Set(image.indices.filter { image[$0] != 0 }.map { $0 / 22 })
             #expect(rows.count >= 17, "\(character) spans \(rows.count) rows")
@@ -259,6 +259,8 @@ struct MascotGalleryTests {
         let accounts: [Provider] = [.claudeCode, .antigravity, .codex, .grok]
         let marks = Dictionary(uniqueKeysWithValues: accounts.map { (AccountKey($0).id, true) })
         let star = env["VIGIA_BAR_STAR"] == "1"
+        let dark = env["VIGIA_BAR_DARK"] == "1"
+        let barColour = Color(hex: UInt32(env["VIGIA_BAR_BG"] ?? "", radix: 16) ?? (dark ? 0x1E1E1E : 0xECECEC))
         let settings = AppSettings(enabledAccounts: Set(accounts.map(\.rawValue)), botMarks: marks,
                                    mascotCharacters: star ? [AccountKey(.antigravity).id: MascotCharacter.starBuddy.rawValue] : [:])
         settings.menuBarWorkingOnly = false
@@ -275,12 +277,14 @@ struct MascotGalleryTests {
             monitor.adoptDemo(running: running, labels: labels,
                               startedAt: Dictionary(uniqueKeysWithValues: running.map { ($0, Date().addingTimeInterval(-60)) }))
             let host = NSHostingView(rootView: MenuBarMascotsView(settings: settings, store: store))
-            host.appearance = NSAppearance(named: .aqua)
+            host.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
             let size = host.fittingSize
             host.frame = NSRect(origin: .zero, size: NSSize(width: size.width + 8, height: 24))
             let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
             window.contentView = host
             host.layoutSubtreeIfNeeded()
+            // The ink the bar would use over this backdrop, as the real item does.
+            host.rootView = MenuBarMascotsView(settings: settings, store: store)
             let pixelsWide = Int(host.frame.width * scale), pixelsHigh = Int(host.frame.height * scale)
             let rep = try #require(NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: pixelsWide, pixelsHigh: pixelsHigh,
                                                     bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
@@ -296,7 +300,7 @@ struct MascotGalleryTests {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
                 Image(nsImage: row).interpolation(.none).resizable()
                     .frame(width: row.size.width * zoom, height: row.size.height * zoom)
-                    .background(Color(white: 0.92))
+                    .background(barColour)
             }
         }
         .padding(8).background(Color.gray)

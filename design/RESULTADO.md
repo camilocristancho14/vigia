@@ -171,3 +171,14 @@ La barra de menú de este Mac es de 1× (1080p), así que cada marca mide **20 p
 ## v0.5.2: Clawd vuelve a su tamaño de 0.5.0
 
 En la 0.5.1 Clawd quedó demasiado grande en la barra (marca de 22 pt y una caja más ancha). Vuelve exactamente a lo de la 0.5.0: caja cuadrada de 20 pt y el mismo sprite (`ClawdMarkView` y `ClawdSprites` son idénticos a los de la v0.5.0). Las demás marcas siguen en 22 pt. El tamaño por personaje vive en `MascotCharacter.menuBarSize`, con una prueba que lo fija.
+
+## v0.5.3: siluetas más gruesas en la barra (Antigravity primero)
+
+Sobre lo de 0.5.1 y 0.5.2, para Float Bot y Star Buddy a tamaño de barra:
+
+- **Float Bot:** el hueco bajo el arco sube, así que las patas son pesadas en vez de dos trazos finos, y hay más sitio para la cara. Ocupa un 39 % de su caja (antes 35 %).
+- **Star Buddy:** los lados de la estrella se abren hacia un rombo suave, rechoncho pero todavía una estrella, con las puntas roja, amarilla y verde como bloques.
+- **Contraste:** tinta de cara más oscura sobre el cuerpo azul.
+- **Trabajando:** el cuerpo ya no retrocede al 86 % sino al 95 %, y las señales (chispas, chevrones) se acercan al cuerpo.
+- **Clawd** no se toca: sigue exactamente en el tamaño de la 0.5.0.
+- **Revisión:** el item real (`MenuBarMascotsView`) renderizado a 1× sobre barra clara, oscura y de color, en reposo, trabajando y pensando (`item-0.5.3-*.png` en `~/vigia-capturas/`). La barra real no se pudo capturar con `screencapture` porque otra app a pantalla completa la mantiene oculta.
