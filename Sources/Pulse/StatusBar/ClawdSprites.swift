@@ -34,7 +34,15 @@ enum MascotPose: Equatable, Sendable, CaseIterable {
     case spent
     /// The turn failed, or the session died in the middle of one.
     case error
+    /// A turn in flight that is waiting on a test run, not on the model:
+    /// holding up a test tube that bubbles. «Probando…»
+    case testing
+    /// A turn in flight waiting on a build or any other long command:
+    /// beside an hourglass, sand running. «Compilando…», «Esperando comando…»
+    case longCommand
 
+    /// Spending tokens. The waits on a long command are not: the turn is in
+    /// flight, but the model is idle until the command comes back.
     var isWorking: Bool { self == .run || self == .type || self == .thinking }
 
     /// What an idle mark does through the working day, rotated every five
@@ -70,9 +78,12 @@ enum MascotPose: Equatable, Sendable, CaseIterable {
 
     /// The pose for a turn in flight, from the word the status bar shows:
     /// thinking while it is the model's move, at the laptop for commands and
-    /// edits, on the move for looking things up and handing work out.
+    /// edits, on the move for looking things up and handing work out, and
+    /// waiting with a test tube or an hourglass on a long command.
     static func working(label: String?) -> MascotPose {
         switch label {
+        case CommandWait.testingLabel: .testing
+        case CommandWait.buildingLabel, CommandWait.waitingLabel: .longCommand
         case "Reading", "Searching", "Browsing web", "Searching web", "Delegating": .run
         case "Thinking…", nil: .thinking
         default: .type
@@ -105,7 +116,8 @@ enum ClawdSprites {
 
     private static let palette: [Character: (UInt8, UInt8, UInt8)] = [
         "O": (217, 119, 87), "K": (25, 20, 20), "W": (246, 242, 235), "B": (110, 70, 50),
-        "S": (225, 228, 236), "Y": (250, 204, 21), "C": (120, 200, 245), "D": (184, 96, 70), "G": (198, 202, 210), "g": (138, 144, 156), "Z": (140, 165, 240)
+        "S": (225, 228, 236), "Y": (250, 204, 21), "C": (120, 200, 245), "D": (184, 96, 70), "G": (198, 202, 210), "g": (138, 144, 156), "Z": (140, 165, 240),
+        "L": (120, 205, 110)
     ]
 
     static let awake0: [String] = [
@@ -591,6 +603,123 @@ enum ClawdSprites {
         "................."
     ]
 
+    // Waiting on a long command. Testing: a test tube held up in the right
+    // claw, green and bubbling, a bubble rising out of it. The tube stands a
+    // cell clear of the body so it reads in one ink too, and its bubbles are
+    // holes in it. Eyes up and to the right, on the tube.
+
+    static let testing0: [String] = [
+        ".................",
+        "...OOOOOOOOOOO.SS",
+        "...OOKKOOOOOKK.LL",
+        "OOOOOKKOOOOOKK.L.",
+        "OOOOOOOOOOOOOOOLL",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let testing1: [String] = [
+        ".................",
+        "...OOOOOOOOOOO.SS",
+        "...OOKKOOOOOKK..L",
+        "OOOOOKKOOOOOKK.LL",
+        "OOOOOOOOOOOOOOOLL",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let testing2: [String] = [
+        "................W",
+        "...OOOOOOOOOOO.SS",
+        "...OOKKOOOOOKK.LL",
+        "OOOOOKKOOOOOKK.LL",
+        "OOOOOOOOOOOOOOOLL",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    static let testing3: [String] = [
+        "...............W.",
+        "...OOOOOOOOOOO.SS",
+        "...OOKKOOOOOKK.LL",
+        "OOOOOKKOOOOOKK.LL",
+        "OOOOOOOOOOOOOOOLL",
+        "OOOOOOOOOOOOOOOOO",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...OOOOOOOOOOO...",
+        "...O..O...O..O...",
+        "...O..O...O..O...",
+        "...O..O...O..O..."
+    ]
+
+    // A long command: a cell to the left, so an hourglass fits beside him a
+    // cell clear, its sand running from the top bulb to the bottom one (the
+    // empty glass is a hole, so the sand moves in one ink as well). Its ends
+    // are the laptop's grey rather than wood: brown is dark enough to drop
+    // out of the one-ink frames. He
+    // watches it and taps a foot.
+
+    static let hourglass0: [String] = [
+        ".................",
+        "..OOOOOOOOOOO....",
+        "..OOKKOOOOOKK....",
+        "OOOOKKOOOOOKKO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOO.ggg",
+        "..OOOOOOOOOOO.YYY",
+        "..OOOOOOOOOOO.SYS",
+        "..OOOOOOOOOOO..Y.",
+        "..O..O...O..O.S.S",
+        "..O..O...O..O.SYS",
+        "..O..O...O..O.ggg"
+    ]
+
+    static let hourglass1: [String] = [
+        ".................",
+        "..OOOOOOOOOOO....",
+        "..OOKKOOOOOKK....",
+        "OOOOKKOOOOOKKO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOO.ggg",
+        "..OOOOOOOOOOO.S.S",
+        "..OOOOOOOOOOO.SYS",
+        "..OOOOOOOOOOO..Y.",
+        "..O..O...O..O.S.S",
+        "..O..O...O..O.YYY",
+        "..O..O...O....ggg"
+    ]
+
+    static let hourglass2: [String] = [
+        ".................",
+        "..OOOOOOOOOOO....",
+        "..OOOOOOOOOOO....",
+        "OOOOKKOOOOOKKO...",
+        "OOOOOOOOOOOOOO...",
+        "OOOOOOOOOOOOO.ggg",
+        "..OOOOOOOOOOO.S.S",
+        "..OOOOOOOOOOO.S.S",
+        "..OOOOOOOOOOO..S.",
+        "..O..O...O..O.YYY",
+        "..O..O...O..O.YYY",
+        "..O..O...O..O.ggg"
+    ]
+
     /// Full-colour frames for a pose, in the order they play.
     @MainActor
     static let frames: [String: [NSImage]] = [
@@ -606,7 +735,9 @@ enum ClawdSprites {
         "celebrate": [celebrate0, celebrate1].map(render),
         "stretch": [stretch0, stretch1].map(render),
         "play": [play0, play1, play2, play3].map(render),
-        "error": [error0, error1].map(render)
+        "error": [error0, error1].map(render),
+        "testing": [testing0, testing1, testing2, testing3].map(render),
+        "hourglass": [hourglass0, hourglass1, hourglass2, hourglass2].map(render)
     ]
 
     private static func render(_ rows: [String]) -> NSImage {

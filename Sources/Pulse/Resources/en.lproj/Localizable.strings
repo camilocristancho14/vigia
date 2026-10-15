@@ -934,6 +934,9 @@
 "Delegating" = "Delegating";
 "Planning" = "Planning";
 "Using tool" = "Using tool";
+"Testing…" = "Testing…";
+"Building…" = "Building…";
+"Waiting on command…" = "Waiting on command…";
 "Menu bar mascots" = "Menu bar mascots";
 "Show AI mascots" = "Show AI mascots";
 "The same marks as the notch, in the same order, moving while each AI works." = "The same marks as the notch, in the same order, moving while each AI works.";

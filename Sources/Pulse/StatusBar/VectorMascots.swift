@@ -181,6 +181,19 @@ enum VectorMascots {
             moment.offset.width = 0.8 * sin(time * 26)
             moment.eyes = .squeezed
             moment.mouth = .frown
+        case .testing:
+            // Leaning back to watch the tube, eyes on it.
+            moment.rotation = -3 + 1 * sin(time * 1.3)
+            moment.offset.width = -1.5
+            moment.eyes = .open(look: CGPoint(x: 1.3, y: -1.1))
+            moment.mouth = .small
+        case .longCommand:
+            // Waiting it out, eyes on the sand, a slow sway.
+            moment.fromFeet = true
+            moment.offset.width = -1.5
+            moment.rotation = 2 * sin(time * 0.9)
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: 1.2, y: 0.8))
+            moment.mouth = .flat
         case .error:
             // Melting: spread at the feet, sunk, grey.
             let sag = (sin(time * 0.8) + 1) / 2
@@ -768,6 +781,8 @@ enum VectorMascots {
         case .celebrate: drawConfetti(in: &context, size: size, time: time)
         case .play: drawPlayBall(in: &context, size: size, time: time, ink: colour ? Color(hex: 0xFBBC04) : mono)
         case .error: drawErrorMark(in: &context, size: size, time: time)
+        case .testing: drawTestTube(in: &context, size: size, time: time, ink: colour ? nil : mono)
+        case .longCommand: drawHourglass(in: &context, size: size, time: time, ink: colour ? nil : mono)
         case .sleep:
             // The design's own Zs: drawn strokes in the character's blue.
             var layer = context

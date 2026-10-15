@@ -48,6 +48,10 @@ enum AgentActivity {
         /// A limit the agent reported hitting that has not lifted yet. See
         /// `LimitHit`.
         var limit: LimitHit?
+        /// When the shell command the turn is waiting on started, while the
+        /// label is one of `CommandWait`'s waits — the timer beside
+        /// «Probando…» counts from here, not from the start of the turn.
+        var commandSince: Date?
     }
 
     /// How long an open question keeps a mark waiting. A person may take a
@@ -106,9 +110,15 @@ enum AgentActivity {
             // and the newest file is not necessarily the busy one. The filter
             // is the longest grace any verdict can claim, so nothing older is
             // worth opening.
-            for file in files where now.timeIntervalSince(file.modified) <= Wait.tool.grace {
+            for file in files where now.timeIntervalSince(file.modified) <= CommandWait.longGrace {
                 guard !Task.isCancelled else { break }
-                switch verdict(for: file.url, provider: provider) {
+                let found = verdict(for: file.url, provider: provider)
+                // Past the ordinary tool grace only a test run or a build can
+                // still be going, so only a tool call is worth reading on.
+                if now.timeIntervalSince(file.modified) > Wait.tool.grace {
+                    guard case .working(.tool, _) = found else { continue }
+                }
+                switch found {
                 case .working(let wait, let at):
                     // Timed from the record's *own* stamp, not the file's.
                     // Claude Code goes on writing bookkeeping into a transcript
@@ -119,9 +129,13 @@ enum AgentActivity {
                     // that died mid-turn look freshly written for ever, and the
                     // ring turned for as long as the file kept being poked.
                     let since = now.timeIntervalSince(at ?? file.modified)
-                    state.isWorking = since <= wait.grace
+                    let call = wait == .tool && provider.handWritten == .claudeCode
+                        ? lastToolCall(in: tail(of: file.url)) : nil
+                    state.isWorking = since <= CommandWait.grace(ordinary: wait.grace, kind: call?.kind)
                     if state.isWorking {
-                        state.label = activityLabel(for: file.url, provider: provider, wait: wait)
+                        let label = activityLabel(provider: provider, wait: wait, call: call, running: since)
+                        state.label = label
+                        state.commandSince = CommandWait.isWait(label) ? (at ?? file.modified) : nil
                     } else if wait == .model, file.url == newest, since <= wait.grace + failureWindow {
                         // The model's move outlived its grace: the session
                         // died mid-turn. Only the model's wait says so
@@ -273,12 +287,21 @@ enum AgentActivity {
 
     /// The status-bar wording for a turn in flight, as claude-status-bar words
     /// it: the model's move is "Thinking…", a tool's is named by the tool.
-    static func activityLabel(for url: URL, provider: Provider, wait: Wait) -> String {
+    ///
+    /// A shell command is named for what it is — «Probando…» for a test run,
+    /// «Compilando…» for a build — and becomes «Esperando comando…» once it
+    /// has run for `CommandWait.threshold`. `running` is how long the tool
+    /// call has been in flight.
+    static func activityLabel(for url: URL, provider: Provider, wait: Wait, running: TimeInterval = 0) -> String {
+        let call = wait == .tool && provider.handWritten == .claudeCode ? lastToolCall(in: tail(of: url)) : nil
+        return activityLabel(provider: provider, wait: wait, call: call, running: running)
+    }
+
+    private static func activityLabel(provider: Provider, wait: Wait, call: ToolCall?,
+                                      running: TimeInterval) -> String {
         guard wait == .tool else { return "Thinking…" }
-        guard provider.handWritten == .claudeCode,
-              let tool = lastToolName(in: tail(of: url))
-        else { return "Using tool" }
-        return toolLabel(tool)
+        guard let call else { return "Using tool" }
+        return CommandWait.label(tool: call.name, kind: call.kind, running: running, toolLabel: toolLabel)
     }
 
     static func toolLabel(_ tool: String) -> String {
@@ -296,17 +319,31 @@ enum AgentActivity {
         }
     }
 
-    private static func lastToolName(in lines: [Data]) -> String? {
+    /// The newest tool call in a transcript's tail. The command of a shell
+    /// call is classified here and then dropped: only its kind is kept.
+    struct ToolCall: Equatable {
+        var name: String
+        var kind: CommandKind?
+    }
+
+    static func lastToolCall(in lines: [Data]) -> ToolCall? {
         for line in lines.reversed() {
             guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
                   record["type"] as? String == "assistant",
                   let content = (record["message"] as? [String: Any])?["content"] as? [[String: Any]]
             else { continue }
-            if let name = content.last(where: { $0["type"] as? String == "tool_use" })?["name"] as? String {
-                return name
+            if let use = content.last(where: { $0["type"] as? String == "tool_use" }),
+               let name = use["name"] as? String {
+                let command = (use["input"] as? [String: Any])?["command"] as? String
+                let kind = CommandWait.isShell(name) ? command.flatMap(CommandWait.kind(of:)) : nil
+                return ToolCall(name: name, kind: kind)
             }
         }
         return nil
+    }
+
+    private static func lastToolName(in lines: [Data]) -> String? {
+        lastToolCall(in: lines)?.name
     }
 
     // MARK: - Reading the tail
@@ -732,6 +769,9 @@ final class AgentActivityMonitor {
     /// seen running — the status bar's "Reading 0:12".
     private(set) var labels: [Provider: String] = [:]
     private(set) var startedAt: [Provider: Date] = [:]
+    /// When the long command each provider is waiting on started, while its
+    /// label is one of `CommandWait`'s waits — «Probando… 2:13».
+    private(set) var commandSince: [Provider: Date] = [:]
 
     /// The limit each provider's agent reported hitting, while it still binds.
     private(set) var limits: [Provider: LimitHit] = [:]
@@ -766,7 +806,11 @@ final class AgentActivityMonitor {
             for provider in $0 {
                 guard let remote = RemoteActivityReceiver.shared.state(for: provider) else { continue }
                 var state = states[provider] ?? AgentActivity.State(lastWrite: nil, isWorking: false)
-                if !state.isWorking { state.isWorking = true; state.label = remote.label }
+                if !state.isWorking {
+                    state.isWorking = true
+                    state.label = remote.label
+                    state.commandSince = remote.since
+                }
                 state.lastWrite = max(state.lastWrite ?? Date(), Date())
                 states[provider] = state
             }
@@ -818,6 +862,7 @@ final class AgentActivityMonitor {
         finishedAt = [:]
         labels = [:]
         startedAt = [:]
+        commandSince = [:]
         waiting = []
         failedAt = [:]
         limits = [:]
@@ -827,7 +872,8 @@ final class AgentActivityMonitor {
     /// `stop()` clears `running`; the set is applied after that, and the timer
     /// stays down so the next scan cannot replace it.
     func adoptDemo(running providers: Set<Provider>, labels: [Provider: String] = [:],
-                   startedAt: [Provider: Date] = [:], finishedAt: [Provider: Date] = [:],
+                   startedAt: [Provider: Date] = [:], commandSince: [Provider: Date] = [:],
+                   finishedAt: [Provider: Date] = [:],
                    waiting: Set<Provider> = [], failedAt: [Provider: Date] = [:],
                    limits: [Provider: LimitHit] = [:],
                    lastWrites: [Provider: Date]? = nil) {
@@ -838,6 +884,7 @@ final class AgentActivityMonitor {
         self.limits = limits
         self.labels = labels
         self.startedAt = startedAt
+        self.commandSince = commandSince
         self.finishedAt = finishedAt
         lastWrite = Date()
         self.lastWrites = lastWrites ?? Dictionary(uniqueKeysWithValues: providers.map { ($0, Date()) })
@@ -891,6 +938,8 @@ final class AgentActivityMonitor {
 
         let labels = states.compactMapValues { $0.isWorking ? $0.label : nil }
         if labels != self.labels { self.labels = labels }
+        let commands = states.compactMapValues { $0.isWorking ? $0.commandSince : nil }
+        if commands != commandSince { commandSince = commands }
 
         let newest = states.values.compactMap(\.lastWrite).max()
         if newest != lastWrite { lastWrite = newest }

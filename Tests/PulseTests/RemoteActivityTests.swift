@@ -10,9 +10,11 @@ struct RemoteActivityTests {
     func toolCall() {
         var ledger = RemoteActivityLedger()
         ledger.record(source: "bot", event: "PreToolUse", tool: "Bash", at: t0)
+        #expect(ledger.state(now: t0.addingTimeInterval(5))?.label == "Running command")
+        // Still working two minutes on, but now it is a wait on the command.
         let state = ledger.state(now: t0.addingTimeInterval(120))
         #expect(state?.isWorking == true)
-        #expect(state?.label == "Running command")
+        #expect(state?.label == "Waiting on command…")
         #expect(ledger.state(now: t0.addingTimeInterval(400)) == nil)
     }
 

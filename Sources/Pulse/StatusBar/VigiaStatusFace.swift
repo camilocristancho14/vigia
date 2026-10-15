@@ -254,7 +254,7 @@ private struct MenuBarMascotItem: View {
                     .font(.system(size: 11, weight: .medium))
                     .lineLimit(1)
             }
-            if settings.menuBarTimer, let since = store.workingSince(provider) {
+            if settings.menuBarTimer, let since = store.timerSince(provider) {
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let seconds = max(0, Int(context.date.timeIntervalSince(since)))
                     Text(String(format: "%d:%02d", seconds / 60, seconds % 60))
