@@ -86,6 +86,9 @@ struct LogoMascotView: View {
             mark.scaleEffect(0.86).offset(x: size * 0.05 * sin(time * 2.8))
         case .error:
             mark.grayscale(1).opacity(0.45).rotationEffect(.degrees(-6), anchor: .bottom)
+        case .testing, .longCommand:
+            // Stepped back and still, to make room for the tube or the glass.
+            mark.scaleEffect(0.8, anchor: .bottomLeading).offset(y: size * 0.02 * sin(time * 1.5))
         }
     }
 
@@ -141,6 +144,8 @@ struct LogoMascotView: View {
         case .celebrate: drawConfetti(in: &canvas, size: canvasSize, time: time)
         case .play: drawPlayBall(in: &canvas, size: canvasSize, time: time, ink: .primary)
         case .error: drawErrorMark(in: &canvas, size: canvasSize, time: time)
+        case .testing: drawTestTube(in: &canvas, size: canvasSize, time: time, ink: .primary)
+        case .longCommand: drawHourglass(in: &canvas, size: canvasSize, time: time, ink: .primary)
         case .type, .awake, .waking, .stretch: break
         }
     }

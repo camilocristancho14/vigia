@@ -280,6 +280,18 @@ final class UsageStore {
     /// When the turn running now was first seen.
     func workingSince(_ provider: Provider) -> Date? { activity.startedAt[provider] }
 
+    /// When the long command a working provider is waiting on started, while
+    /// its label is «Probando…», «Compilando…» or «Esperando comando…».
+    func commandSince(_ provider: Provider) -> Date? { activity.commandSince[provider] }
+
+    /// Where the status bar's timer counts from: the turn's start, except
+    /// while it waits on a long command — «Probando… 2:13» is how long the
+    /// tests have been running, not how long the turn has.
+    func timerSince(_ provider: Provider) -> Date? {
+        guard CommandWait.isWait(activityLabel(provider)) else { return workingSince(provider) }
+        return commandSince(provider) ?? workingSince(provider)
+    }
+
     /// Whether this provider's CLI finished a turn just now.
     ///
     /// The rail's mark celebrates a finished turn. Six seconds is long enough

@@ -1,0 +1,93 @@
+# What a shell command is, for the «Probando…» state: test, build, or - (neither).
+# Checked against CommandWait.kind(of:) by CommandWaitTests and against the
+# hook's Bash copy of the rules by scripts/test-vigia-notify.sh, so the two
+# never drift apart. One command per line: kind, a tab, the command.
+test	python manage.py test
+test	python3 manage.py test apps.ventas --keepdb --parallel 4
+test	./manage.py test
+test	cd /srv/app && timeout 900 python manage.py test 2>&1 | tail -40
+test	docker compose exec web python manage.py test
+test	pytest
+test	pytest -x -q tests/test_models.py
+test	.venv/bin/pytest -k ventas
+test	python -m pytest -q
+test	python3 -m unittest discover
+test	uv run pytest
+test	poetry run pytest --maxfail=1
+test	DJANGO_SETTINGS_MODULE=app.settings.test pytest
+test	tox -e py312
+test	npm test
+test	npm t
+test	npm run test:e2e
+test	npm run test -- --watch=false
+test	yarn test
+test	pnpm test:unit
+test	pnpm exec jest
+test	bun test
+test	npx jest --runInBand
+test	npx vitest run
+test	npx playwright test
+test	npx playwright test tests/login.spec.ts --project=chromium
+test	npx cypress run
+test	swift test
+test	swift test --filter CommandWaitTests
+test	swift build && swift test
+test	xcodebuild test -scheme Vigia -destination 'platform=macOS'
+test	go test ./...
+test	cargo test
+test	cargo nextest run
+test	mvn test
+test	./gradlew test
+test	./gradlew :app:test
+test	bundle exec rspec
+test	rails test
+test	dotnet test
+test	mix test
+test	make test
+test	make -j8 check
+test	ctest --output-on-failure
+test	bash -c "cd api && pytest"
+test	./scripts/run-tests.sh
+test	sudo -u www-data python manage.py test
+build	swift build
+build	swift build -c release
+build	xcodebuild -scheme Vigia build
+build	cargo build --release
+build	go build ./cmd/server
+build	npm run build
+build	yarn build
+build	pnpm run build:prod
+build	make
+build	make release
+build	docker build -t app .
+build	docker compose build
+build	mvn package -DskipTests
+build	./gradlew assembleDebug
+build	tsc -p .
+build	npx vite build
+build	time swift build
+-	ls -la
+-	git status
+-	git commit -m "Run the tests in CI"
+-	grep -rn pytest .
+-	cat pytest.ini
+-	echo "npm test"
+-	pip install pytest
+-	uv pip install pytest
+-	poetry add --group dev pytest
+-	npm install
+-	npm i -D vitest
+-	gem install rspec
+-	python manage.py runserver
+-	python manage.py migrate
+-	python -c "import pytest; print(pytest.__version__)"
+-	swift run Pulse
+-	cargo install ripgrep
+-	go vet ./...
+-	make lint
+-	npm run lint
+-	npx playwright install chromium
+-	docker compose up -d
+-	sleep 30
+-	curl -s http://localhost:8000/health
+-	rg -n "def test_" tests/

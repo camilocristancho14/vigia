@@ -29,6 +29,8 @@ enum ClawdFrames {
         case .sleep, .stretch: 0.45
         case .tired, .waking: 0.3
         case .spent, .error: 0.35
+        case .testing: 0.15
+        case .longCommand: 0.25
         }
     }
 
@@ -37,7 +39,8 @@ enum ClawdFrames {
     private static let cycles: [MascotPose: (key: String, step: TimeInterval)] = [
         .type: ("type", 0.16), .sleep: ("sleep", 0.9), .tired: ("tired", 0.3), .spent: ("spent", 0.35),
         .thinking: ("thinking", 0.45), .waiting: ("waiting", 0.4), .celebrate: ("celebrate", 0.25),
-        .stretch: ("stretch", 1.1), .play: ("play", 0.22), .error: ("error", 0.7)
+        .stretch: ("stretch", 1.1), .play: ("play", 0.22), .error: ("error", 0.7),
+        .testing: ("testing", 0.3), .longCommand: ("hourglass", 0.6)
     ]
 
     /// The frame to show `seconds` into a pose.
@@ -62,7 +65,8 @@ enum ClawdFrames {
             // Up from a crouch, eyes opening, once a cycle of three seconds.
             let beat = seconds.truncatingRemainder(dividingBy: 3)
             return frames[beat < 1 ? 0 : beat < 1.8 ? 1 : 2]
-        case .type, .sleep, .tired, .spent, .thinking, .waiting, .celebrate, .stretch, .play, .error:
+        case .type, .sleep, .tired, .spent, .thinking, .waiting, .celebrate, .stretch, .play, .error,
+             .testing, .longCommand:
             guard let cycle = cycles[pose], let frames = sets[cycle.key] else { return walk.first }
             return frames[Int(seconds / cycle.step) % frames.count]
         }

@@ -6,7 +6,7 @@ Cubre Claude Code, Codex, Cursor, Gemini CLI y Grok Build (`~/.grok`), y el rest
 
 ## Qué hace
 
-- **Barra de menú.** Una mascota por cada IA de tu panel, en el mismo orden que el notch: Clawd (el cangrejo en píxeles) para Claude Code, la bolita de Grok Bot, y el logo de las demás, o su mascota animada si la activas. Se mueven solo mientras esa IA trabaja y, junto a ella, aparece qué está haciendo y cuánto lleva: *Pensando… 0:13*, *Leyendo 1:04*, *Ejecutando comando 0:07*. Las que no hacen nada se quedan quietas.
+- **Barra de menú.** Una mascota por cada IA de tu panel, en el mismo orden que el notch: Clawd (el cangrejo en píxeles) para Claude Code, la bolita de Grok Bot, y el logo de las demás, o su mascota animada si la activas. Se mueven solo mientras esa IA trabaja y, junto a ella, aparece qué está haciendo y cuánto lleva: *Pensando… 0:13*, *Leyendo 1:04*, *Ejecutando comando 0:07*. Mientras la IA solo espera a que acabe un comando largo —pruebas, una compilación— lo dice aparte, porque ahí no está gastando tokens: *Probando… 2:13*, *Compilando… 0:41*, *Esperando comando… 0:25* (ver «Esperando un comando»). Las que no hacen nada se quedan quietas.
 - **Clic en la barra de menú.** Abre la tarjeta de detalle de cada IA, la misma que el notch muestra al dejar el puntero sobre un anillo: sus límites, cuándo se reinician y si van a alcanzar.
 - **Notch.** El panel del borde de la pantalla, con los anillos de uso. Se abre al pasar el puntero o al hacer clic.
 - **Ajustes de la barra de menú.** Activar o quitar las mascotas, el texto de lo que hace cada IA, el tiempo transcurrido y el porcentaje de uso; mostrar solo las IAs que están trabajando; y elegir cuáles aparecen.
@@ -22,19 +22,46 @@ Cada mascota muestra qué está haciendo la IA. Claude Code tiene a Clawd, y cua
 | --- | --- | --- | --- |
 | Ejecuta un comando, edita, escribe, planea o piensa | Teclea en una laptop | Escena de «escribir» o «trabajar» con una laptop delante | Un brillo cruza el logo |
 | Busca, lee, navega o delega | Camina de prisa | Escena de «buscar», con líneas de velocidad | Tres puntos orbitan el logo |
+| Espera a que acaben unas pruebas (*Probando…*) | Sostiene un tubo de ensayo que burbujea | Mira un tubo de ensayo que burbujea | El logo se aparta junto al tubo |
+| Espera una compilación o un comando de más de 20 s (*Compilando…*, *Esperando comando…*) | Junto a un reloj de arena, golpeando el suelo con una pata | Mira un reloj de arena que se vacía y se da la vuelta | El logo se aparta junto al reloj |
 | Acaba de terminar un turno (5 min) | Toma café, con vapor | Canturrea con una taza humeante | Vapor sube del logo |
 | Quieta y despierta | Parpadea | Su rutina de siempre | Respira |
 | Sin actividad (20 min) | Duerme con «Z» | Se adormila y duerme, con «z» | Atenuado, con «z» |
 | Límite al 75 % o más | Cansado: párpados caídos y una gota de sudor | Cansada, con una gota de sudor | Se ladea y suda |
 | Límite al 100 % | Ojos en X y estrellas mareadas | Se apaga, con estrellas mareadas | Tiembla entre estrellas |
 
-Trabajar manda sobre todo, y el descanso de después del turno también; el cansancio y el agotamiento se ven cuando no está trabajando ni de descanso.
+Esperar un comando cuenta como turno en curso (no se duerme ni celebra), pero no es «trabajar»: Clawd deja la laptop. Trabajar manda sobre todo, y el descanso de después del turno también; el cansancio y el agotamiento se ven cuando no está trabajando ni de descanso.
 
 Las IAs que no se pueden observar (Grok Bot, por ejemplo) no «trabajan»: muestran primero el cansancio y el agotamiento según su límite y, si no, van cambiando de escena a lo largo del día: duermen de noche (23:00 a 06:00), toman café por la mañana y después, cada cuarto de hora, parpadean, descansan, teclean en la laptop o salen a correr. Los logos solo descansan y toman café. Con «Reducir movimiento» activado en macOS los logos se quedan quietos. En Ajustes, Clawd puede conservar el naranja de Claude en la barra de menú.
 
+## Esperando un comando
+
+Cuando Claude Code lanza un comando con la herramienta Bash, Vigía mira qué comando es:
+
+- **Pruebas** (`manage.py test`, `pytest`, `npm test`, `npm run test:e2e`, `swift test`, `npx playwright test`, `go test`, `cargo test`, `make test`…): *Probando…* desde el primer segundo.
+- **Compilaciones** (`swift build`, `xcodebuild`, `npm run build`, `cargo build`, `docker build`, `make`…): *Compilando…*.
+- **Cualquier otro comando** que lleve más de 20 segundos sin volver: *Esperando comando…*.
+
+El reloj de al lado cuenta desde que empezó el comando, no el turno. Al volver el resultado (`PostToolUse`) pasa a *Pensando…*, y con `Stop` termina. Como un `manage.py test` puede tardar bastante, las pruebas y compilaciones se dan por vivas hasta 15 minutos sin noticias (el resto de herramientas, 5).
+
+Las reglas están en `Sources/Pulse/Usage/CommandWait.swift`; atraviesan envoltorios como `timeout 900`, `uv run`, `docker compose exec web` o `cd x &&`, y no confunden `pip install pytest` o `grep pytest` con una prueba. La tabla `Tests/PulseTests/Fixtures/command-kinds.tsv` dice qué es cada comando de ejemplo, y la comprueban tanto `swift test` como `scripts/test-vigia-notify.sh` (la copia en Bash del hook). Para Claude Code en este Mac funciona solo, leyendo sus transcripciones; para otra máquina hace falta el hook de abajo.
+
 ## Actividad remota
 
-Claude en el navegador o en la app de Mac se detecta mirando la conversación más reciente de tu cuenta (usa la sesión de la app de escritorio). Para Claude Code en otra máquina, activa **Ajustes > Barra de menú > Actividad remota de Claude Code**: Vigía escucha en el puerto 7717, protegido con un token (botón *Copiar token*), y los hooks de Claude Code del servidor le avisan con un POST a `/activity` (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`). El cuerpo puede llevar `"provider"` (`claudeCode`, `grok` para Grok Build, `grokBot`, `codex`, …; por defecto `claudeCode`), así que sirve igual para Grok Build y las demás IAs.
+Claude en el navegador o en la app de Mac se detecta mirando la conversación más reciente de tu cuenta (usa la sesión de la app de escritorio). Para Claude Code en otra máquina, activa **Ajustes > Barra de menú > Actividad remota de Claude Code**: Vigía escucha en el puerto 7717, protegido con un token (botón *Copiar token*), y los hooks de Claude Code del servidor le avisan con un POST a `/activity` (`UserPromptSubmit`, `PreToolUse`, `PostToolUse`, `Stop`). El cuerpo puede llevar `"provider"` (`claudeCode`, `grok` para Grok Build, `grokBot`, `codex`, …; por defecto `claudeCode`), así que sirve igual para Grok Build y las demás IAs, y desde 0.6.0 un `"kind"` opcional (`"test"` o `"build"`) en los `PreToolUse` de Bash, para *Probando…* y *Compilando…*. Un hook viejo sin `kind` sigue funcionando (solo verá *Esperando comando…* a los 20 s).
+
+`scripts/vigia-notify.sh` es un hook listo para copiar a la otra máquina (bash 3.2 o posterior, `jq` y `curl`): lee `VIGIA_URL` y `VIGIA_TOKEN` de `~/.config/vigia/env`, clasifica el comando allí mismo y **solo envía la categoría, nunca el comando**. Regístralo en `~/.claude/settings.json` de esa máquina:
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.claude/vigia-notify.sh" }] }],
+    "PreToolUse":       [{ "matcher": "*", "hooks": [{ "type": "command", "command": "~/.claude/vigia-notify.sh" }] }],
+    "PostToolUse":      [{ "matcher": "*", "hooks": [{ "type": "command", "command": "~/.claude/vigia-notify.sh" }] }],
+    "Stop":             [{ "hooks": [{ "type": "command", "command": "~/.claude/vigia-notify.sh" }] }]
+  }
+}
+```
 
 **Color de la barra.** Vigía lee el fondo de pantalla bajo la barra de menú de cada pantalla (sin pedir permisos) y, si una mascota se confunde con él —Clawd naranja sobre un fondo naranja, por ejemplo—, la dibuja en blanco o negro, la que se vea en todas tus pantallas a la vez. Está apagado por defecto; úsalo solo por una red privada (Tailscale o un túnel SSH).
 
@@ -81,6 +108,7 @@ Requiere Swift 6 y macOS 14 o posterior.
 
 ```bash
 swift test                  # pruebas
+scripts/test-vigia-notify.sh   # reglas de comandos del hook contra la misma tabla que swift test
 scripts/make-app.sh         # arma build.noindex/Vigia.app, Vigia.dmg y Vigia.zip
 ```
 

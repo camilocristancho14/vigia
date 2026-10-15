@@ -19,6 +19,8 @@ func drawMascotOverlay(pose: MascotPose, mood: BotMarkMood, in context: inout Gr
     case (.celebrate, _): drawConfetti(in: &context, size: size, time: time)
     case (.play, _): drawPlayBall(in: &context, size: size, time: time, ink: Color(red: 0.98, green: 0.74, blue: 0.02))
     case (.error, _): drawErrorMark(in: &context, size: size, time: time)
+    case (.testing, _): drawTestTube(in: &context, size: size, time: time, ink: nil)
+    case (.longCommand, _): drawHourglass(in: &context, size: size, time: time, ink: nil)
     default: break
     }
 }
@@ -251,4 +253,91 @@ func drawErrorMark(in context: inout GraphicsContext, size: CGSize, time: TimeIn
     let at = CGPoint(x: width * 0.3, y: height * (0.18 - 0.14 * CGFloat(rise)))
     context.fill(Path(ellipseIn: CGRect(x: at.x - puff, y: at.y - puff, width: puff * 2, height: puff * 2)),
                  with: .color(Color(white: 0.55).opacity(0.6 * (1 - rise))))
+}
+
+// MARK: - Waiting on a long command
+
+/// A test tube held up beside the head, green and bubbling, a bubble rising
+/// out of the top now and then: a test run. `ink` draws it in one colour, for
+/// a template mark; nil draws it in its own.
+func drawTestTube(in context: inout GraphicsContext, size: CGSize, time: TimeInterval, ink: Color?) {
+    let width = size.width, height = size.height
+    let line = max(1, width * 0.045)
+    let tube = CGRect(x: width * 0.76, y: height * 0.08, width: max(3, width * 0.15), height: height * 0.4)
+    let glass = Path(roundedRect: tube, cornerRadius: tube.width / 2, style: .continuous)
+    let liquid = CGRect(x: tube.minX, y: tube.minY + tube.height * 0.38, width: tube.width, height: tube.height * 0.62)
+    let green = Color(red: 0.47, green: 0.80, blue: 0.43)
+    context.fill(Path(roundedRect: liquid, cornerRadius: tube.width / 2, style: .continuous),
+                 with: .color(ink ?? green))
+    context.stroke(glass, with: .color(ink ?? Color(white: 0.88)), lineWidth: line)
+    // Bubbles: two climbing inside, one escaping over the rim.
+    for index in 0..<3 {
+        let phase = (time * 0.9 + Double(index) / 3).truncatingRemainder(dividingBy: 1)
+        let radius = max(0.7, width * (index == 2 ? 0.045 : 0.03))
+        let x = tube.midX + CGFloat(sin(time * 5 + Double(index) * 2)) * tube.width * 0.18
+        let y = index == 2
+            ? tube.minY - height * 0.12 * CGFloat(phase)
+            : liquid.maxY - (liquid.height * 0.9) * CGFloat(phase)
+        let bubble = Path(ellipseIn: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2))
+        if index == 2 {
+            context.fill(bubble, with: .color((ink ?? green).opacity(1 - phase)))
+        } else if ink == nil {
+            // In one ink the climbing bubbles would not show; the escaping
+            // one carries the motion alone.
+            context.fill(bubble, with: .color(.white.opacity(0.85)))
+        }
+    }
+}
+
+/// An hourglass standing beside the mark, its sand running down and the
+/// glass turning over when it is through: a build, or any command that is
+/// taking its time.
+func drawHourglass(in context: inout GraphicsContext, size: CGSize, time: TimeInterval, ink: Color?) {
+    let width = size.width, height = size.height
+    let cycle = 4.0
+    let phase = (time / cycle).truncatingRemainder(dividingBy: 1)
+    // The last eighth of each cycle turns it over.
+    let flip = phase > 0.875 ? (phase - 0.875) / 0.125 : 0
+    let running = min(1, phase / 0.875)
+    let box = CGRect(x: width * 0.72, y: height * 0.04, width: width * 0.24, height: height * 0.42)
+    let line = max(1, width * 0.045)
+    let wood = ink ?? Color(red: 0.43, green: 0.27, blue: 0.20)
+    let sand = ink ?? Color(red: 0.98, green: 0.80, blue: 0.08)
+    let glassInk = ink ?? Color(white: 0.88)
+
+    var layer = context
+    layer.translateBy(x: box.midX, y: box.midY)
+    layer.rotate(by: .degrees(180 * flip))
+    layer.translateBy(x: -box.midX, y: -box.midY)
+
+    let inset = box.width * 0.14
+    let top = box.minY + line, bottom = box.maxY - line, middle = box.midY
+    var glass = Path()
+    glass.move(to: CGPoint(x: box.minX + inset, y: top))
+    glass.addLine(to: CGPoint(x: box.maxX - inset, y: top))
+    glass.addLine(to: CGPoint(x: box.midX + line * 0.4, y: middle))
+    glass.addLine(to: CGPoint(x: box.maxX - inset, y: bottom))
+    glass.addLine(to: CGPoint(x: box.minX + inset, y: bottom))
+    glass.addLine(to: CGPoint(x: box.midX - line * 0.4, y: middle))
+    glass.closeSubpath()
+
+    // Sand: the top bulb draining from above, the bottom one filling up.
+    let half = middle - top
+    var upper = layer
+    upper.clip(to: glass)
+    let left = CGFloat(1 - running)
+    upper.fill(Path(CGRect(x: box.minX, y: middle - half * left * 0.85, width: box.width, height: half * left * 0.85)),
+               with: .color(sand))
+    upper.fill(Path(CGRect(x: box.minX, y: bottom - half * CGFloat(running) * 0.85,
+                           width: box.width, height: half * CGFloat(running) * 0.85)),
+               with: .color(sand))
+    if flip == 0, running < 1 {
+        upper.fill(Path(CGRect(x: box.midX - line * 0.35, y: middle, width: line * 0.7, height: half)),
+                   with: .color(sand))
+    }
+    layer.stroke(glass, with: .color(glassInk), lineWidth: line * 0.8)
+    for y in [box.minY, box.maxY - line] {
+        layer.fill(Path(roundedRect: CGRect(x: box.minX, y: y, width: box.width, height: line), cornerRadius: line / 2),
+                   with: .color(wood))
+    }
 }

@@ -116,6 +116,9 @@ struct BotMarkProgramme {
                 scene = [("writing", 3_000...4_000), ("working", 2_000...3_000)]
             case "Running command":
                 scene = [("working", 2_500...3_500), ("loading", 2_000...2_800), ("orbit", 1_800...2_400)]
+            case CommandWait.testingLabel, CommandWait.buildingLabel, CommandWait.waitingLabel:
+                // Not spending: watching the command run, not working at it.
+                scene = [("loading", 2_800...3_600), ("listening", 2_400...3_200), ("curious", 1_800...2_400)]
             case "Delegating":
                 scene = [("spawning", 2_200...3_000), ("orbit", 2_000...2_800)]
             default:

@@ -9,7 +9,9 @@ import Network
 /// read off this Mac's disk, and a remote session writes nothing here. The
 /// account's usage figure already includes it, but says nothing about *now*.
 /// So the remote side pushes: Claude Code's hooks (`UserPromptSubmit`,
-/// `PreToolUse`, `PostToolUse`, `Stop`) POST a few bytes to this receiver.
+/// `PreToolUse`, `PostToolUse`, `Stop`) POST a few bytes to this receiver —
+/// `{provider, source, event, tool}` and, from newer hooks, a `kind` saying
+/// whether a shell command is a test run or a build (see `CommandWait`).
 ///
 /// **Off until switched on, and never open.** It listens on a network port,
 /// so every request must carry the bearer token generated when it was first
@@ -29,6 +31,13 @@ struct RemoteActivityLedger: Sendable {
         var wait: AgentActivity.Wait
         var label: String?
         var at: Date
+        /// The tool a `PreToolUse` named, and what its hook said the command
+        /// was. The label is worked out when asked, because a shell command
+        /// turns into a wait just by running long enough.
+        var tool: String?
+        var kind: CommandKind?
+
+        var grace: TimeInterval { CommandWait.grace(ordinary: wait.grace, kind: kind) }
     }
 
     private var entries: [String: Entry] = [:]
@@ -51,7 +60,11 @@ struct RemoteActivityLedger: Sendable {
             ?? Provider.allCases.first { squash($0.rawValue) == wanted || squash($0.displayName) == wanted }
     }
 
-    mutating func record(provider: Provider = .claudeCode, source: String, event: String, tool: String?, at now: Date) {
+    /// `kind` is the optional category a newer hook sends with a shell
+    /// command (`"test"`, `"build"`); an older hook sends none, and a kind on
+    /// any other tool is ignored.
+    mutating func record(provider: Provider = .claudeCode, source: String, event: String, tool: String?,
+                         kind: String? = nil, at now: Date) {
         let key = "\(provider.rawValue)/\(source.prefix(64))"
         owners[key] = provider
         switch event {
@@ -59,7 +72,8 @@ struct RemoteActivityLedger: Sendable {
             entries[key] = Entry(working: true, wait: .model, label: "Thinking…", at: now)
         case "PreToolUse":
             let label = tool.map(AgentActivity.toolLabel) ?? "Using tool"
-            entries[key] = Entry(working: true, wait: .tool, label: label, at: now)
+            let kind = tool.map(CommandWait.isShell) == true ? CommandKind(named: kind) : nil
+            entries[key] = Entry(working: true, wait: .tool, label: label, at: now, tool: tool, kind: kind)
         case "Stop", "SessionEnd":
             entries[key] = Entry(working: false, wait: .model, label: nil, at: now)
         default:
@@ -68,17 +82,22 @@ struct RemoteActivityLedger: Sendable {
         lastEvent = now
         // A handful of sources is the realistic case; bound the table anyway.
         if entries.count > 32 {
-            entries = entries.filter { now.timeIntervalSince($0.value.at) < AgentActivity.Wait.tool.grace }
+            entries = entries.filter { now.timeIntervalSince($0.value.at) < CommandWait.longGrace }
             owners = owners.filter { entries[$0.key] != nil }
         }
     }
 
-    func state(for provider: Provider = .claudeCode, now: Date) -> (isWorking: Bool, label: String?)? {
+    /// `since` is when the shell command it is waiting on started, while the
+    /// label is one of `CommandWait`'s; nil otherwise.
+    func state(for provider: Provider = .claudeCode, now: Date) -> (isWorking: Bool, label: String?, since: Date?)? {
         let live = entries.filter { owners[$0.key] == provider }.map(\.value).filter {
-            $0.working && now.timeIntervalSince($0.at) <= $0.wait.grace
+            $0.working && now.timeIntervalSince($0.at) <= $0.grace
         }
         guard let newest = live.max(by: { $0.at < $1.at }) else { return nil }
-        return (true, newest.label)
+        guard newest.wait == .tool, let tool = newest.tool else { return (true, newest.label, nil) }
+        let label = CommandWait.label(tool: tool, kind: newest.kind, running: now.timeIntervalSince(newest.at),
+                                      toolLabel: AgentActivity.toolLabel)
+        return (true, label, CommandWait.isWait(label) ? newest.at : nil)
     }
 }
 
@@ -100,7 +119,7 @@ final class RemoteActivityReceiver: @unchecked Sendable {
     }
 
     /// The remote side's current verdict, or nil when nothing is working.
-    func state(for provider: Provider = .claudeCode, now: Date = Date()) -> (isWorking: Bool, label: String?)? {
+    func state(for provider: Provider = .claudeCode, now: Date = Date()) -> (isWorking: Bool, label: String?, since: Date?)? {
         lock.lock(); defer { lock.unlock() }
         return ledger.state(for: provider, now: now)
     }
@@ -217,8 +236,11 @@ final class RemoteActivityReceiver: @unchecked Sendable {
         guard let provider = RemoteActivityLedger.provider(named: json["provider"] as? String) else { return 400 }
         let source = (json["source"] as? String) ?? "remote"
         let tool = json["tool"] as? String
+        // Optional, and only ever a category: newer hooks classify the
+        // command where it runs and never send the command itself.
+        let kind = json["kind"] as? String
         lock.lock()
-        ledger.record(provider: provider, source: source, event: event, tool: tool, at: Date())
+        ledger.record(provider: provider, source: source, event: event, tool: tool, kind: kind, at: Date())
         lock.unlock()
         return 204
     }
