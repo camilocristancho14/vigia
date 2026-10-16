@@ -330,11 +330,10 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         guard let written = handWritten else { return false }
         return switch written {
         case .claudeCode, .codex: true
-        // Antigravity is an editor and keeps nothing. OpenCode *does* keep
-        // sessions with token counts — `opencode stats` adds them up — but in
-        // its own store rather than the JSONL both CLIs above write, so the
-        // ledger cannot read it yet. False here means "no history shown",
-        // which is true today and better than a column of zeroes.
+        // False means the JSONL ledger has nothing to add. Antigravity's
+        // conversation databases are already read by SpendAgent, and
+        // OpenCode's own store is not read yet. Flipping either one on here
+        // would show an empty history beside the reader that understands it.
         case .kiro, .antigravity, .cursor, .openCodeGo, .kimiCode, .ollamaCloud,
              .zai, .glmCoding, .minimax, .minimaxCN, .copilot, .grok, .grokBot,
              .volcengine, .commandCode, .deepSeek, .devin, .xiaomiMiMo, .sub2api,
@@ -352,8 +351,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         if self == .gemini { return true }
         guard let written = handWritten else { return false }
         return switch written {
-        case .claudeCode, .codex, .kiro, .zai, .glmCoding, .grok, .cursor: true
-        case .antigravity, .openCodeGo, .kimiCode, .ollamaCloud,
+        case .claudeCode, .codex, .kiro, .zai, .glmCoding, .grok, .cursor, .antigravity: true
+        case .openCodeGo, .kimiCode, .ollamaCloud,
              .minimax, .minimaxCN, .copilot, .grokBot, .volcengine,
              .commandCode, .deepSeek, .devin, .xiaomiMiMo,
              .sub2api, .newAPI, .v2ex, .qoder, .stepFun, .pulseExtension: false
@@ -431,8 +430,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         guard let written = handWritten else { return profile?.soleRoute?() }
         return switch written {
         case .antigravity:
-            (String.localized("Antigravity's language server"),
-             String.localized("Only while Antigravity is open."))
+            (String.localized("Antigravity or the agy CLI"),
+             String.localized("Only while Antigravity or agy is open."))
         case .cursor:
             (String.localized("Cursor's own login"),
              String.localized("Uses the login Cursor already saved."))

@@ -73,7 +73,8 @@ enum CommandWait {
 
     /// Claude Code's `Bash`, and what Grok Build and others call theirs.
     static func isShell(_ tool: String) -> Bool {
-        ["bash", "shell", "run_command", "run_shell_command", "terminal", "exec_command"].contains(tool.lowercased())
+        ["bash", "shell", "run_command", "run_shell_command", "run_terminal_command", "terminal", "exec_command"]
+            .contains(tool.lowercased())
     }
 
     // MARK: - Classifying a command

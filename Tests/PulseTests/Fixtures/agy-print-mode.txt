@@ -1,0 +1,6 @@
+I0923 11:56:36.248836      51 server.go:625] Language server listening on random port at 44935 for HTTPS (gRPC)
+I0923 11:56:36.248937      51 server.go:633] Language server listening on random port at 37347 for HTTP
+I0923 11:56:36.584609       1 printmode.go:181] Print mode: starting (promptLength=4, model="", conversationID="")
+I0923 11:56:36.585527       1 printmode.go:372] Print mode: not authenticated, trying silent auth
+I0923 11:56:36.585551       1 printmode.go:378] Print mode: silent auth failed
+W0923 11:56:36.585568       1 printmode.go:390] Print mode: not logged in and no controlling terminal; cannot complete interactive login

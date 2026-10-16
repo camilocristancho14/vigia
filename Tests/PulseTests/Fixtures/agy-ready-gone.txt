@@ -1,0 +1,6 @@
+I0923 11:58:16.325607      36 server.go:625] Language server listening on random port at 35523 for HTTPS (gRPC)
+I0923 11:58:16.325713      36 server.go:633] Language server listening on random port at 34935 for HTTP
+I0923 11:58:16.579451     195 quota_manager.go:36] doRefreshQuota: skipped (not logged in)
+I0923 11:58:16.600341       1 common.go:435] Starting CLI program
+CLI ready for user input
+I0923 14:05:06.347739      40 common.go:385] Terminal gone, shutting down

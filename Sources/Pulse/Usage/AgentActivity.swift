@@ -24,6 +24,9 @@ import Observation
 ///   same lifecycle with Prompt, ToolResults and AssistantMessage records.
 /// - ZCode Desktop, its TUI and `zcode-acp` share turn lifecycle telemetry,
 ///   including a stable turn id when several turns overlap.
+/// - `agy` does not write these transcripts. Its glog file and
+///   `conversation_summaries` table are read by `AntigravityCLISession`,
+///   which replaces the empty result the walk below would store.
 ///
 /// So only the tail of the newest transcripts is read, and the answer is exact
 /// rather than a guess with a timer attached.
@@ -96,7 +99,8 @@ enum AgentActivity {
     static func states(
         for providers: Set<Provider>,
         now: Date = Date(),
-        home: URL = URL(fileURLWithPath: NSHomeDirectory())
+        home: URL = URL(fileURLWithPath: NSHomeDirectory()),
+        agyRunning: @Sendable () -> Bool = { AntigravityCLISession.processIsRunning() }
     ) -> [Provider: State] {
         var states: [Provider: State] = [:]
 
@@ -129,7 +133,7 @@ enum AgentActivity {
                     // that died mid-turn look freshly written for ever, and the
                     // ring turned for as long as the file kept being poked.
                     let since = now.timeIntervalSince(at ?? file.modified)
-                    let call = wait == .tool && provider.handWritten == .claudeCode
+                    let call = wait == .tool && tracksToolNames(provider)
                         ? lastToolCall(in: tail(of: file.url)) : nil
                     state.isWorking = since <= CommandWait.grace(ordinary: wait.grace, kind: call?.kind)
                     if state.isWorking {
@@ -189,6 +193,13 @@ enum AgentActivity {
                 state.lastWrite = at
             }
             states[.gemini] = state
+        }
+        if providers.contains(.antigravity) {
+            states[.antigravity] = AntigravityCLISession.state(
+                home: home,
+                processRunning: agyRunning(),
+                now: now
+            )
         }
 
         return states
@@ -293,8 +304,16 @@ enum AgentActivity {
     /// has run for `CommandWait.threshold`. `running` is how long the tool
     /// call has been in flight.
     static func activityLabel(for url: URL, provider: Provider, wait: Wait, running: TimeInterval = 0) -> String {
-        let call = wait == .tool && provider.handWritten == .claudeCode ? lastToolCall(in: tail(of: url)) : nil
+        let call = wait == .tool && tracksToolNames(provider) ? lastToolCall(in: tail(of: url)) : nil
         return activityLabel(provider: provider, wait: wait, call: call, running: running)
+    }
+
+    /// Claude Code names a tool in the assistant record. Grok Build names it
+    /// on `_meta` of the tool-call update. Codex's tool records, as read
+    /// here, do not carry a name that has been checked against a real
+    /// session, so a Codex tool stays "Using tool".
+    private static func tracksToolNames(_ provider: Provider) -> Bool {
+        provider.handWritten == .claudeCode || provider.handWritten == .grok
     }
 
     private static func activityLabel(provider: Provider, wait: Wait, call: ToolCall?,
@@ -306,15 +325,15 @@ enum AgentActivity {
 
     static func toolLabel(_ tool: String) -> String {
         switch tool {
-        case "Bash": "Running command"
-        case "Edit", "MultiEdit", "NotebookEdit": "Editing"
-        case "Write": "Writing"
-        case "Read": "Reading"
-        case "Grep", "Glob": "Searching"
+        case "Bash", "run_terminal_command": "Running command"
+        case "Edit", "MultiEdit", "NotebookEdit", "search_replace": "Editing"
+        case "Write", "write": "Writing"
+        case "Read", "read_file": "Reading"
+        case "Grep", "Glob", "grep", "list_dir": "Searching"
         case "WebFetch": "Browsing web"
         case "WebSearch": "Searching web"
         case "Task", "Agent": "Delegating"
-        case "TodoWrite": "Planning"
+        case "TodoWrite", "todo_write": "Planning"
         default: "Using tool"
         }
     }
@@ -328,18 +347,43 @@ enum AgentActivity {
 
     static func lastToolCall(in lines: [Data]) -> ToolCall? {
         for line in lines.reversed() {
-            guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any],
-                  record["type"] as? String == "assistant",
-                  let content = (record["message"] as? [String: Any])?["content"] as? [[String: Any]]
-            else { continue }
-            if let use = content.last(where: { $0["type"] as? String == "tool_use" }),
-               let name = use["name"] as? String {
-                let command = (use["input"] as? [String: Any])?["command"] as? String
-                let kind = CommandWait.isShell(name) ? command.flatMap(CommandWait.kind(of:)) : nil
-                return ToolCall(name: name, kind: kind)
-            }
+            guard let record = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
+            if let call = claudeToolCall(in: record) { return call }
+            if let call = grokToolCall(in: record) { return call }
         }
         return nil
+    }
+
+    private static func claudeToolCall(in record: [String: Any]) -> ToolCall? {
+        guard record["type"] as? String == "assistant",
+              let content = (record["message"] as? [String: Any])?["content"] as? [[String: Any]],
+              let use = content.last(where: { $0["type"] as? String == "tool_use" }),
+              let name = use["name"] as? String
+        else { return nil }
+        let command = (use["input"] as? [String: Any])?["command"] as? String
+        let kind = CommandWait.isShell(name) ? command.flatMap(CommandWait.kind(of:)) : nil
+        return ToolCall(name: name, kind: kind)
+    }
+
+    /// Grok Build's tool name lives at `_meta["x.ai/tool"].name`. `title`
+    /// is a path or a raw command, so it is never used as a label. The
+    /// shell command is classified and dropped. A `completed` or `failed`
+    /// update has no name; the caller keeps walking to the call that does.
+    private static func grokToolCall(in record: [String: Any]) -> ToolCall? {
+        guard let update = (record["params"] as? [String: Any])?["update"] as? [String: Any] else { return nil }
+        switch update["sessionUpdate"] as? String {
+        case "tool_call", "tool_call_update": break
+        default: return nil
+        }
+        if let status = update["status"] as? String, status == "completed" || status == "failed" {
+            return nil
+        }
+        guard let meta = (update["_meta"] as? [String: Any])?["x.ai/tool"] as? [String: Any],
+              let name = meta["name"] as? String, !name.isEmpty
+        else { return nil }
+        let command = (update["rawInput"] as? [String: Any])?["command"] as? String
+        let kind = CommandWait.isShell(name) ? command.flatMap(CommandWait.kind(of:)) : nil
+        return ToolCall(name: name, kind: kind)
     }
 
     private static func lastToolName(in lines: [Data]) -> String? {
@@ -481,7 +525,15 @@ enum AgentActivity {
                     return .failed(at: stamp(of: record))
                 case "turn_completed", "turn_cancelled", "session_end":
                     return .finished
-                case "tool_call", "tool_call_update", "plan":
+                case "tool_call", "plan":
+                    return .working(.tool, at: stamp(of: record))
+                case "tool_call_update":
+                    // `completed` and `failed` are the tool finishing. The
+                    // turn is then the model's move, not still inside the tool.
+                    let status = update?["status"] as? String
+                    if status == "completed" || status == "failed" {
+                        return .working(.model, at: stamp(of: record))
+                    }
                     return .working(.tool, at: stamp(of: record))
                 case "user_message_chunk", "agent_message_chunk", "agent_thought_chunk":
                     return .working(.model, at: stamp(of: record))

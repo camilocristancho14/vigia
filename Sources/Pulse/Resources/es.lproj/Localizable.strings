@@ -350,10 +350,10 @@
 "Liquid Glass" = "Liquid Glass";
 "Transparency" = "Transparencia";
 "Clearer to the right. Darker reads better over bright pages." = "Más claro hacia la derecha. Más oscuro se lee mejor sobre páginas brillantes.";
-"Open Antigravity to see its usage." = "Abre Antigravity para ver su uso.";
-"Asks the language server Antigravity runs while it is open." = "Consulta al servidor de lenguaje que Antigravity ejecuta mientras está abierto.";
-"Only while Antigravity is open." = "Solo mientras Antigravity está abierto.";
-"Antigravity's language server" = "Servidor de lenguaje de Antigravity";
+"Open Antigravity or run agy to see its usage." = "Abre Antigravity o ejecuta agy para ver su uso.";
+"Asks the language server the Antigravity app or the agy CLI runs while it is open." = "Consulta al servidor de lenguaje que la app Antigravity o el CLI agy ejecutan mientras están abiertos.";
+"Only while Antigravity or agy is open." = "Solo mientras Antigravity o agy está abierto.";
+"Antigravity or the agy CLI" = "Antigravity o el CLI agy";
 "Sign in to Cursor to see usage." = "Inicia sesión en Cursor para ver el uso.";
 "Cursor's saved login was refused. Open Cursor to renew it." = "Se rechazó el inicio de sesión guardado de Cursor. Abre Cursor para renovarlo.";
 "Sign in to Grok to see usage." = "Inicia sesión en Grok para ver el uso.";
@@ -481,7 +481,7 @@
 "Asks arkcli, using the login it already saved." = "Consulta a arkcli, con el inicio de sesión que ya guardó.";
 "Access keys" = "Claves de acceso";
 "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "AccessKeyID:SecretAccessKey, de Volcengine. Opcional: arkcli no necesita ninguna. Se guarda cifrado en este Mac.";
-"Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity está abierto pero no respondió. Reiniciarlo suele ayudar.";
+"Antigravity or agy is running but didn't answer. Restarting it usually helps." = "Antigravity o agy está en marcha pero no respondió. Reiniciarlo suele ayudar.";
 "Second limit inside the ring" = "Segundo límite dentro del anillo";
 "A thinner ring for the next-fullest limit, where a provider has one." = "Un anillo más delgado para el siguiente límite más lleno, cuando el proveedor tiene uno.";
 "That key works. The account has no Coding Plan running on it." = "Esa clave funciona. La cuenta no tiene un Coding Plan activo.";
@@ -604,7 +604,7 @@
 "Enable a service in its settings to start monitoring." = "Activa un servicio en sus ajustes para empezar a monitorear.";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "Lee el inicio de sesión guardado de Claude Code desde el llavero o su archivo de credenciales. Puede pedir acceso al llavero, incluido el almacén de cookies de Claude Desktop.";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "Lee ~/.codex/auth.json y puede ejecutar codex app-server con su inicio de sesión guardado. Vigía no solicita acceso al llavero.";
-"Reads the running editor's local language server and connection token. No Keychain prompt." = "Lee el servidor de lenguaje local del editor en ejecución y su token de conexión. Sin aviso del llavero.";
+"Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt." = "Lee el servidor de lenguaje que la app Antigravity o el CLI agy ejecutan en este Mac, y su token de conexión cuando hay uno. Sin aviso del llavero.";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Lee el inicio de sesión guardado en la base de datos local de Cursor. Sin aviso del llavero.";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "Lee el inicio de sesión guardado en ~/.grok/auth.json. Sin aviso del llavero.";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "Usa una clave ingresada en Ajustes, o lee el auth.json de OpenCode. Sin aviso del llavero.";

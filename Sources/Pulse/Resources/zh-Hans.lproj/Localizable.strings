@@ -300,10 +300,10 @@
 "Clear glass that shows what is behind the panel, instead of solid black." = "透出面板后面的内容，替代纯黑背景。";
 "Transparency" = "透明度";
 "Clearer to the right. Darker reads better over bright pages." = "越往右越透。偏暗一些，在浅色页面上更容易看清。";
-"Open Antigravity to see its usage." = "打开 Antigravity 才能读到它的用量。";
-"Asks the language server Antigravity runs while it is open." = "向 Antigravity 打开时运行的语言服务器读取。";
-"Only while Antigravity is open." = "仅在 Antigravity 打开时可读。";
-"Antigravity's language server" = "Antigravity 语言服务器";
+"Open Antigravity or run agy to see its usage." = "打开 Antigravity 或运行 agy 才能读到它的用量。";
+"Asks the language server the Antigravity app or the agy CLI runs while it is open." = "向 Antigravity 应用或 agy CLI 打开时运行的语言服务器读取。";
+"Only while Antigravity or agy is open." = "仅在 Antigravity 或 agy 打开时可读。";
+"Antigravity or the agy CLI" = "Antigravity 或 agy CLI";
 
 /* Cursor */
 "Sign in to Cursor to see usage." = "在 Cursor 中登录后才能读到用量。";
@@ -469,7 +469,7 @@
 "Asks arkcli, using the login it already saved." = "调用 arkcli，用它已经保存的登录。";
 "Access keys" = "访问密钥";
 "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "格式为 AccessKeyID:SecretAccessKey，来自火山引擎。可不填——走 arkcli 不需要。加密保存在本机。";
-"Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity 开着但没有响应，重启它通常能解决。";
+"Antigravity or agy is running but didn't answer. Restarting it usually helps." = "Antigravity 或 agy 在运行但没有应答。重新启动通常能解决。";
 
 /* 内圈第二条限额 */
 "Second limit inside the ring" = "显示第二条限额";
@@ -625,7 +625,7 @@
 "Enable a service in its settings to start monitoring." = "在左侧选择服务，开启「在面板中显示」即可开始监控。";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "读取 Claude Code 保存在钥匙串或凭据文件里的登录信息。可能弹出钥匙串授权，包括 Claude 桌面版的 cookie 存储授权。";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "读取 ~/.codex/auth.json，也可能启动 codex app-server 使用它保存的登录。Pulse 不请求钥匙串授权。";
-"Reads the running editor's local language server and connection token. No Keychain prompt." = "连接运行中的编辑器，读取本机语言服务器的用量及连接令牌。不弹钥匙串。";
+"Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt." = "读取本机上 Antigravity 应用或 agy CLI 运行的语言服务器，以及已设置的连接令牌。不弹钥匙串。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "读取 Cursor 本地数据库里保存的登录信息。不弹钥匙串。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "读取 ~/.grok/auth.json 里保存的登录信息。不弹钥匙串。";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "使用在设置里填入的 key，或读取 OpenCode 的 auth.json。不弹钥匙串。";
