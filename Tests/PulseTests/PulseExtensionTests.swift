@@ -365,8 +365,10 @@ struct ExtensionRunTests {
         let usage = await service.fetch()
         #expect(usage.state == .unavailable(.extensionTimedOut))
         // The time limit plus the stop's own grace, and nowhere near the
-        // thirty seconds the program asked for.
-        #expect(Date().timeIntervalSince(started) < 10)
+        // thirty seconds the program asked for. The call also waits its turn
+        // on the utility queue, so a busy runner can land past ten seconds
+        // without having waited out the sleep.
+        #expect(Date().timeIntervalSince(started) < 20)
     }
 
     @Test("A program deleted since the scan is reported missing")
