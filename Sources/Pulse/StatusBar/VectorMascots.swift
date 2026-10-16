@@ -370,19 +370,76 @@ enum VectorMascots {
         return path.copy(using: &lift) ?? path
     }())
 
-    /// The Codex cloud: a scalloped ghost hem under five overlapping puffs.
+    /// The Codex cloud, traced from the logo's own outline (the overlapping
+    /// lobes, not a ghost hem) and scaled into the same box the old cloud
+    /// occupied, so the mark stays the same size. The border is white.
     private static let cloud = Path({ () -> CGPath in
         let path = CGMutablePath()
-        path.move(to: CGPoint(x: 10, y: 35))
-        path.addLine(to: CGPoint(x: 54, y: 35))
-        path.addLine(to: CGPoint(x: 54, y: 50))
-        for (end, control) in [(43.0, 48.5), (32.0, 37.5), (21.0, 26.5), (10.0, 15.5)] {
-            path.addQuadCurve(to: CGPoint(x: end, y: 50), control: CGPoint(x: control, y: 58))
-        }
+        path.move(to: CGPoint(x: 24.66, y: 12.38))
+        path.addCurve(to: CGPoint(x: 30.57, y: 11.61), control1: CGPoint(x: 26.53, y: 11.62), control2: CGPoint(x: 28.57, y: 11.36))
+        path.addCurve(to: CGPoint(x: 37.54, y: 14.94), control1: CGPoint(x: 33.20, y: 11.91), control2: CGPoint(x: 35.66, y: 13.08))
+        path.addLine(to: CGPoint(x: 37.67, y: 14.94))
+        path.addCurve(to: CGPoint(x: 45.55, y: 15.63), control1: CGPoint(x: 40.30, y: 14.26), control2: CGPoint(x: 43.08, y: 14.51))
+        path.addLine(to: CGPoint(x: 45.68, y: 15.71))
+        path.addLine(to: CGPoint(x: 45.96, y: 15.84))
+        path.addCurve(to: CGPoint(x: 51.62, y: 22.04), control1: CGPoint(x: 48.54, y: 17.15), control2: CGPoint(x: 50.55, y: 19.35))
+        path.addQuadCurve(to: CGPoint(x: 52.42, y: 26.17), control: CGPoint(x: 52.39, y: 24.00))
+        path.addCurve(to: CGPoint(x: 52.08, y: 29.32), control1: CGPoint(x: 52.47, y: 27.23), control2: CGPoint(x: 52.35, y: 28.29))
+        path.addCurve(to: CGPoint(x: 52.16, y: 29.60), control1: CGPoint(x: 52.05, y: 29.42), control2: CGPoint(x: 52.08, y: 29.54))
+        path.addQuadCurve(to: CGPoint(x: 55.21, y: 35.21), control: CGPoint(x: 54.48, y: 31.95))
+        path.addQuadCurve(to: CGPoint(x: 52.93, y: 45.18), control: CGPoint(x: 56.37, y: 40.73))
+        path.addLine(to: CGPoint(x: 52.57, y: 45.59))
+        path.addCurve(to: CGPoint(x: 46.89, y: 49.20), control1: CGPoint(x: 51.07, y: 47.32), control2: CGPoint(x: 49.09, y: 48.57))
+        path.addCurve(to: CGPoint(x: 46.68, y: 49.39), control1: CGPoint(x: 46.79, y: 49.22), control2: CGPoint(x: 46.71, y: 49.29))
+        path.addCurve(to: CGPoint(x: 35.19, y: 57.98), control1: CGPoint(x: 45.27, y: 54.52), control2: CGPoint(x: 40.52, y: 58.07))
+        path.addCurve(to: CGPoint(x: 27.03, y: 54.63), control1: CGPoint(x: 32.14, y: 57.98), control2: CGPoint(x: 29.21, y: 56.77))
+        path.addCurve(to: CGPoint(x: 26.78, y: 54.55), control1: CGPoint(x: 26.97, y: 54.55), control2: CGPoint(x: 26.87, y: 54.52))
+        path.addCurve(to: CGPoint(x: 23.68, y: 54.91), control1: CGPoint(x: 25.77, y: 54.83), control2: CGPoint(x: 24.72, y: 54.95))
+        path.addCurve(to: CGPoint(x: 18.64, y: 53.72), control1: CGPoint(x: 21.93, y: 54.91), control2: CGPoint(x: 20.21, y: 54.50))
+        path.addCurve(to: CGPoint(x: 14.48, y: 50.24), control1: CGPoint(x: 17.00, y: 52.91), control2: CGPoint(x: 15.57, y: 51.71))
+        path.addQuadCurve(to: CGPoint(x: 13.40, y: 48.64), control: CGPoint(x: 13.86, y: 49.46))
+        path.addCurve(to: CGPoint(x: 12.44, y: 46.16), control1: CGPoint(x: 13.01, y: 47.84), control2: CGPoint(x: 12.69, y: 47.01))
+        path.addCurve(to: CGPoint(x: 12.42, y: 40.22), control1: CGPoint(x: 11.93, y: 44.21), control2: CGPoint(x: 11.92, y: 42.17))
+        path.addLine(to: CGPoint(x: 12.42, y: 40.09))
+        path.addLine(to: CGPoint(x: 12.37, y: 39.96))
+        path.addCurve(to: CGPoint(x: 9.68, y: 35.70), control1: CGPoint(x: 11.17, y: 38.75), control2: CGPoint(x: 10.25, y: 37.30))
+        path.addCurve(to: CGPoint(x: 9.04, y: 32.60), control1: CGPoint(x: 9.31, y: 34.71), control2: CGPoint(x: 9.09, y: 33.66))
+        path.addCurve(to: CGPoint(x: 9.40, y: 28.47), control1: CGPoint(x: 8.93, y: 31.21), control2: CGPoint(x: 9.05, y: 29.82))
+        path.addCurve(to: CGPoint(x: 17.61, y: 20.28), control1: CGPoint(x: 10.57, y: 24.53), control2: CGPoint(x: 13.66, y: 21.44))
+        path.addCurve(to: CGPoint(x: 17.79, y: 20.13), control1: CGPoint(x: 17.69, y: 20.26), control2: CGPoint(x: 17.76, y: 20.21))
+        path.addCurve(to: CGPoint(x: 19.93, y: 15.94), control1: CGPoint(x: 18.24, y: 18.61), control2: CGPoint(x: 18.97, y: 17.20))
+        path.addCurve(to: CGPoint(x: 24.66, y: 12.36), control1: CGPoint(x: 21.17, y: 14.36), control2: CGPoint(x: 22.80, y: 13.12))
         path.closeSubpath()
-        for (x, y, r) in [(17.5, 34.0, 8.5), (25, 23, 10), (39, 22, 10.5), (47, 33, 8.5), (32, 30, 12)] {
-            path.addEllipse(in: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2))
-        }
+        return path
+    }())
+
+    /// The logo's `>` and `_`, in the same box as `cloud`.
+    private static let codexChevron = Path({ () -> CGPath in
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: 23.11, y: 27.59))
+        path.addCurve(to: CGPoint(x: 20.98, y: 27.17), control1: CGPoint(x: 22.61, y: 26.94), control2: CGPoint(x: 21.69, y: 26.76))
+        path.addCurve(to: CGPoint(x: 20.27, y: 29.22), control1: CGPoint(x: 20.27, y: 27.58), control2: CGPoint(x: 19.96, y: 28.46))
+        path.addLine(to: CGPoint(x: 23.55, y: 34.98))
+        path.addLine(to: CGPoint(x: 20.27, y: 40.48))
+        path.addCurve(to: CGPoint(x: 20.18, y: 42.18), control1: CGPoint(x: 19.92, y: 40.98), control2: CGPoint(x: 19.89, y: 41.64))
+        path.addCurve(to: CGPoint(x: 21.65, y: 43.05), control1: CGPoint(x: 20.47, y: 42.72), control2: CGPoint(x: 21.04, y: 43.06))
+        path.addCurve(to: CGPoint(x: 23.11, y: 42.15), control1: CGPoint(x: 22.27, y: 43.05), control2: CGPoint(x: 22.83, y: 42.70))
+        path.addLine(to: CGPoint(x: 26.85, y: 35.83))
+        path.addCurve(to: CGPoint(x: 26.85, y: 34.18), control1: CGPoint(x: 27.17, y: 35.32), control2: CGPoint(x: 27.17, y: 34.68))
+        path.closeSubpath()
+        return path
+    }())
+
+    private static let codexDash = Path({ () -> CGPath in
+        let path = CGMutablePath()
+        path.move(to: CGPoint(x: 33.67, y: 39.65))
+        path.addCurve(to: CGPoint(x: 32.22, y: 41.29), control1: CGPoint(x: 32.85, y: 39.75), control2: CGPoint(x: 32.22, y: 40.46))
+        path.addCurve(to: CGPoint(x: 33.67, y: 42.93), control1: CGPoint(x: 32.22, y: 42.12), control2: CGPoint(x: 32.85, y: 42.83))
+        path.addLine(to: CGPoint(x: 43.04, y: 42.93))
+        path.addCurve(to: CGPoint(x: 44.65, y: 42.17), control1: CGPoint(x: 43.68, y: 43.01), control2: CGPoint(x: 44.30, y: 42.71))
+        path.addCurve(to: CGPoint(x: 44.65, y: 40.40), control1: CGPoint(x: 44.99, y: 41.64), control2: CGPoint(x: 44.99, y: 40.94))
+        path.addCurve(to: CGPoint(x: 43.04, y: 39.65), control1: CGPoint(x: 44.30, y: 39.86), control2: CGPoint(x: 43.68, y: 39.57))
+        path.closeSubpath()
         return path
     }())
 
@@ -473,19 +530,14 @@ enum VectorMascots {
 
         default:
             let shape = cloud
-            context.stroke(shape, with: .color(Color(hex: 0x262394)),
+            context.stroke(shape, with: .color(.white),
                            style: StrokeStyle(lineWidth: 4.6, lineJoin: .round))
             context.fill(shape, with: .color(Color(hex: 0x262394)))
             context.fill(shape, with: .linearGradient(
                 Gradient(stops: [.init(color: Color(hex: 0xB1A7FF), location: 0),
                                  .init(color: Color(hex: 0x7A9DFF), location: 0.5),
                                  .init(color: Color(hex: 0x3941FF), location: 1)]),
-                startPoint: CGPoint(x: 32, y: 11), endPoint: CGPoint(x: 32, y: 56)))
-            var shine = context
-            shine.translateBy(x: 22, y: 20)
-            shine.rotate(by: .degrees(-35))
-            shine.fill(ellipse(0, 0, 4.6, 2.4), with: .color(.white.opacity(0.55)))
-            context.fill(ellipse(29, 15.5, 1.3, 1.3), with: .color(.white.opacity(0.5)))
+                startPoint: CGPoint(x: 32, y: 11.5), endPoint: CGPoint(x: 32, y: 58)))
         }
     }
 
@@ -526,11 +578,11 @@ enum VectorMascots {
 
         default:
             let shape = cloud
-            context.stroke(shape, with: .color(Color(hex: 0x262394)), style: StrokeStyle(lineWidth: 5.6, lineJoin: .round))
+            context.stroke(shape, with: .color(.white), style: StrokeStyle(lineWidth: 5.6, lineJoin: .round))
             context.fill(shape, with: .color(Color(hex: 0x262394)))
             context.fill(shape, with: .linearGradient(
                 Gradient(colors: [Color(hex: 0xA9A4FF), Color(hex: 0x5C7BFF)]),
-                startPoint: CGPoint(x: 32, y: 11), endPoint: CGPoint(x: 32, y: 56)))
+                startPoint: CGPoint(x: 32, y: 11.5), endPoint: CGPoint(x: 32, y: 58)))
         }
     }
 
@@ -545,20 +597,38 @@ enum VectorMascots {
         var feet: Double
         var ink: Color
         var blush: Color
+        /// Codex's face is the logo's `>_`, punched through the cloud.
+        var promptMark = false
 
         static func of(_ character: MascotCharacter) -> Face {
             switch character {
             case .starBuddy:
                 Face(left: CGPoint(x: 25.5, y: 31), right: CGPoint(x: 38.5, y: 31), blushY: 36.2,
-                     blushX: (20.8, 43.2), mouthY: 38.6, feet: 59, ink: Color(hex: 0x231F4A), blush: Color(hex: 0xFF9FB8))
+                     blushX: (20.8, 43.2), mouthY: 38.6, feet: 59, ink: Color(hex: 0x231F4A), blush: Color(hex: 0xFF9FB8),
+                     promptMark: false)
             case .cloudGhost:
                 Face(left: CGPoint(x: 24, y: 38), right: CGPoint(x: 40, y: 38), blushY: 43.2,
-                     blushX: (19.4, 44.6), mouthY: 45, feet: 56, ink: Color(hex: 0x1A1866), blush: Color(hex: 0xFF9FD6))
+                     blushX: (19.4, 44.6), mouthY: 45, feet: 56, ink: Color(hex: 0x1A1866), blush: Color(hex: 0xFF9FD6),
+                     promptMark: true)
             default:
                 Face(left: CGPoint(x: 25.8, y: 25.5), right: CGPoint(x: 38.2, y: 25.5), blushY: 30.1,
-                     blushX: (21.4, 42.6), mouthY: 33, feet: 56, ink: Color(hex: 0x231F4A), blush: Color(hex: 0xFF9FB8))
+                     blushX: (21.4, 42.6), mouthY: 33, feet: 56, ink: Color(hex: 0x231F4A), blush: Color(hex: 0xFF9FB8),
+                     promptMark: false)
             }
         }
+    }
+
+    /// Codex's `>_`, a hole in the cloud the way the logo draws it. `offset`
+    /// is the pose's glance, so a look still moves the mark. In one-ink mode
+    /// the caller has already set `.destinationOut`.
+    private static func drawLogoPrompt(cursor: Bool, offset: CGPoint, colour: Bool,
+                                       in context: inout GraphicsContext) {
+        var layer = context
+        layer.translateBy(x: offset.x, y: offset.y)
+        if colour { layer.blendMode = .destinationOut }
+        let ink = GraphicsContext.Shading.color(.black)
+        layer.fill(codexChevron, with: ink)
+        if cursor { layer.fill(codexDash, with: ink) }
     }
 
     /// The face for a moment. In one-ink mode it is drawn with
@@ -573,7 +643,7 @@ enum VectorMascots {
         // what survive twenty pixels.
         let grow = style.simple ? 1.3 : 1.0
 
-        if colour, !style.simple, moment.eyes != .cross {
+        if colour, !style.simple, !face.promptMark, moment.eyes != .cross {
             for x in [face.blushX.0, face.blushX.1] {
                 context.fill(ellipse(x, face.blushY, 2.6, 1.7), with: .color(face.blush.opacity(0.8)))
             }
@@ -582,6 +652,11 @@ enum VectorMascots {
         for (index, eye) in [face.left, face.right].enumerated() {
             switch moment.eyes {
             case .open(let look), .wide(let look):
+                if face.promptMark {
+                    guard index == 0 else { continue }
+                    drawLogoPrompt(cursor: true, offset: look, colour: colour, in: &context)
+                    continue
+                }
                 let wide = { if case .wide = moment.eyes { return true } else { return false } }()
                 let centre = CGPoint(x: eye.x + look.x, y: eye.y + look.y)
                 context.fill(ellipse(centre.x, centre.y, (wide ? 3.3 : 3) * grow, (wide ? 4.4 : 4) * grow), with: ink)
@@ -618,20 +693,15 @@ enum VectorMascots {
                 chevron.addLine(to: CGPoint(x: eye.x - 2.4 * side, y: eye.y + 2.6))
                 context.stroke(chevron, with: ink, style: line)
             case .prompt(let cursor):
-                // The design's white `>_` across both eyes, drawn once.
+                // The logo's `>_`, the cursor (the dash) blinking.
                 guard index == 0 else { continue }
-                let white = GraphicsContext.Shading.color(colour ? .white : .black)
-                var chevron = Path()
-                chevron.move(to: CGPoint(x: 22.5, y: 34))
-                chevron.addLine(to: CGPoint(x: 28, y: 38.5))
-                chevron.addLine(to: CGPoint(x: 22.5, y: 43))
-                context.stroke(chevron, with: white, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 3.8 : 2.8), lineCap: .round, lineJoin: .round))
-                if cursor {
-                    var bar = Path()
-                    bar.move(to: CGPoint(x: 33, y: 43))
-                    bar.addLine(to: CGPoint(x: 41.5, y: 43))
-                    context.stroke(bar, with: white, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 3.8 : 2.8), lineCap: .round))
-                }
+                drawLogoPrompt(cursor: cursor, offset: .zero, colour: colour, in: &context)
+            }
+        }
+        if face.promptMark {
+            switch moment.eyes {
+            case .open, .wide, .prompt: return
+            default: break
             }
         }
         if case .prompt = moment.eyes { return }
