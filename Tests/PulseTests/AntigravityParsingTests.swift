@@ -22,6 +22,12 @@ struct AntigravityParsingTests {
         return try JSONDecoder().decode(AntigravityUsageService.Reply.self, from: Data(contentsOf: url))
     }
 
+    @Test("The quota request asks the server to reload instead of answering from its cache")
+    func quotaRequestRefreshes() throws {
+        let body = try #require(String(data: AntigravityUsageService.quotaRequestBody, encoding: .utf8))
+        #expect(body.contains("\"forceRefresh\":true"))
+    }
+
     @Test("The captured reply becomes four windows, shortest first within each group")
     func capturedReply() throws {
         let windows = AntigravityUsageService.windows(from: try Self.captured())

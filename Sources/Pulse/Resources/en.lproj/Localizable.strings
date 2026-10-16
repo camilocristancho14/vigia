@@ -300,10 +300,10 @@
 "Clear glass that shows what is behind the panel, instead of solid black." = "Clear glass that shows what is behind the panel, instead of solid black.";
 "Transparency" = "Transparency";
 "Clearer to the right. Darker reads better over bright pages." = "Clearer to the right. Darker reads better over bright pages.";
-"Open Antigravity to see its usage." = "Open Antigravity to see its usage.";
-"Asks the language server Antigravity runs while it is open." = "Asks the language server Antigravity runs while it is open.";
-"Only while Antigravity is open." = "Only while Antigravity is open.";
-"Antigravity's language server" = "Antigravity's language server";
+"Open Antigravity or run agy to see its usage." = "Open Antigravity or run agy to see its usage.";
+"Asks the language server the Antigravity app or the agy CLI runs while it is open." = "Asks the language server the Antigravity app or the agy CLI runs while it is open.";
+"Only while Antigravity or agy is open." = "Only while Antigravity or agy is open.";
+"Antigravity or the agy CLI" = "Antigravity or the agy CLI";
 
 /* Cursor */
 "Sign in to Cursor to see usage." = "Sign in to Cursor to see usage.";
@@ -469,7 +469,7 @@
 "Asks arkcli, using the login it already saved." = "Asks arkcli, using the login it already saved.";
 "Access keys" = "Access keys";
 "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac.";
-"Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity is open but didn't answer. Restarting it usually helps.";
+"Antigravity or agy is running but didn't answer. Restarting it usually helps." = "Antigravity or agy is running but didn't answer. Restarting it usually helps.";
 
 /* The second usage ring */
 "Second limit inside the ring" = "Second limit inside the ring";
@@ -625,7 +625,7 @@
 "Enable a service in its settings to start monitoring." = "Enable a service in its settings to start monitoring.";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage.";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Vigía does not request Keychain access.";
-"Reads the running editor's local language server and connection token. No Keychain prompt." = "Reads the running editor's local language server and connection token. No Keychain prompt.";
+"Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt." = "Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt.";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Reads the login saved in Cursor's local database. No Keychain prompt.";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "Reads the login saved in ~/.grok/auth.json. No Keychain prompt.";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt.";

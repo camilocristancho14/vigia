@@ -1,0 +1,3 @@
+# Not a captured agy log. The sentence is the binary's printf
+# ("Surfacing tool confirmation: %q at step %d"). No live line matched it.
+I0923 12:10:00.100000       1 binary:0] Surfacing tool confirmation: "example" at step 1

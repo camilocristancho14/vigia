@@ -192,7 +192,7 @@ vigia_command_kind() {
   kind=
   if [ "$event" = PreToolUse ]; then
     case $(printf '%s' "$tool" | tr '[:upper:]' '[:lower:]') in
-      bash|shell|run_command|run_shell_command|terminal|exec_command)
+      bash|shell|run_command|run_shell_command|run_terminal_command|terminal|exec_command)
         cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // .toolInput.command // .tool_input.cmd // empty' 2>/dev/null)
         kind=$(LC_ALL=C vigia_command_kind "$cmd")
         unset cmd ;;

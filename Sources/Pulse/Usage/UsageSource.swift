@@ -150,7 +150,7 @@ enum UsageSource: String, CaseIterable, Identifiable, Sendable {
         case (_, .antigravity):
             // Never shown — Antigravity has one route, so settings states it
             // rather than offering a choice. See `Provider.hasSourceChoice`.
-            .localized("Asks the language server Antigravity runs while it is open.")
+            .localized("Asks the language server the Antigravity app or the agy CLI runs while it is open.")
         case (_, .cursor):
             // Never shown, for the same reason: one route.
             .localized("Reads your account's limits with the login Cursor saved.")

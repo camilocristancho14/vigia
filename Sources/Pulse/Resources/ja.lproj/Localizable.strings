@@ -300,10 +300,10 @@
 "Clear glass that shows what is behind the panel, instead of solid black." = "真っ黒ではなく、背後の内容が透けて見えるガラスにします。";
 "Transparency" = "透明度";
 "Clearer to the right. Darker reads better over bright pages." = "右ほど透明になります。暗めにすると、明るいページの上でも読みやすくなります。";
-"Open Antigravity to see its usage." = "使用量を読むには Antigravity を開いてください。";
-"Asks the language server Antigravity runs while it is open." = "Antigravity が起動中に走らせている language server に問い合わせます。";
-"Only while Antigravity is open." = "Antigravity が開いているあいだだけ読めます。";
-"Antigravity's language server" = "Antigravity の language server";
+"Open Antigravity or run agy to see its usage." = "使用量を読むには Antigravity を開くか agy を実行してください。";
+"Asks the language server the Antigravity app or the agy CLI runs while it is open." = "Antigravity アプリまたは agy CLI が起動中に走らせている language server に問い合わせます。";
+"Only while Antigravity or agy is open." = "Antigravity または agy が開いているあいだだけ読めます。";
+"Antigravity or the agy CLI" = "Antigravity または agy CLI";
 
 /* Cursor */
 "Sign in to Cursor to see usage." = "使用量を読むには Cursor でサインインしてください。";
@@ -469,7 +469,7 @@
 "Asks arkcli, using the login it already saved." = "arkcli を呼び出し、既に保存されているログインを使います。";
 "Access keys" = "アクセスキー";
 "AccessKeyID:SecretAccessKey, from Volcengine. Optional — arkcli needs none. Stored encrypted on this Mac." = "Volcengine の AccessKeyID:SecretAccessKey という形式です。arkcli を使う場合は不要で、省略できます。この Mac に暗号化して保存されます。";
-"Antigravity is open but didn't answer. Restarting it usually helps." = "Antigravity は開いていますが応答がありません。再起動すると直ることが多いです。";
+"Antigravity or agy is running but didn't answer. Restarting it usually helps." = "Antigravity または agy は動いていますが応答しませんでした。再起動すると直ることが多いです。";
 
 /* The second usage ring */
 "Second limit inside the ring" = "リングの内側に 2 本目の上限";
@@ -625,7 +625,7 @@
 "Enable a service in its settings to start monitoring." = "左側でサービスを選び、「パネルに表示」をオンにすると監視を始めます。";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "キーチェーンまたは認証情報ファイルから Claude Code のログインを読み取ります。Claude デスクトップの Cookie 保存領域を含め、キーチェーンへのアクセスを求めることがあります。";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "~/.codex/auth.json を読み取り、保存済みのログインで codex app-server を起動する場合があります。Pulse はキーチェーンへのアクセスを求めません。";
-"Reads the running editor's local language server and connection token. No Keychain prompt." = "起動中のエディタのローカル言語サーバから使用量と接続トークンを読み取ります。キーチェーンの確認はありません。";
+"Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt." = "この Mac で Antigravity アプリまたは agy CLI が走らせている language server と、設定されている接続トークンを読み取ります。キーチェーンの確認はありません。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Cursor のローカルデータベースに保存されたログインを読み取ります。キーチェーンの確認はありません。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "~/.grok/auth.json に保存されたログインを読み取ります。キーチェーンの確認はありません。";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "設定で入力したキーを使うか、OpenCode の auth.json を読み取ります。キーチェーンの確認はありません。";

@@ -11,13 +11,16 @@ import Foundation
 /// a failure.
 ///
 /// Three things have to be found, and not one of them can be assumed:
-/// - **the process**, which lives inside an app bundle rather than on `PATH`;
-/// - **the port**, because the server is started with `--https_server_port 0`,
-///   meaning "take any free one" — it is a different port on every launch, so
-///   anything hardcoded is wrong by the next restart;
-/// - **the CSRF token**, a per-launch UUID passed on the command line. Without
-///   it the server answers `unauthenticated`, and it is the reason this can
-///   only ever read the quota of the Antigravity running as this same user.
+/// - **the process**, either inside an app bundle or the `agy` executable
+///   on `PATH` (matched by that name alone, never as a substring of another
+///   command);
+/// - **the port**, because the server is started with a port of 0 — "take
+///   any free one" — so it is a different port on every launch and anything
+///   hardcoded is wrong by the next restart;
+/// - **the CSRF token**, a per-launch UUID the desktop app passes as
+///   `--csrf_token`. Without it that server answers `unauthenticated`. The
+///   `agy` CLI does not put the flag on its argv; the header is omitted
+///   rather than sent empty.
 ///
 /// **More than one process can match, and most of them are the wrong one.**
 /// Antigravity IDE runs two language servers and only one answers; the other
@@ -28,15 +31,20 @@ struct AntigravityUsageService: Sendable {
     /// The RPCs this uses. Antigravity is built on Codeium's language server,
     /// hence the `exa.` package and the `x-codeium-` header.
     ///
-    /// Those two are all there is: of the 306 methods the server exposes, not
-    /// one has "usage" or "credit" in its name, and nothing on disk carries a
-    /// token count either. So Antigravity can say how much of a quota is left
-    /// and what the plan is called — and that is the whole of it. The spending
-    /// history and the window estimate the other two providers get are built
-    /// from per-model token counts, which do not exist here to be read.
+    /// Those two are all there is for a *quota*: of the methods the server
+    /// exposes, not one has "usage" or "credit" in its name, and the summary
+    /// is not written to disk. Per-conversation token rows, when `agy` has
+    /// saved any, are read separately by `AntigravityCLIReader`. This call
+    /// says how much of a quota is left and what the plan is called.
     private static let quotaMethod = "exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary"
     private static let statusMethod = "exa.language_server_pb.LanguageServerService/GetUserStatus"
     private static let csrfHeader = "x-codeium-csrf-token"
+
+    /// Protobuf JSON name `forceRefresh`, verified in agy 1.2.9. The reply
+    /// uses the same camel-case JSON (`remainingFraction`), and an unknown
+    /// field is ignored, so an older server still answers the way `{}` did.
+    /// An empty body is served from the in-memory quota cache.
+    static let quotaRequestBody = Data(#"{"forceRefresh":true}"#.utf8)
 
     func fetch() async -> ProviderUsage {
         let servers = Self.locateServers()
@@ -148,46 +156,72 @@ struct AntigravityUsageService: Sendable {
 
     private struct Server {
         let ports: [Int]
-        let token: String
+        /// Nil for an `agy` process that was not started with `--csrf_token`.
+        /// The header is then omitted.
+        let token: String?
     }
 
     /// Every language server on this Mac that might be able to answer, best
-    /// first.
+    /// first: the app, the IDE, then a running `agy`.
     ///
     /// Plural, and that is the point: Antigravity IDE runs two of them and
     /// only one answers this RPC. One `ps` for all of them, then one `lsof`
     /// each — a process listening on nothing cannot be asked anything, so it
-    /// is dropped here rather than being tried and timing out.
+    /// is dropped here rather than being tried and timing out. If `agy` is
+    /// up but `lsof` lists nothing, the ports from its newest live log are
+    /// tried instead.
     private static func locateServers() -> [Server] {
-        languageServerProcesses().compactMap { candidate in
-            let ports = listeningPorts(of: candidate.pid)
-            return ports.isEmpty ? nil : Server(ports: ports, token: candidate.token)
+        guard let listing = run("/bin/ps", ["-axww", "-o", "pid=,command="]) else { return [] }
+        let lines = listing.split(separator: "\n").map(String.init)
+        return appServers(in: lines) + cliServers(in: lines)
+    }
+
+    /// Desktop language servers, in `Origin` order. The bundle path is what
+    /// keeps Codeium's other editors out, and `--csrf_token` is required:
+    /// without it those servers answer `unauthenticated`.
+    private static func appServers(in lines: [String]) -> [Server] {
+        Origin.allCases.flatMap { origin in
+            lines
+                .filter { $0.contains("/language_server") && $0.contains(origin.pathFragment) }
+                .compactMap { line -> Server? in
+                    let fields = line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+                    guard
+                        let pid = fields.first.flatMap(Int32.init),
+                        let token = AntigravityCLISession.csrfToken(in: fields)
+                    else { return nil }
+                    let ports = listeningPorts(of: pid)
+                    return ports.isEmpty ? nil : Server(ports: ports, token: token)
+                }
         }
     }
 
-    /// Every matching process's pid and CSRF token, in `Origin` order.
-    private static func languageServerProcesses() -> [(pid: Int32, token: String)] {
-        guard let listing = run("/bin/ps", ["-axww", "-o", "pid=,command="]) else { return [] }
-
-        let lines = listing.split(separator: "\n").filter { $0.contains("/language_server") }
-
-        return Origin.allCases.flatMap { origin in
-            lines
-                .filter { $0.contains(origin.pathFragment) }
-                .compactMap { line in
-                    // Splitting on spaces survives a bundle path that has one
-                    // in it: the pid is still the first field, and the token is
-                    // still whatever follows the flag.
-                    let fields = line.split(separator: " ", omittingEmptySubsequences: true)
-                    guard
-                        let pid = fields.first.flatMap({ Int32($0) }),
-                        let flag = fields.firstIndex(of: "--csrf_token"),
-                        fields.index(after: flag) < fields.endIndex
-                    else { return nil }
-
-                    return (pid, String(fields[fields.index(after: flag)]))
-                }
+    /// `agy` processes. The executable's last path component has to be `agy`;
+    /// the rest of the command line is not consulted for the match.
+    private static func cliServers(in lines: [String]) -> [Server] {
+        var found: [Server] = []
+        var liveWithoutPorts = false
+        var fallbackToken: String?
+        for line in lines {
+            let fields = line.split(separator: " ", omittingEmptySubsequences: true).map(String.init)
+            guard AntigravityCLISession.commandNamesAgy(fields), let pid = fields.first.flatMap(Int32.init) else {
+                continue
+            }
+            let token = AntigravityCLISession.csrfToken(in: fields)
+            let ports = listeningPorts(of: pid)
+            if ports.isEmpty {
+                liveWithoutPorts = true
+                fallbackToken = fallbackToken ?? token
+                continue
+            }
+            found.append(Server(ports: ports, token: token))
         }
+        if found.isEmpty, liveWithoutPorts {
+            let ports = AntigravityCLISession.liveLogPorts()
+            if !ports.isEmpty {
+                found.append(Server(ports: ports, token: fallbackToken))
+            }
+        }
+        return found
     }
 
     /// Every loopback port the process is listening on.
@@ -247,7 +281,7 @@ struct AntigravityUsageService: Sendable {
         }
     }
 
-    private static func ask(port: Int, token: String) async -> Result<[UsageWindow], Failure> {
+    private static func ask(port: Int, token: String?) async -> Result<[UsageWindow], Failure> {
         switch await post(quotaMethod, port: port, token: token) {
         case .failure(let failure):
             return .failure(failure)
@@ -264,7 +298,7 @@ struct AntigravityUsageService: Sendable {
     /// `GetUserStatus` answers with a good deal more than this, the account's
     /// name and email address among it. Only the plan's name is decoded: the
     /// rest is the user's, not ours, and nothing here has any use for it.
-    private static func plan(port: Int, token: String) async -> String? {
+    private static func plan(port: Int, token: String?) async -> String? {
         guard
             case .success(let data) = await post(statusMethod, port: port, token: token),
             let reply = try? JSONDecoder().decode(StatusReply.self, from: data),
@@ -275,7 +309,7 @@ struct AntigravityUsageService: Sendable {
         return name
     }
 
-    private static func post(_ method: String, port: Int, token: String) async -> Result<Data, Failure> {
+    private static func post(_ method: String, port: Int, token: String?) async -> Result<Data, Failure> {
         guard let url = URL(string: "https://127.0.0.1:\(port)/\(method)") else {
             return .failure(.wrongPort)
         }
@@ -283,8 +317,10 @@ struct AntigravityUsageService: Sendable {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(token, forHTTPHeaderField: csrfHeader)
-        request.httpBody = Data("{}".utf8)
+        if let token, !token.isEmpty {
+            request.setValue(token, forHTTPHeaderField: csrfHeader)
+        }
+        request.httpBody = quotaRequestBody
         request.timeoutInterval = 6
 
         let session = URLSession(
