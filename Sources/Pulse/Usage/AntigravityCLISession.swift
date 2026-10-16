@@ -344,9 +344,9 @@ enum AntigravityCLISession {
                 """
             ) { statement in
                 found.append(Summary(
-                    notFullyIdle: isSet(AgentSQLite.text(statement, 0)),
-                    killed: isSet(AgentSQLite.text(statement, 1)),
-                    lastModified: AgentSQLite.text(statement, 2).flatMap { timestamp($0, timeZone: timeZone) }
+                    notFullyIdle: isSet(AgentSQLite.text(statement, column: 0)),
+                    killed: isSet(AgentSQLite.text(statement, column: 1)),
+                    lastModified: AgentSQLite.text(statement, column: 2).flatMap { timestamp($0, timeZone: timeZone) }
                 ))
             }
             return found
