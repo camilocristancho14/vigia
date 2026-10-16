@@ -261,6 +261,18 @@ enum VectorMascots {
         // Feet stay where they were: stepping back is stepping back, not up.
         let fitLift = style.simple && pose.isWorking ? (1 - room) * 32 * 0.9 : 0
 
+        if colour, !style.simple, character == .floatBot {
+            // The design's ground shadow. It stays put while the arch hovers.
+            let lift = max(0, -moment.offset.height)
+            let fade = max(0, 0.18 - lift * 0.022)
+            if fade > 0.02 {
+                var shadow = context
+                shadow.scaleBy(x: unit, y: unit)
+                shadow.fill(ellipse(32, 58.6, max(6.0, 12 - lift * 0.35), 1.7),
+                            with: .color(Color(hex: 0x1D3C8F, opacity: fade)))
+            }
+        }
+
         if pose.isWorking, !style.simple {
             drawWork(character, pose: pose, time: time, colour: colour, in: &context, unit: unit, front: false)
         }
@@ -339,35 +351,35 @@ enum VectorMascots {
         return path.copy(using: &place) ?? path
     }())
 
-    /// The arch for a small mark: the same outer curve, with the hollow
-    /// under it raised so the legs are heavy instead of two thin strokes.
+    /// The logo's arch for a small mark. The outer curves are the icon's own
+    /// (peak, splayed legs, curled feet). The inner arch sits lower so the
+    /// legs stay a solid shape at twenty pixels; `arch` keeps the real hollow.
     private static let archBar = Path({ () -> CGPath in
         let path = CGMutablePath()
-        path.move(to: CGPoint(x: 54.33, y: 54.67))
-        path.addCurve(to: CGPoint(x: 57.8, y: 51.2), control1: CGPoint(x: 57.41, y: 56.98), control2: CGPoint(x: 62.03, y: 55.43))
-        path.addCurve(to: CGPoint(x: 32, y: 5), control1: CGPoint(x: 45.09, y: 38.88), control2: CGPoint(x: 47.78, y: 5))
-        path.addCurve(to: CGPoint(x: 6.2, y: 51.2), control1: CGPoint(x: 16.22, y: 5), control2: CGPoint(x: 18.91, y: 38.88))
-        path.addCurve(to: CGPoint(x: 9.67, y: 54.67), control1: CGPoint(x: 1.58, y: 55.82), control2: CGPoint(x: 6.59, y: 56.98))
-        path.addCurve(to: CGPoint(x: 32, y: 45), control1: CGPoint(x: 19, y: 50), control2: CGPoint(x: 21, y: 45))
-        path.addCurve(to: CGPoint(x: 54.33, y: 54.67), control1: CGPoint(x: 43, y: 45), control2: CGPoint(x: 45, y: 50))
+        path.move(to: CGPoint(x: 54.42, y: 54.85))
+        path.addCurve(to: CGPoint(x: 57.88, y: 51.38), control1: CGPoint(x: 57.50, y: 57.16), control2: CGPoint(x: 62.12, y: 55.62))
+        path.addCurve(to: CGPoint(x: 32.08, y: 5.17), control1: CGPoint(x: 45.18, y: 39.06), control2: CGPoint(x: 47.87, y: 5.17))
+        path.addCurve(to: CGPoint(x: 6.29, y: 51.38), control1: CGPoint(x: 16.30, y: 5.17), control2: CGPoint(x: 18.99, y: 39.06))
+        path.addCurve(to: CGPoint(x: 9.75, y: 54.85), control1: CGPoint(x: 1.66, y: 56.00), control2: CGPoint(x: 6.67, y: 57.16))
+        path.addCurve(to: CGPoint(x: 32.08, y: 48), control1: CGPoint(x: 18.2, y: 51.4), control2: CGPoint(x: 22.4, y: 48))
+        path.addCurve(to: CGPoint(x: 54.42, y: 54.85), control1: CGPoint(x: 41.76, y: 48), control2: CGPoint(x: 45.9, y: 51.4))
         path.closeSubpath()
-        var lift = CGAffineTransform(translationX: 0, y: -1)
-        return path.copy(using: &lift) ?? path
+        return path
     }())
 
-    /// Antigravity's arch, traced from the official icon, lifted one unit.
+    /// Antigravity's arch, the official icon path scaled into this box.
+    /// Feet sit on y = 56; the width matches the mark it replaces.
     private static let arch = Path({ () -> CGPath in
         let path = CGMutablePath()
-        path.move(to: CGPoint(x: 54.33, y: 54.67))
-        path.addCurve(to: CGPoint(x: 57.8, y: 51.2), control1: CGPoint(x: 57.41, y: 56.98), control2: CGPoint(x: 62.03, y: 55.43))
-        path.addCurve(to: CGPoint(x: 32, y: 5), control1: CGPoint(x: 45.09, y: 38.88), control2: CGPoint(x: 47.78, y: 5))
-        path.addCurve(to: CGPoint(x: 6.2, y: 51.2), control1: CGPoint(x: 16.22, y: 5), control2: CGPoint(x: 18.91, y: 38.88))
-        path.addCurve(to: CGPoint(x: 9.67, y: 54.67), control1: CGPoint(x: 1.58, y: 55.82), control2: CGPoint(x: 6.59, y: 56.98))
-        path.addCurve(to: CGPoint(x: 32, y: 38.37), control1: CGPoint(x: 20.6, y: 47.34), control2: CGPoint(x: 21.26, y: 38.37))
-        path.addCurve(to: CGPoint(x: 54.33, y: 54.67), control1: CGPoint(x: 42.74, y: 38.37), control2: CGPoint(x: 43.4, y: 47.34))
+        path.move(to: CGPoint(x: 54.42, y: 54.85))
+        path.addCurve(to: CGPoint(x: 57.88, y: 51.38), control1: CGPoint(x: 57.50, y: 57.16), control2: CGPoint(x: 62.12, y: 55.62))
+        path.addCurve(to: CGPoint(x: 32.08, y: 5.17), control1: CGPoint(x: 45.18, y: 39.06), control2: CGPoint(x: 47.87, y: 5.17))
+        path.addCurve(to: CGPoint(x: 6.29, y: 51.38), control1: CGPoint(x: 16.30, y: 5.17), control2: CGPoint(x: 18.99, y: 39.06))
+        path.addCurve(to: CGPoint(x: 9.75, y: 54.85), control1: CGPoint(x: 1.66, y: 56.00), control2: CGPoint(x: 6.67, y: 57.16))
+        path.addCurve(to: CGPoint(x: 32.08, y: 32.51), control1: CGPoint(x: 21.69, y: 46.76), control2: CGPoint(x: 20.92, y: 32.51))
+        path.addCurve(to: CGPoint(x: 54.42, y: 54.85), control1: CGPoint(x: 43.25, y: 32.51), control2: CGPoint(x: 42.48, y: 46.76))
         path.closeSubpath()
-        var lift = CGAffineTransform(translationX: 0, y: -1)
-        return path.copy(using: &lift) ?? path
+        return path
     }())
 
     /// The Codex cloud, traced from the logo's own outline (the overlapping
@@ -463,6 +475,35 @@ enum VectorMascots {
                          .init(color: Color(hex: hex, opacity: 0), location: 1)])
     }
 
+    /// The icon's cap, traced from the rendered logo: yellow on the upper
+    /// left, red down the right shoulder, a green wedge on the left, and the
+    /// light-blue sheen along the right leg. The caller has clipped to the arch.
+    private static func fillAntigravityColours(in context: inout GraphicsContext, shine: Bool) {
+        func blob(_ hex: UInt32, _ points: [CGPoint]) {
+            var path = Path()
+            guard let first = points.first else { return }
+            path.move(to: first)
+            path.addLines(Array(points.dropFirst()))
+            path.closeSubpath()
+            context.fill(path, with: .color(Color(hex: hex)))
+        }
+        blob(0xFBBC04, [CGPoint(x: 21.38, y: 13.25), CGPoint(x: 26.62, y: 15.25), CGPoint(x: 30.25, y: 15.88),
+                        CGPoint(x: 36.75, y: 15.50), CGPoint(x: 33.25, y: 10.88), CGPoint(x: 30.75, y: 4.88),
+                        CGPoint(x: 28.12, y: 5.50), CGPoint(x: 25.75, y: 7.00), CGPoint(x: 22.88, y: 10.25)])
+        blob(0xFC413D, [CGPoint(x: 30.88, y: 4.88), CGPoint(x: 33.25, y: 10.50), CGPoint(x: 39.00, y: 17.75),
+                        CGPoint(x: 46.50, y: 24.00), CGPoint(x: 44.62, y: 17.62), CGPoint(x: 40.62, y: 9.62),
+                        CGPoint(x: 35.88, y: 5.50)])
+        blob(0x00B95C, [CGPoint(x: 27.00, y: 15.38), CGPoint(x: 21.38, y: 13.38), CGPoint(x: 19.62, y: 17.12),
+                        CGPoint(x: 17.50, y: 24.62), CGPoint(x: 21.50, y: 21.38), CGPoint(x: 27.00, y: 19.00)])
+        blob(0x749BFF, [CGPoint(x: 43.38, y: 21.88), CGPoint(x: 42.88, y: 25.50), CGPoint(x: 43.75, y: 28.62),
+                        CGPoint(x: 46.50, y: 33.50), CGPoint(x: 50.50, y: 37.75), CGPoint(x: 46.50, y: 24.12)])
+        guard shine else { return }
+        var highlight = context
+        highlight.translateBy(x: 29.2, y: 8.6)
+        highlight.rotate(by: .degrees(-26))
+        highlight.fill(ellipse(0, 0, 2.3, 1.1), with: .color(.white.opacity(0.30)))
+    }
+
     private static func drawBody(_ character: MascotCharacter, style: Style, in context: inout GraphicsContext) {
         if style.simple { drawFlatBody(character, in: &context); return }
         switch character {
@@ -497,36 +538,7 @@ enum VectorMascots {
             context.fill(shape, with: .color(Color(hex: 0x3186FF)))
             var inside = context
             inside.clip(to: shape)
-            inside.translateBy(x: 0, y: -1)
-            var sheen = Path()
-            sheen.move(to: CGPoint(x: 43.6, y: 21))
-            sheen.addCurve(to: CGPoint(x: 51.2, y: 38.5), control1: CGPoint(x: 44.2, y: 26), control2: CGPoint(x: 45.8, y: 32.5))
-            sheen.addLines([CGPoint(x: 62, y: 38.5), CGPoint(x: 62, y: 21)])
-            sheen.closeSubpath()
-            inside.fill(sheen, with: .color(Color(hex: 0x749BFF, opacity: 0.9)))
-            var green = Path()
-            green.move(to: CGPoint(x: 4, y: 26.5))
-            green.addCurve(to: CGPoint(x: 28.5, y: 13.5), control1: CGPoint(x: 14, y: 25.6), control2: CGPoint(x: 22, y: 21.5))
-            green.addLines([CGPoint(x: 28.5, y: 0), CGPoint(x: 4, y: 0)])
-            green.closeSubpath()
-            inside.fill(green, with: .color(Color(hex: 0x00B95C)))
-            var yellow = Path()
-            yellow.move(to: CGPoint(x: 14, y: 15))
-            yellow.addCurve(to: CGPoint(x: 37.2, y: 16.2), control1: CGPoint(x: 20, y: 13.6), control2: CGPoint(x: 28, y: 13.4))
-            yellow.addLines([CGPoint(x: 31, y: 0), CGPoint(x: 14, y: 0)])
-            yellow.closeSubpath()
-            inside.fill(yellow, with: .color(Color(hex: 0xFBBC04)))
-            var red = Path()
-            red.move(to: CGPoint(x: 31, y: 0))
-            red.addLine(to: CGPoint(x: 37.2, y: 16.2))
-            red.addCurve(to: CGPoint(x: 46.6, y: 23.6), control1: CGPoint(x: 40.5, y: 17.6), control2: CGPoint(x: 44, y: 20.2))
-            red.addLines([CGPoint(x: 62, y: 27), CGPoint(x: 62, y: 0)])
-            red.closeSubpath()
-            inside.fill(red, with: .color(Color(hex: 0xFC413D)))
-            var shine = inside
-            shine.translateBy(x: 26.5, y: 10.5)
-            shine.rotate(by: .degrees(-35))
-            shine.fill(ellipse(0, 0, 3, 1.5), with: .color(.white.opacity(0.45)))
+            fillAntigravityColours(in: &inside, shine: true)
 
         default:
             let shape = cloud
@@ -561,20 +573,7 @@ enum VectorMascots {
             context.fill(shape, with: .color(Color(hex: 0x3186FF)))
             var inside = context
             inside.clip(to: shape)
-            inside.translateBy(x: 0, y: -1)
-            var green = Path()
-            green.move(to: CGPoint(x: 0, y: 29)); green.addLine(to: CGPoint(x: 20, y: 22))
-            green.addLine(to: CGPoint(x: 27, y: 10)); green.addLine(to: CGPoint(x: 0, y: 4)); green.closeSubpath()
-            inside.fill(green, with: .color(Color(hex: 0x00B95C)))
-            var yellow = Path()
-            yellow.move(to: CGPoint(x: 14, y: 17)); yellow.addLine(to: CGPoint(x: 38, y: 17))
-            yellow.addLine(to: CGPoint(x: 32, y: 0)); yellow.addLine(to: CGPoint(x: 14, y: 0)); yellow.closeSubpath()
-            inside.fill(yellow, with: .color(Color(hex: 0xFBBC04)))
-            var red = Path()
-            red.move(to: CGPoint(x: 32, y: 0)); red.addLine(to: CGPoint(x: 38, y: 17))
-            red.addLine(to: CGPoint(x: 48, y: 25)); red.addLine(to: CGPoint(x: 64, y: 26)); red.addLine(to: CGPoint(x: 64, y: 0))
-            red.closeSubpath()
-            inside.fill(red, with: .color(Color(hex: 0xFC413D)))
+            fillAntigravityColours(in: &inside, shine: false)
 
         default:
             let shape = cloud
@@ -611,8 +610,9 @@ enum VectorMascots {
                      blushX: (19.4, 44.6), mouthY: 45, feet: 56, ink: Color(hex: 0x1A1866), blush: Color(hex: 0xFF9FD6),
                      promptMark: true)
             default:
-                Face(left: CGPoint(x: 25.8, y: 25.5), right: CGPoint(x: 38.2, y: 25.5), blushY: 30.1,
-                     blushX: (21.4, 42.6), mouthY: 33, feet: 56, ink: Color(hex: 0x231F4A), blush: Color(hex: 0xFF9FB8),
+                // On the blue chest, under the cap and above the hollow.
+                Face(left: CGPoint(x: 26.2, y: 21.2), right: CGPoint(x: 37.8, y: 21.2), blushY: 25.2,
+                     blushX: (22.8, 41.2), mouthY: 27.4, feet: 56, ink: Color(hex: 0x231F4A), blush: Color(hex: 0xFF9FB8),
                      promptMark: false)
             }
         }
