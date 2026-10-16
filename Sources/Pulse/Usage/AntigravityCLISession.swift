@@ -336,10 +336,13 @@ enum AntigravityCLISession {
         let url = home.appending(path: ".gemini/antigravity-cli/conversation_summaries.db")
         let rows = AgentSQLite.read(at: url) { database -> [Summary] in
             var found: [Summary] = []
-            AgentSQLite.each(database, """
+            AgentSQLite.each(
+                database,
+                sql: """
                 SELECT not_fully_idle, killed, last_modified_time
                 FROM conversation_summaries
-                """) { statement in
+                """
+            ) { statement in
                 found.append(Summary(
                     notFullyIdle: isSet(AgentSQLite.text(statement, 0)),
                     killed: isSet(AgentSQLite.text(statement, 1)),
