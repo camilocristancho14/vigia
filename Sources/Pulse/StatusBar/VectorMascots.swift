@@ -72,8 +72,8 @@ enum VectorMascots {
         case wide(look: CGPoint)
         case cross
         case squeezed
-        /// Codex's `>_` prompt, the cursor blinking.
-        case prompt(cursor: Bool)
+        /// Codex's `>_` prompt, the cursor blinking. `look` is how far it glances.
+        case prompt(cursor: Bool, look: CGPoint)
     }
 
     enum Mouth: Equatable { case smile, flat, small, open, frown }
@@ -103,102 +103,505 @@ enum VectorMascots {
         return moment
     }
 
+    // MARK: - Beats
+    //
+    // Clawd holds a frame, then the next; the bot eases a squash into a landing.
+    // These marks do the same kind of acting, each in its own weight: the arch
+    // is nearly weightless, the cloud is a pillow, the star is a buoy.
+
+    private static func wrap(_ time: TimeInterval, _ period: Double) -> Double {
+        let turned = time.truncatingRemainder(dividingBy: period)
+        return (turned < 0 ? turned + period : turned) / period
+    }
+
+    private static func smooth(_ t: Double) -> Double {
+        let t = min(1, max(0, t))
+        return t * t * (3 - 2 * t)
+    }
+
+    private static func easeOutCubic(_ t: Double) -> Double {
+        let t = min(1, max(0, t))
+        let u = 1 - t
+        return 1 - u * u * u
+    }
+
+    private static func easeInCubic(_ t: Double) -> Double {
+        let t = min(1, max(0, t))
+        return t * t * t
+    }
+
+    /// Shut for the last fifth of a second in every 4.2, the way Clawd blinks.
+    private static func eyeBlink(_ time: TimeInterval) -> Bool {
+        time.truncatingRemainder(dividingBy: 4.2) >= 4.0
+    }
+
+    /// A terminal cursor: lit longer than dark, and quicker while keys are going.
+    private static func cursorLit(_ time: TimeInterval, typing: Bool) -> Bool {
+        let period = typing ? 0.70 : 1.06
+        let lit = typing ? 0.42 : 0.68
+        return time.truncatingRemainder(dividingBy: period) < lit
+    }
+
+    /// One hump a period, lingering at the top. 0 on the ground, 1 at the crest.
+    private static func hoverArc(_ time: TimeInterval, period: Double) -> Double {
+        let s = max(0, sin(wrap(time, period) * .pi))
+        let u = 1 - s
+        return 1 - u * u * u
+    }
+
+    /// Crouch, rise, hang, land. Height is 0 on the ground, 1 at the crest and
+    /// negative in the crouch. Squash is positive when the body is wide and short.
+    /// `weight` is 0 for something with no mass and 1 for a pillow.
+    private static func bounce(_ time: TimeInterval, period: Double, hang: Double, weight: Double) -> (height: Double, squash: Double) {
+        let t = wrap(time, period)
+        let crouch = 0.12 + 0.10 * weight
+        if t < crouch {
+            let u = smooth(t / crouch)
+            return (-0.22 * weight * u, (0.035 + 0.05 * weight) * u)
+        }
+        let riseEnd = min(0.70, crouch + 0.28 * (1 - hang))
+        let hangEnd = min(0.86, riseEnd + max(0, hang))
+        if t < riseEnd {
+            let u = easeOutCubic((t - crouch) / max(0.001, riseEnd - crouch))
+            return (u, -0.04 * (1 - u))
+        }
+        if t < hangEnd {
+            let u = (t - riseEnd) / max(0.001, hangEnd - riseEnd)
+            return (1 - 0.035 * sin(u * .pi), -0.012)
+        }
+        let u = easeInCubic((t - hangEnd) / max(0.001, 1 - hangEnd))
+        let land = u > 0.7 ? smooth((u - 0.7) / 0.3) : 0
+        return (1 - u, (0.045 + 0.04 * weight) * land)
+    }
+
+    /// Longer in than out. 0 empty, 1 full.
+    private static func breath(_ time: TimeInterval, period: Double = 3.6) -> Double {
+        let t = wrap(time, period)
+        if t < 0.62 { return smooth(t / 0.62) }
+        return 1 - smooth((t - 0.62) / 0.38)
+    }
+
     private static func momentAtFullGain(for pose: MascotPose, character: MascotCharacter, at time: TimeInterval) -> Moment {
+        switch character {
+        case .cloudGhost: codexMoment(pose, at: time)
+        case .starBuddy: starMoment(pose, at: time)
+        default: antigravityMoment(pose, at: time)
+        }
+    }
+
+    /// Float Bot: almost no weight. It hangs in the air, and thrust is what
+    /// brings it down onto a landing.
+    private static func antigravityMoment(_ pose: MascotPose, at time: TimeInterval) -> Moment {
         var moment = Moment()
-        let blink = time.truncatingRemainder(dividingBy: 4.2) >= 4.05
+        let blink = eyeBlink(time)
         switch pose {
+        case .awake:
+            let up = hoverArc(time, period: 2.7)
+            moment.offset.height = -1.8 * up
+            moment.rotation = 1.8 * sin(wrap(time, 3.4) * 2 * .pi)
+            moment.scale = CGSize(width: 1.035 - 0.055 * up, height: 0.975 + 0.055 * up)
+            moment.eyes = blink ? .closed : .open(look: .zero)
+            moment.mouth = .smile
         case .run:
-            moment.offset.height = -2.2 * abs(sin(time * 9))
-            moment.rotation = -5
-            moment.eyes = .open(look: CGPoint(x: 1.2, y: 0))
+            let jump = bounce(time, period: 0.48, hang: 0.30, weight: 0.15)
+            moment.offset.height = -3.6 * max(0, jump.height) + 0.3 * min(0, jump.height)
+            moment.rotation = -7.5 + 1.6 * sin(time * 6)
+            moment.scale = CGSize(width: 1 + jump.squash, height: 1 - jump.squash)
+            moment.eyes = .open(look: CGPoint(x: 1.5, y: -0.15))
             moment.mouth = .flat
         case .type:
-            moment.rotation = 3.5 * sin(time * 2.2)
-            moment.offset.height = -0.7 * abs(sin(time * 4.4))
-            moment.eyes = character == .cloudGhost
-                ? .prompt(cursor: Int(time * 2.4) % 2 == 0)
-                : .open(look: CGPoint(x: -1.2, y: 0.6))
+            let tap = hoverArc(time, period: 0.36)
+            moment.offset.height = -0.9 * tap
+            moment.rotation = 2.6 * sin(time * 1.7)
+            moment.scale = CGSize(width: 1 + 0.035 * tap, height: 1 - 0.03 * tap)
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: -1.3, y: 0.7))
             moment.mouth = .flat
         case .thinking:
-            moment.rotation = -4 + 1.5 * sin(time * 1.4)
-            moment.offset.height = -0.8 * sin(time * 1.8)
-            moment.eyes = .open(look: CGPoint(x: 1.1, y: -1.1))
+            let beat = wrap(time, 3.4)
+            let lookX = beat < 0.5 ? 1.35 : beat < 0.78 ? 0.15 : -0.9
+            let lookY = beat < 0.5 ? -1.35 : -0.35
+            moment.rotation = -6.5 + 2.2 * sin(time * 1.05)
+            moment.offset.height = -1.5 * hoverArc(time, period: 3.0)
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: lookX, y: lookY))
             moment.mouth = .small
         case .waking:
+            // The same three beats Clawd uses: crouched, half open, up.
             let beat = time.truncatingRemainder(dividingBy: 3)
-            let rise = min(1, beat / 1.6)
             moment.fromFeet = true
-            moment.scale = CGSize(width: 1.06 - 0.06 * rise, height: 0.82 + 0.18 * rise)
-            moment.eyes = rise < 0.45 ? .closed : rise < 0.8 ? .half : .wide(look: .zero)
-            moment.mouth = rise < 0.8 ? .small : .open
+            if beat < 1 {
+                moment.scale = CGSize(width: 1.08, height: 0.78 + 0.04 * smooth(beat))
+                moment.eyes = .closed
+                moment.mouth = .small
+            } else if beat < 1.8 {
+                let u = smooth((beat - 1) / 0.8)
+                moment.scale = CGSize(width: 1.06 - 0.04 * u, height: 0.84 + 0.12 * u)
+                moment.offset.height = -0.7 * u
+                moment.eyes = .half
+                moment.mouth = .small
+            } else {
+                let u = smooth((beat - 1.8) / 1.2)
+                moment.scale = CGSize(width: 1.02 - 0.02 * u, height: 0.96 + 0.04 * u)
+                moment.offset.height = -1.5 * u
+                moment.eyes = .wide(look: .zero)
+                moment.mouth = .open
+            }
         case .waiting:
-            let hop = abs(sin(time * 3.2))
-            moment.offset.height = -4 * hop
+            let jump = bounce(time, period: 0.92, hang: 0.34, weight: 0.12)
+            moment.offset.height = -4.6 * max(0, jump.height) + 0.25 * min(0, jump.height)
             moment.fromFeet = true
-            moment.scale = CGSize(width: 1 + 0.04 * (1 - hop), height: 1 - 0.04 * (1 - hop))
-            moment.eyes = .wide(look: CGPoint(x: 0.6, y: -0.9))
+            moment.scale = CGSize(width: 1 + jump.squash, height: 1 - jump.squash)
+            moment.rotation = 2.2 * sin(time * 2.1)
+            moment.eyes = .wide(look: CGPoint(x: 0.5, y: -1.1))
             moment.mouth = .small
         case .celebrate:
-            moment.offset.height = -5 * abs(sin(time * 5))
-            moment.rotation = 8 * sin(time * 10)
+            let jump = bounce(time, period: 0.52, hang: 0.22, weight: 0.08)
+            moment.offset.height = -5.4 * max(0, jump.height)
+            moment.rotation = 7.5 * sin(time * 6) * (0.35 + 0.65 * max(0, jump.height))
+            moment.scale = CGSize(width: 1 + jump.squash, height: 1 - jump.squash)
             moment.eyes = .happy
             moment.mouth = .open
         case .coffee:
-            moment.rotation = 2.5 * sin(time * 1.6)
-            moment.eyes = blink ? .closed : .open(look: CGPoint(x: 0.9, y: 0.4))
-            moment.mouth = .smile
+            // Steam, steam, then a sip, as Clawd's cup cycle does.
+            let beat = time.truncatingRemainder(dividingBy: 4.2)
+            let sip = beat > 2.15 && beat < 2.85
+            moment.rotation = 3.2 * sin(time * 1.35) + (sip ? 2 : 0)
+            moment.offset.height = -0.7 * hoverArc(time, period: 2.4)
+            moment.offset.width = 0.5
+            moment.eyes = sip ? .happy : (blink ? .closed : .open(look: CGPoint(x: 1.1, y: 0.35)))
+            moment.mouth = sip ? .open : .smile
+        case .stretch:
+            let cycle = wrap(time, 2.8)
+            let reach: Double
+            if cycle < 0.16 {
+                reach = -0.4 * smooth(cycle / 0.16)
+            } else if cycle < 0.62 {
+                reach = smooth((cycle - 0.16) / 0.46)
+            } else {
+                reach = 1 - smooth((cycle - 0.62) / 0.38)
+            }
+            let up = max(0, reach)
+            moment.fromFeet = true
+            moment.scale = CGSize(width: 1 - 0.06 * up + 0.045 * max(0, -reach),
+                                  height: 1 + 0.10 * up - 0.05 * max(0, -reach))
+            moment.eyes = up > 0.55 ? .happy : .closed
+            moment.mouth = up > 0.55 ? .open : .small
+        case .play:
+            let across = playAcross(at: time)
+            moment.offset.width = 2.2 * sin(time * 2.6)
+            moment.offset.height = -1.7 * hoverArc(time, period: 0.52)
+            moment.eyes = .open(look: CGPoint(x: (across - 0.5) * 2.6, y: -1.1))
+            moment.mouth = .open
+        case .sleep:
+            let air = breath(time, period: 4.4)
+            moment.fromFeet = true
+            moment.offset.height = 1.7 - 0.3 * air
+            moment.scale = CGSize(width: 1.02 - 0.03 * air, height: 0.98 + 0.04 * air)
+            moment.eyes = .closed
+            moment.mouth = .small
+        case .tired:
+            let air = breath(time, period: 2.8)
+            moment.fromFeet = true
+            moment.rotation = -7.5 + 1.3 * sin(time * 0.85)
+            moment.offset.height = 2
+            moment.scale = CGSize(width: 1.045 - 0.02 * air, height: 0.955 + 0.02 * air)
+            moment.eyes = .half
+            moment.mouth = .flat
+        case .spent:
+            moment.offset.width = 0.9 * sin(time * 26)
+            moment.scale = CGSize(width: 1.04, height: 0.96)
+            moment.eyes = .squeezed
+            moment.mouth = .frown
+        case .testing:
+            moment.rotation = -4.2 + 1.5 * sin(time * 1.2)
+            moment.offset.width = -1.2
+            moment.offset.height = -1.1 * hoverArc(time, period: 2.2)
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: 1.45, y: -1.15))
+            moment.mouth = .small
+        case .longCommand:
+            moment.fromFeet = true
+            moment.offset.width = -1.2
+            moment.rotation = 2.6 * sin(time * 0.8)
+            moment.offset.height = 0.35
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: 1.3, y: 0.95))
+            moment.mouth = .flat
+        case .error:
+            let sag = breath(time, period: 2.4)
+            moment.fromFeet = true
+            moment.scale = CGSize(width: 1.10 + 0.045 * sag, height: 0.84 - 0.045 * sag)
+            moment.eyes = .cross
+            moment.mouth = .frown
+            moment.grey = true
+        }
+        return moment
+    }
+
+    /// Cloud Ghost: a pillow. Landings squash, the `>_` is the face, and the
+    /// cursor — not an eyelid — is what blinks while it is awake.
+    private static func codexMoment(_ pose: MascotPose, at time: TimeInterval) -> Moment {
+        var moment = Moment()
+        let blink = eyeBlink(time)
+        func prompt(_ look: CGPoint, typing: Bool = false) -> Eyes {
+            .prompt(cursor: cursorLit(time, typing: typing), look: look)
+        }
+        switch pose {
         case .awake:
-            moment.scale = CGSize(width: 1, height: 1 + 0.02 * sin(time * 1.6))
+            let up = hoverArc(time, period: 3.5)
+            moment.offset.height = -1.35 * up
+            moment.offset.width = 1.6 * sin(wrap(time, 4.8) * 2 * .pi)
+            moment.scale = CGSize(width: 1.055 - 0.07 * up, height: 0.955 + 0.08 * up)
+            moment.eyes = prompt(.zero)
+            moment.mouth = .smile
+        case .run:
+            let jump = bounce(time, period: 0.66, hang: 0.14, weight: 0.8)
+            moment.offset.height = -2.7 * max(0, jump.height)
+            moment.offset.width = 1.5 * sin(time * 2.3)
+            moment.rotation = -4.5
+            moment.scale = CGSize(width: 1 + 1.2 * jump.squash, height: 1 - 1.2 * jump.squash)
+            moment.eyes = prompt(CGPoint(x: 1.15, y: 0))
+            moment.mouth = .flat
+        case .type:
+            let tap = hoverArc(time, period: 0.32)
+            moment.offset.height = -0.75 * tap
+            moment.rotation = 2.0 * sin(time * 1.45)
+            moment.scale = CGSize(width: 1 + 0.05 * tap, height: 1 - 0.045 * tap)
+            moment.eyes = prompt(CGPoint(x: -0.75, y: 0.4), typing: true)
+            moment.mouth = .flat
+        case .thinking:
+            let beat = wrap(time, 3.6)
+            let look = beat < 0.55 ? CGPoint(x: 0.95, y: -0.85) : CGPoint(x: -0.45, y: -0.25)
+            moment.rotation = -5.5 + 1.8 * sin(time * 0.85)
+            moment.offset.height = -1.15 * hoverArc(time, period: 3.2)
+            moment.offset.width = 0.9 * sin(time * 0.65)
+            moment.eyes = prompt(look)
+            moment.mouth = .small
+        case .waking:
+            let beat = time.truncatingRemainder(dividingBy: 3)
+            moment.fromFeet = true
+            if beat < 1 {
+                moment.scale = CGSize(width: 1.12, height: 0.74 + 0.04 * smooth(beat))
+                moment.offset.height = 1.2
+                moment.eyes = .closed
+                moment.mouth = .small
+            } else if beat < 1.8 {
+                let u = smooth((beat - 1) / 0.8)
+                moment.scale = CGSize(width: 1.10 - 0.06 * u, height: 0.80 + 0.14 * u)
+                moment.offset.height = 1.2 * (1 - u)
+                moment.eyes = .half
+                moment.mouth = .small
+            } else {
+                let u = smooth((beat - 1.8) / 1.2)
+                moment.scale = CGSize(width: 1.04 - 0.03 * u, height: 0.96 + 0.04 * u)
+                moment.offset.height = -0.8 * u
+                moment.eyes = prompt(.zero)
+                moment.mouth = .small
+            }
+        case .waiting:
+            let jump = bounce(time, period: 1.08, hang: 0.18, weight: 0.9)
+            moment.offset.height = -3.8 * max(0, jump.height)
+            moment.fromFeet = true
+            moment.scale = CGSize(width: 1 + 1.25 * jump.squash, height: 1 - 1.25 * jump.squash)
+            moment.rotation = 1.4 * sin(time * 1.6)
+            moment.eyes = prompt(CGPoint(x: 0.45, y: -0.75))
+            moment.mouth = .small
+        case .celebrate:
+            let jump = bounce(time, period: 0.58, hang: 0.16, weight: 0.55)
+            moment.offset.height = -4.8 * max(0, jump.height)
+            moment.rotation = 6 * sin(time * 5)
+            moment.scale = CGSize(width: 1 + 1.1 * jump.squash, height: 1 - 1.1 * jump.squash)
+            moment.eyes = .happy
+            moment.mouth = .open
+        case .coffee:
+            let beat = time.truncatingRemainder(dividingBy: 4.2)
+            let sip = beat > 2.15 && beat < 2.85
+            moment.rotation = 2.8 * sin(time * 1.1)
+            moment.offset.width = 0.9 * sin(time * 0.75)
+            moment.offset.height = -0.85 * hoverArc(time, period: 2.9)
+            moment.scale = CGSize(width: 1.03, height: 0.98)
+            moment.eyes = sip ? .happy : prompt(CGPoint(x: 0.9, y: 0.3))
+            moment.mouth = sip ? .open : .smile
+        case .stretch:
+            let cycle = wrap(time, 3.1)
+            let reach: Double = cycle < 0.2 ? -0.5 * smooth(cycle / 0.2)
+                : cycle < 0.65 ? smooth((cycle - 0.2) / 0.45)
+                : 1 - smooth((cycle - 0.65) / 0.35)
+            let up = max(0, reach)
+            moment.fromFeet = true
+            moment.scale = CGSize(width: 1.04 - 0.08 * up + 0.06 * max(0, -reach),
+                                  height: 0.98 + 0.12 * up - 0.06 * max(0, -reach))
+            moment.eyes = up > 0.55 ? .happy : .closed
+            moment.mouth = up > 0.55 ? .open : .small
+        case .play:
+            let across = playAcross(at: time)
+            moment.offset.width = 2.4 * sin(time * 2.2)
+            moment.offset.height = -1.2 * hoverArc(time, period: 0.7)
+            moment.scale = CGSize(width: 1.04, height: 0.97)
+            moment.eyes = prompt(CGPoint(x: (across - 0.5) * 1.8, y: -0.55))
+            moment.mouth = .open
+        case .sleep:
+            let air = breath(time, period: 4.6)
+            moment.fromFeet = true
+            moment.offset.height = 3.1 - 0.35 * air
+            moment.scale = CGSize(width: 1.06 - 0.05 * air, height: 0.94 + 0.06 * air)
+            moment.eyes = .closed
+            moment.mouth = .small
+        case .tired:
+            let air = breath(time, period: 3.0)
+            moment.fromFeet = true
+            moment.rotation = -8 + 1.1 * sin(time * 0.7)
+            moment.offset.height = 2.4
+            moment.scale = CGSize(width: 1.07 - 0.02 * air, height: 0.93 + 0.025 * air)
+            moment.eyes = .half
+            moment.mouth = .flat
+        case .spent:
+            moment.offset.width = 1.0 * sin(time * 24)
+            moment.scale = CGSize(width: 1.06, height: 0.93)
+            moment.eyes = .squeezed
+            moment.mouth = .frown
+        case .testing:
+            moment.rotation = -3.5 + 1.2 * sin(time * 1.1)
+            moment.offset.width = -1.4 + 0.6 * sin(time * 0.8)
+            moment.offset.height = -0.7 * hoverArc(time, period: 2.6)
+            moment.eyes = prompt(CGPoint(x: 1.2, y: -0.7))
+            moment.mouth = .small
+        case .longCommand:
+            moment.fromFeet = true
+            moment.offset.width = -1.3
+            moment.rotation = 2.2 * sin(time * 0.7)
+            moment.offset.height = 0.8
+            moment.scale = CGSize(width: 1.03, height: 0.98)
+            moment.eyes = blink ? .closed : prompt(CGPoint(x: 1.05, y: 0.7))
+            moment.mouth = .flat
+        case .error:
+            let sag = breath(time, period: 2.6)
+            moment.fromFeet = true
+            moment.scale = CGSize(width: 1.12 + 0.05 * sag, height: 0.80 - 0.05 * sag)
+            moment.eyes = .cross
+            moment.mouth = .frown
+            moment.grey = true
+        }
+        return moment
+    }
+
+    /// Star Buddy: a buoy. Quicker than the cloud, with a glint in the scale,
+    /// and it tips over when it sleeps.
+    private static func starMoment(_ pose: MascotPose, at time: TimeInterval) -> Moment {
+        var moment = Moment()
+        let blink = eyeBlink(time)
+        let glint = 0.02 * sin(time * 5.5)
+        switch pose {
+        case .awake:
+            let up = hoverArc(time, period: 2.4)
+            moment.offset.height = -1.4 * up
+            moment.rotation = 2.4 * sin(wrap(time, 3.2) * 2 * .pi)
+            moment.scale = CGSize(width: 1 + glint, height: 1 + 0.03 * up - glint)
             moment.fromFeet = true
             moment.eyes = blink ? .closed : .open(look: .zero)
             moment.mouth = .smile
+        case .run:
+            let jump = bounce(time, period: 0.42, hang: 0.18, weight: 0.25)
+            moment.offset.height = -3.2 * max(0, jump.height)
+            moment.rotation = -6
+            moment.scale = CGSize(width: 1 + jump.squash + glint, height: 1 - jump.squash)
+            moment.eyes = .open(look: CGPoint(x: 1.4, y: 0))
+            moment.mouth = .flat
+        case .type:
+            let tap = hoverArc(time, period: 0.34)
+            moment.offset.height = -0.8 * tap
+            moment.rotation = 3.2 * sin(time * 2.0)
+            moment.scale = CGSize(width: 1 + glint, height: 1 - 0.02 * tap)
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: -1.2, y: 0.55))
+            moment.mouth = .flat
+        case .thinking:
+            let beat = wrap(time, 3.2)
+            moment.rotation = -5 + 2 * sin(time * 1.2)
+            moment.offset.height = -1.2 * hoverArc(time, period: 2.6)
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: beat < 0.6 ? 1.2 : -0.6, y: -1.2))
+            moment.mouth = .small
+        case .waking:
+            let beat = time.truncatingRemainder(dividingBy: 3)
+            moment.fromFeet = true
+            if beat < 1 {
+                moment.scale = CGSize(width: 1.08, height: 0.80)
+                moment.eyes = .closed
+                moment.mouth = .small
+            } else if beat < 1.8 {
+                let u = smooth((beat - 1) / 0.8)
+                moment.scale = CGSize(width: 1.05 - 0.03 * u, height: 0.86 + 0.10 * u)
+                moment.eyes = .half
+                moment.mouth = .small
+            } else {
+                moment.scale = CGSize(width: 1, height: 1)
+                moment.offset.height = -1.2 * smooth((beat - 1.8) / 1.2)
+                moment.eyes = .wide(look: .zero)
+                moment.mouth = .open
+            }
+        case .waiting:
+            let jump = bounce(time, period: 0.84, hang: 0.26, weight: 0.3)
+            moment.offset.height = -4.4 * max(0, jump.height)
+            moment.fromFeet = true
+            moment.scale = CGSize(width: 1 + jump.squash, height: 1 - jump.squash)
+            moment.eyes = .wide(look: CGPoint(x: 0.6, y: -1.0))
+            moment.mouth = .small
+        case .celebrate:
+            let jump = bounce(time, period: 0.48, hang: 0.2, weight: 0.2)
+            moment.offset.height = -5.2 * max(0, jump.height)
+            moment.rotation = 8 * sin(time * 5.5)
+            moment.scale = CGSize(width: 1 + jump.squash + glint, height: 1 - jump.squash)
+            moment.eyes = .happy
+            moment.mouth = .open
+        case .coffee:
+            let beat = time.truncatingRemainder(dividingBy: 4.2)
+            let sip = beat > 2.15 && beat < 2.85
+            moment.rotation = 2.8 * sin(time * 1.5)
+            moment.eyes = sip ? .happy : (blink ? .closed : .open(look: CGPoint(x: 1.0, y: 0.4)))
+            moment.mouth = sip ? .open : .smile
         case .stretch:
-            let reach = (sin(time * 1.1) + 1) / 2
+            let reach = hoverArc(time, period: 2.6)
             moment.fromFeet = true
             moment.scale = CGSize(width: 1 - 0.05 * reach, height: 1 + 0.09 * reach)
-            moment.eyes = reach > 0.5 ? .happy : .closed
-            moment.mouth = reach > 0.5 ? .open : .small
+            moment.eyes = reach > 0.55 ? .happy : .closed
+            moment.mouth = reach > 0.55 ? .open : .small
         case .play:
             let across = playAcross(at: time)
-            moment.offset.width = 2 * sin(time * 2.8)
-            moment.offset.height = -1.5 * abs(sin(time * 5.6))
-            moment.eyes = .open(look: CGPoint(x: (across - 0.5) * 2.4, y: -1))
+            moment.offset.width = 2.3 * sin(time * 2.8)
+            moment.offset.height = -1.6 * hoverArc(time, period: 0.48)
+            moment.eyes = .open(look: CGPoint(x: (across - 0.5) * 2.5, y: -1))
             moment.mouth = .open
         case .sleep:
+            let air = breath(time, period: 4.0)
             moment.fromFeet = true
-            moment.offset.height = 2.5
-            moment.rotation = character == .starBuddy ? 8 : 0
-            moment.scale = CGSize(width: 1 + 0.015 * sin(time * 0.9), height: 1 - 0.025 * sin(time * 0.9))
+            moment.offset.height = 2.2
+            moment.rotation = 8
+            moment.scale = CGSize(width: 1.02 - 0.02 * air, height: 0.98 + 0.03 * air)
             moment.eyes = .closed
             moment.mouth = .small
         case .tired:
             moment.fromFeet = true
-            moment.rotation = -6 + 1.5 * sin(time * 1.2)
-            moment.offset.height = 1.5
+            moment.rotation = -6 + 1.6 * sin(time * 1.1)
+            moment.offset.height = 1.6
             moment.eyes = .half
             moment.mouth = .flat
         case .spent:
-            moment.offset.width = 0.8 * sin(time * 26)
+            moment.offset.width = 0.85 * sin(time * 26)
+            moment.rotation = 3 * sin(time * 13)
             moment.eyes = .squeezed
             moment.mouth = .frown
         case .testing:
-            // Leaning back to watch the tube, eyes on it.
-            moment.rotation = -3 + 1 * sin(time * 1.3)
-            moment.offset.width = -1.5
-            moment.eyes = .open(look: CGPoint(x: 1.3, y: -1.1))
+            moment.rotation = -3.2 + sin(time * 1.3)
+            moment.offset.width = -1.4
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: 1.35, y: -1.1))
             moment.mouth = .small
         case .longCommand:
-            // Waiting it out, eyes on the sand, a slow sway.
             moment.fromFeet = true
-            moment.offset.width = -1.5
-            moment.rotation = 2 * sin(time * 0.9)
-            moment.eyes = blink ? .closed : .open(look: CGPoint(x: 1.2, y: 0.8))
+            moment.offset.width = -1.4
+            moment.rotation = 2.2 * sin(time * 0.9)
+            moment.eyes = blink ? .closed : .open(look: CGPoint(x: 1.2, y: 0.85))
             moment.mouth = .flat
         case .error:
-            // Melting: spread at the feet, sunk, grey.
-            let sag = (sin(time * 0.8) + 1) / 2
+            let sag = breath(time, period: 2.2)
             moment.fromFeet = true
-            moment.scale = CGSize(width: 1.08 + 0.04 * sag, height: 0.86 - 0.04 * sag)
+            moment.scale = CGSize(width: 1.09 + 0.04 * sag, height: 0.85 - 0.04 * sag)
+            moment.rotation = 4 * sin(time * 1.4)
             moment.eyes = .cross
             moment.mouth = .frown
             moment.grey = true
@@ -692,10 +1095,10 @@ enum VectorMascots {
                 chevron.addLine(to: CGPoint(x: eye.x + 2.4 * side, y: eye.y))
                 chevron.addLine(to: CGPoint(x: eye.x - 2.4 * side, y: eye.y + 2.6))
                 context.stroke(chevron, with: ink, style: line)
-            case .prompt(let cursor):
+            case .prompt(let cursor, let look):
                 // The logo's `>_`, the cursor (the dash) blinking.
                 guard index == 0 else { continue }
-                drawLogoPrompt(cursor: cursor, offset: .zero, colour: colour, in: &context)
+                drawLogoPrompt(cursor: cursor, offset: look, colour: colour, in: &context)
             }
         }
         if face.promptMark {
@@ -734,8 +1137,8 @@ enum VectorMascots {
     // MARK: Effects
 
     /// What each character does at work, from its design: Star Buddy's three
-    /// sparkles orbit it, Float Bot pulses code chevrons and drops thrust
-    /// sparkles from under its arch, Cloud Ghost's data bits rise up its sides.
+    /// sparkles orbit and twinkle, Float Bot types chevrons and drops thrust
+    /// from under its arch, Cloud Ghost's data bits rise up its sides.
     private static func drawWork(_ character: MascotCharacter, pose: MascotPose, time: TimeInterval, colour: Bool,
                                  in context: inout GraphicsContext, unit: CGFloat, front: Bool) {
         let speed = pose == .run ? 1.8 : 1.0
@@ -751,39 +1154,58 @@ enum VectorMascots {
                 // In front on the lower half of the orbit, behind on the upper.
                 guard (sin(angle) > 0) == front else { continue }
                 let centre = CGPoint(x: 32 + 27 * cos(angle), y: 32 + 13 * sin(angle))
-                let radius = 2.4 + 1.1 * sin(angle)
-                drawSpark(in: &layer, at: centre, radius: radius, colour: tone(hex, 0.6 + 0.35 * sin(angle)))
+                let twinkle = 0.45 * sin(time * 7.5 + Double(index) * 2.1)
+                let radius = max(1.15, 2.4 + 1.1 * sin(angle) + twinkle)
+                drawSpark(in: &layer, at: centre, radius: radius, colour: tone(hex, 0.55 + 0.4 * max(0, sin(angle))))
             }
         case .floatBot:
             guard front else {
+                // Burst out of the hollow, then linger. The run locks this to
+                // the same period as the hop, so the thrust is the hop.
+                let period = pose == .run ? 0.48 : 0.90
+                let hues: [UInt32] = [0xFC413D, 0xFBBC04, 0x00B95C]
                 for index in 0..<3 {
-                    let fall = (time * 1.4 * speed + Double(index) / 3).truncatingRemainder(dividingBy: 1)
-                    let hex: UInt32 = [0xFC413D, 0xFBBC04, 0x00B95C][index]
-                    let centre = CGPoint(x: 32 + 3.5 * sin(Double(index) * 2.1 + time), y: 43 + 14 * fall)
-                    drawSpark(in: &layer, at: centre, radius: 2.4 * (1 - fall * 0.5), colour: tone(hex, 1 - fall))
+                    let fall = easeOutCubic(wrap(time + Double(index) * period / 3, period))
+                    let centre = CGPoint(x: 32 + 4.2 * sin(Double(index) * 2.1 + time * 3),
+                                         y: 36 + 18 * fall)
+                    drawSpark(in: &layer, at: centre, radius: 2.6 * (1 - fall * 0.5),
+                              colour: tone(hues[index], 1 - fall * 0.82))
                 }
                 return
             }
+            let period = pose == .run ? 0.36 : 0.55
             for (index, side) in [-1.0, 1.0].enumerated() {
-                let pulse = (sin(time * 4 * speed + Double(index) * .pi) + 1) / 2
-                let x = 32 + side * 25
+                let local = wrap(time + Double(index) * period * 0.5, period)
+                let pulse = local < 0.42 ? easeOutCubic(local / 0.42) : 1 - smooth((local - 0.42) / 0.58)
+                let x = 32 + side * (23.2 + 3.4 * pulse)
                 var chevron = Path()
-                chevron.move(to: CGPoint(x: x - side * 0, y: 24.6))
-                chevron.addLine(to: CGPoint(x: x + side * 3.4, y: 28))
+                chevron.move(to: CGPoint(x: x, y: 24.2))
+                chevron.addLine(to: CGPoint(x: x + side * 3.6, y: 27.8))
                 chevron.addLine(to: CGPoint(x: x, y: 31.4))
-                layer.stroke(chevron, with: .color(tone(0x4893FC, 0.3 + 0.65 * pulse)),
+                layer.stroke(chevron, with: .color(tone(0x4893FC, 0.28 + 0.72 * pulse)),
                              style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
+                // The keystroke travelling out past the one that just landed.
+                let ghostX = x + side * (2.4 + 2.2 * pulse)
+                var ghost = Path()
+                ghost.move(to: CGPoint(x: ghostX, y: 25.4))
+                ghost.addLine(to: CGPoint(x: ghostX + side * 2.6, y: 28))
+                ghost.addLine(to: CGPoint(x: ghostX, y: 30.6))
+                layer.stroke(ghost, with: .color(tone(0x4893FC, 0.45 * pulse)),
+                             style: StrokeStyle(lineWidth: 1.6, lineCap: .round, lineJoin: .round))
             }
         default:
             guard !front else { return }
-            for index in 0..<4 {
-                let rise = (time * 0.7 * speed + Double(index) / 4).truncatingRemainder(dividingBy: 1)
-                let x = index % 2 == 0 ? 2.6 : 58.6
-                let y = 50 - 32 * rise
-                let side = 2.6 + 0.6 * Double(index % 2)
-                let hex: UInt32 = index % 3 == 0 ? 0x3941FF : 0x7A9DFF
-                layer.fill(Path(roundedRect: CGRect(x: x, y: y, width: side, height: side), cornerRadius: 0.9),
-                           with: .color(tone(hex, 1 - rise * 0.7)))
+            let period = pose == .run ? 0.72 : 1.15
+            let hues: [UInt32] = [0xB1A7FF, 0x7A9DFF, 0x3941FF]
+            for index in 0..<5 {
+                let rise = easeOutCubic(wrap(time + Double(index) * period / 5, period))
+                let lane = index % 2
+                let stagger = Double(index % 3) * 2.1
+                let x = lane == 0 ? 1.2 + stagger : 60.2 - stagger
+                let y = 52 - 36 * rise
+                let side = 2.3 + 0.45 * Double(lane)
+                layer.fill(Path(roundedRect: CGRect(x: x, y: y, width: side, height: side), cornerRadius: 0.8),
+                           with: .color(tone(hues[index % 3], 0.4 + 0.6 * (1 - rise))))
             }
         }
     }
@@ -806,26 +1228,40 @@ enum VectorMascots {
             for index in 0..<2 {
                 let angle = time * 3.2 * speed + Double(index) * .pi
                 let hue = hues[(Int(time * 0.8 * speed) + index) % hues.count]
+                let twinkle = 1.3 * sin(time * 7.5 + Double(index) * 1.7)
                 let centre = CGPoint(x: 32 + 23 * cos(angle), y: 33 + 20 * sin(angle))
-                drawSpark(in: &layer, at: centre, radius: 7, colour: tone(hue))
+                drawSpark(in: &layer, at: centre, radius: max(5.2, 6.6 + twinkle), colour: tone(hue))
             }
         case .floatBot:
+            let period = pose == .run ? 0.48 : 0.90
+            let hues: [UInt32] = [0xFC413D, 0xFBBC04, 0x00B95C]
+            for index in 0..<2 {
+                let fall = easeOutCubic(wrap(time + Double(index) * period / 2, period))
+                let centre = CGPoint(x: 32 + (index == 0 ? -5.0 : 5.0), y: 52 + 8 * fall)
+                drawSpark(in: &layer, at: centre, radius: 5.2 * (1 - 0.28 * fall),
+                          colour: tone(hues[index], 0.95 - 0.7 * fall))
+            }
+            let typePeriod = pose == .run ? 0.36 : 0.50
             for (index, side) in [-1.0, 1.0].enumerated() {
-                let pulse = (sin(time * 5 * speed + Double(index) * .pi) + 1) / 2
-                let x = 32 + side * 29
+                let local = wrap(time + Double(index) * typePeriod * 0.5, typePeriod)
+                let pulse = local < 0.42 ? easeOutCubic(local / 0.42) : 1 - smooth((local - 0.42) / 0.58)
+                let x = 32 + side * (26.4 + 4.2 * pulse)
                 var chevron = Path()
-                chevron.move(to: CGPoint(x: x - side * 2.5, y: 23))
-                chevron.addLine(to: CGPoint(x: x + side * 1.5, y: 29))
-                chevron.addLine(to: CGPoint(x: x - side * 2.5, y: 35))
-                layer.stroke(chevron, with: .color(tone(0x4893FC, 0.35 + 0.65 * pulse)),
+                chevron.move(to: CGPoint(x: x - side * 2.5, y: 22))
+                chevron.addLine(to: CGPoint(x: x + side * 2.2, y: 29))
+                chevron.addLine(to: CGPoint(x: x - side * 2.5, y: 36))
+                layer.stroke(chevron, with: .color(tone(0x4893FC, 0.4 + 0.6 * pulse)),
                              style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
             }
         default:
-            for index in 0..<2 {
-                let rise = (time * 0.8 * speed + Double(index) * 0.5).truncatingRemainder(dividingBy: 1)
-                let x = index == 0 ? 0.0 : 57.0
-                layer.fill(Path(roundedRect: CGRect(x: x, y: 50 - 36 * rise, width: 7, height: 7), cornerRadius: 1.5),
-                           with: .color(tone(index == 0 ? 0x3941FF : 0x7A9DFF, 1 - rise * 0.6)))
+            let period = pose == .run ? 0.70 : 1.05
+            let hues: [UInt32] = [0xB1A7FF, 0x7A9DFF, 0x3941FF]
+            let lanes = [0.0, 57.0, 0.0]
+            for index in 0..<3 {
+                let rise = easeOutCubic(wrap(time + Double(index) * period / 3, period))
+                layer.fill(Path(roundedRect: CGRect(x: lanes[index], y: 50 - 36 * rise, width: 7, height: 7),
+                                 cornerRadius: 1.5),
+                           with: .color(tone(hues[index], 0.45 + 0.55 * (1 - rise))))
             }
         }
     }
