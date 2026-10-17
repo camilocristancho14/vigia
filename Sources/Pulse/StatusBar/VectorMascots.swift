@@ -1314,14 +1314,6 @@ enum VectorMascots {
         // Bigger features at bar size: two wide eyes and a thick mouth are
         // what survive twenty pixels.
         let grow = style.simple ? 1.3 : 1.0
-        func strokeFeature(_ path: Path, style featureStyle: StrokeStyle) {
-            if face.sclera && colour {
-                var edge = featureStyle
-                edge.lineWidth += 4
-                context.stroke(path, with: .color(.white), style: edge)
-            }
-            context.stroke(path, with: ink, style: featureStyle)
-        }
 
         if colour, !style.simple, !face.promptMark, moment.eyes != .cross {
             for x in [face.blushX.0, face.blushX.1] {
@@ -1346,7 +1338,7 @@ enum VectorMascots {
                     arc.move(to: CGPoint(x: centre.x - 3, y: centre.y - 0.6))
                     arc.addQuadCurve(to: CGPoint(x: centre.x + 3, y: centre.y - 0.6),
                                      control: CGPoint(x: centre.x, y: centre.y + 2.4))
-                    strokeFeature(arc, style: line)
+                    context.stroke(arc, with: ink, style: line)
                     continue
                 }
                 // Closing and opening: the eye squashes toward its lower lid.
@@ -1371,25 +1363,23 @@ enum VectorMascots {
                 var arc = Path()
                 arc.move(to: CGPoint(x: eye.x - 3, y: eye.y - 1))
                 arc.addQuadCurve(to: CGPoint(x: eye.x + 3, y: eye.y - 1), control: CGPoint(x: eye.x, y: eye.y + 3.2))
-                strokeFeature(arc, style: line)
+                context.stroke(arc, with: ink, style: line)
             case .half:
-                let lid = Path(roundedRect: CGRect(x: eye.x - 3, y: eye.y - 0.6, width: 6, height: 3.6), cornerRadius: 1.8)
-                if face.sclera && colour { context.stroke(lid, with: .color(.white), lineWidth: 3.5) }
-                context.fill(lid, with: ink)
+                context.fill(Path(roundedRect: CGRect(x: eye.x - 3, y: eye.y - 0.6, width: 6, height: 3.6), cornerRadius: 1.8), with: ink)
                 var brow = Path()
                 brow.move(to: CGPoint(x: eye.x - 3.2, y: eye.y - 1.4))
                 brow.addLine(to: CGPoint(x: eye.x + 3.2, y: eye.y - 1.4))
-                strokeFeature(brow, style: StrokeStyle(lineWidth: style.stroke(1.2), lineCap: .round))
+                context.stroke(brow, with: ink, style: StrokeStyle(lineWidth: style.stroke(1.2), lineCap: .round))
             case .happy:
                 var arc = Path()
                 arc.move(to: CGPoint(x: eye.x - 3, y: eye.y + 1.2))
                 arc.addQuadCurve(to: CGPoint(x: eye.x + 3, y: eye.y + 1.2), control: CGPoint(x: eye.x, y: eye.y - 3.4))
-                strokeFeature(arc, style: line)
+                context.stroke(arc, with: ink, style: line)
             case .cross:
                 var cross = Path()
                 cross.move(to: CGPoint(x: eye.x - 2.6, y: eye.y - 2.6)); cross.addLine(to: CGPoint(x: eye.x + 2.6, y: eye.y + 2.6))
                 cross.move(to: CGPoint(x: eye.x + 2.6, y: eye.y - 2.6)); cross.addLine(to: CGPoint(x: eye.x - 2.6, y: eye.y + 2.6))
-                strokeFeature(cross, style: StrokeStyle(lineWidth: style.stroke(2.2), lineCap: .round))
+                context.stroke(cross, with: ink, style: StrokeStyle(lineWidth: style.stroke(2.2), lineCap: .round))
             case .squeezed:
                 // > <
                 let side: Double = index == 0 ? 1 : -1
@@ -1397,7 +1387,7 @@ enum VectorMascots {
                 chevron.move(to: CGPoint(x: eye.x - 2.4 * side, y: eye.y - 2.6))
                 chevron.addLine(to: CGPoint(x: eye.x + 2.4 * side, y: eye.y))
                 chevron.addLine(to: CGPoint(x: eye.x - 2.4 * side, y: eye.y + 2.6))
-                strokeFeature(chevron, style: line)
+                context.stroke(chevron, with: ink, style: line)
             case .prompt(let cursor, let look):
                 // The logo's `>_`, the cursor (the dash) blinking.
                 guard index == 0 else { continue }
@@ -1419,25 +1409,22 @@ enum VectorMascots {
         case .smile:
             mouth.move(to: CGPoint(x: 29.6, y: y - 0.6))
             mouth.addQuadCurve(to: CGPoint(x: 34.4, y: y - 0.6), control: CGPoint(x: 32, y: y + 2.2))
-            strokeFeature(mouth, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
+            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
         case .flat:
             mouth.move(to: CGPoint(x: 30.2, y: y))
             mouth.addLine(to: CGPoint(x: 33.8, y: y))
-            strokeFeature(mouth, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
+            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
         case .small:
-            let open = ellipse(32, y + 0.4, 1.4 * grow, 1.7 * grow)
-            if face.sclera && colour { context.stroke(open, with: .color(.white), lineWidth: 3.5) }
-            context.fill(open, with: ink)
+            context.fill(ellipse(32, y + 0.4, 1.4 * grow, 1.7 * grow), with: ink)
         case .open:
             mouth.move(to: CGPoint(x: 29.4, y: y - 0.8))
             mouth.addQuadCurve(to: CGPoint(x: 34.6, y: y - 0.8), control: CGPoint(x: 32, y: y + 4.2))
             mouth.closeSubpath()
-            if face.sclera && colour { context.stroke(mouth, with: .color(.white), lineWidth: 3.5) }
             context.fill(mouth, with: ink)
         case .frown:
             mouth.move(to: CGPoint(x: 29.6, y: y + 1.2))
             mouth.addQuadCurve(to: CGPoint(x: 34.4, y: y + 1.2), control: CGPoint(x: 32, y: y - 1.6))
-            strokeFeature(mouth, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
+            context.stroke(mouth, with: ink, style: StrokeStyle(lineWidth: style.stroke(style.simple ? 2.6 : 1.8), lineCap: .round))
         }
     }
 
