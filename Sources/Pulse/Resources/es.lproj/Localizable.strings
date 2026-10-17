@@ -838,3 +838,16 @@
 "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Dibuja a Cloud Ghost en lugar del logo de Codex. Sus ojos se vuelven un prompt mientras Codex trabaja.";
 "Used up until it resets" = "Agotado hasta el reinicio";
 "Claude and GPT" = "Claude y GPT";
+
+/* First-run auto-detection and welcome window */
+"Add services" = "Agregar servicios";
+"Choose any other services to monitor. The ones already on stay as they are." = "Elige otros servicios para monitorear. Los que ya están activos se quedan como están.";
+"Signed in on this Mac" = "Sesión iniciada en este Mac";
+"Vigía is ready" = "Vigía está listo";
+"These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings." = "Estos servicios ya tenían la sesión iniciada en este Mac, así que Vigía ya los está monitoreando. Puedes cambiarlo cuando quieras en Ajustes.";
+"Monitoring now" = "Monitoreando ahora";
+"Installed — sign in to add" = "Instalados: inicia sesión para agregarlos";
+"Connect Claude Code's status line" = "Conectar la línea de estado de Claude Code";
+"Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "Mantiene legible el uso de Claude Code cuando su sesión caduca. Esto edita ~/.claude/settings.json; puedes desconectarla en Ajustes.";
+"Add more services…" = "Agregar más servicios…";
+"Copied — run %@ in your terminal to sign in." = "Copiado: ejecuta %@ en tu terminal para iniciar sesión.";

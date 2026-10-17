@@ -6,7 +6,11 @@ import SwiftUI
 final class ProviderSetupWindowController {
     private let window: NSWindow
 
-    init(settings: AppSettings, providers: Set<Provider>, isInitial: Bool) {
+    private let mode: ProviderSetupMode
+
+    init(settings: AppSettings, providers: Set<Provider>, mode: ProviderSetupMode) {
+        self.mode = mode
+        let isInitial = mode == .initial
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 700, height: 620),
             styleMask: [.titled, .closable, .resizable],
@@ -14,14 +18,18 @@ final class ProviderSetupWindowController {
         )
         self.window = window
         window.isReleasedWhenClosed = false
+        // Ready first, then the rest that was found, then by name.
+        func rank(_ provider: Provider) -> Int {
+            settings.readyProviders.contains(provider) ? 0 : settings.detectedProviders.contains(provider) ? 1 : 2
+        }
         let ordered = providers.sorted {
-            let left = settings.detectedProviders.contains($0)
-            let right = settings.detectedProviders.contains($1)
-            if left != right { return left }
+            let left = rank($0)
+            let right = rank($1)
+            if left != right { return left < right }
             return $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending
         }
         window.contentView = NSHostingView(rootView: ProviderSetupView(
-            settings: settings, providers: ordered, isInitial: isInitial,
+            settings: settings, providers: ordered, mode: mode,
             finish: { [weak window] selected in
                 guard !isInitial || !selected.isEmpty else { return }
                 window?.close()
@@ -41,6 +49,6 @@ final class ProviderSetupWindowController {
     func close() { window.close() }
 
     func refreshTitle() {
-        window.title = .localized("Choose services to monitor")
+        window.title = mode == .addMore ? .localized("Add services") : .localized("Choose services to monitor")
     }
 }

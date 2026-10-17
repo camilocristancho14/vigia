@@ -963,3 +963,16 @@
 "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working.";
 "Used up until it resets" = "Used up until it resets";
 "Claude and GPT" = "Claude and GPT";
+
+/* First-run auto-detection and welcome window */
+"Add services" = "Add services";
+"Choose any other services to monitor. The ones already on stay as they are." = "Choose any other services to monitor. The ones already on stay as they are.";
+"Signed in on this Mac" = "Signed in on this Mac";
+"Vigía is ready" = "Vigía is ready";
+"These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings." = "These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings.";
+"Monitoring now" = "Monitoring now";
+"Installed — sign in to add" = "Installed — sign in to add";
+"Connect Claude Code's status line" = "Connect Claude Code's status line";
+"Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings.";
+"Add more services…" = "Add more services…";
+"Copied — run %@ in your terminal to sign in." = "Copied — run %@ in your terminal to sign in.";

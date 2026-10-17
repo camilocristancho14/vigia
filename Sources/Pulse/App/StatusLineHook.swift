@@ -253,6 +253,21 @@ enum StatusLineHook {
     /// cannot turn into a second one. Declining is not a dead end — the row in
     /// Settings stays, and an expired login now says where to find it.
     @MainActor
+    /// Whether `offerOnFirstRun` would ask now: never asked, Claude Code is
+    /// here, and the status line is not already Vigía. The welcome window asks
+    /// the same question as a checkbox when this is true, and calls
+    /// `markOffered()` so the alert never follows it.
+    static var wouldOfferOnFirstRun: Bool {
+        !UserDefaults.standard.bool(forKey: Key.offered)
+            && FileManager.default.fileExists(atPath: settingsFile.deletingLastPathComponent().path)
+            && !isInstalled
+    }
+
+    /// The question has been put, whatever the answer turns out to be.
+    static func markOffered() {
+        UserDefaults.standard.set(true, forKey: Key.offered)
+    }
+
     static func offerOnFirstRun(willBeUsed: Bool) {
         guard willBeUsed else { return }
         let defaults = UserDefaults.standard

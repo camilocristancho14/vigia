@@ -34,6 +34,8 @@ extension ProviderProfile {
             ".local/share/kilo",
             "Library/Application Support/Code/User/globalStorage/kilocode.kilo-code",
         ],
+        loginPaths: [".local/share/kilo/auth.json"],
+        discoveryCommands: ["kilo"],
         fetch: { await KiloCodeUsageService.fetch($0) }
     )
 }

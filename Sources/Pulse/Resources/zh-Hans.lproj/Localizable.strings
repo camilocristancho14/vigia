@@ -909,3 +909,16 @@
 "No conversation is within its guaranteed cache time" = "当前没有对话还在缓存保底时间内";
 "Kept at least %@" = "至少保留 %@";
 "The latest one's guaranteed time ended at %@." = "最近一个对话的保底时间已在 %@ 结束。";
+
+/* First-run auto-detection and welcome window */
+"Add services" = "添加服务";
+"Choose any other services to monitor. The ones already on stay as they are." = "选择要监控的其他服务。已开启的服务保持不变。";
+"Signed in on this Mac" = "已在本机登录";
+"Vigía is ready" = "Vigía 已就绪";
+"These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings." = "这些服务已在本机登录，Vigía 现在正在监控它们。你可以随时在设置中更改。";
+"Monitoring now" = "正在监控";
+"Installed — sign in to add" = "已安装 — 登录后即可添加";
+"Connect Claude Code's status line" = "连接 Claude Code 状态栏";
+"Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "在 Claude Code 登录过期后仍能读取其用量。这会编辑 ~/.claude/settings.json；你可以在设置中断开连接。";
+"Add more services…" = "添加更多服务…";
+"Copied — run %@ in your terminal to sign in." = "已复制 — 在终端中运行 %@ 以登录。";

@@ -34,6 +34,8 @@ extension ProviderProfile {
         spendingIsWatchedLocally: false,
         setupSlug: "nous-portal",
         discoveryPaths: [".hermes"],
+        loginPaths: [".hermes/auth.json", ".hermes/shared/nous_auth.json"],
+        discoveryCommands: ["hermes"],
         fetch: { await NousPortalUsageService.fetch($0) }
     )
 }

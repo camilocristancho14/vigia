@@ -26,6 +26,7 @@ extension ProviderProfile {
         reportsSpendableBalance: true,
         setupSlug: "amp",
         discoveryPaths: [".local/share/amp", ".config/amp"],
+        discoveryCommands: ["amp"],
         fetch: { await AmpUsageService.fetch($0) }
     )
 }

@@ -29,6 +29,8 @@ extension ProviderProfile {
         brandColor: 0xFFD21E,
         setupSlug: "hugging-face",
         discoveryPaths: [".cache/huggingface/token"],
+        loginPaths: [".cache/huggingface/token"],
+        discoveryCommands: ["hf", "huggingface-cli"],
         fetch: { await HuggingFaceUsageService.fetch($0) }
     )
 }
