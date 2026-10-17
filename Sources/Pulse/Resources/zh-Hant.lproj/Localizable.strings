@@ -302,8 +302,8 @@
 "Clearer to the right. Darker reads better over bright pages." = "越往右越透。偏暗一點，在淺色頁面上更容易看清。";
 "Open Antigravity or run agy to see its usage." = "開啟 Antigravity 或執行 agy 才讀得到它的用量。";
 "Asks the language server the Antigravity app or the agy CLI runs while it is open." = "向 Antigravity app 或 agy CLI 開啟時執行的語言伺服器讀取。";
-"Only while Antigravity or agy is open." = "只有在 Antigravity 或 agy 開啟時才讀得到。";
-"Antigravity or the agy CLI" = "Antigravity 或 agy CLI";
+"Uses the login agy already saved. Nothing has to be open." = "使用 agy 已儲存的登入。不需要開啟任何程式。";
+"agy's own login" = "agy 自己的登入";
 
 /* Cursor */
 "Sign in to Cursor to see usage." = "在 Cursor 中登入後才讀得到用量。";
@@ -625,7 +625,7 @@
 "Enable a service in its settings to start monitoring." = "在左側選擇服務，開啟「在面板中顯示」即可開始監控。";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "讀取 Claude Code 存在鑰匙圈或憑證檔案中的登入資訊。可能要求鑰匙圈存取權限，包括 Claude 桌面版的 cookie 儲存空間。";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "讀取 ~/.codex/auth.json，也可能啟動 codex app-server 使用已儲存的登入。Pulse 不會要求鑰匙圈存取權限。";
-"Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt." = "讀取這台 Mac 上 Antigravity app 或 agy CLI 執行的語言伺服器，以及已設定的連線權杖。不會出現鑰匙圈提示。";
+"Reads the login saved in ~/.gemini/jetski-standalone-oauth-token by the agy CLI. No Keychain prompt." = "讀取 agy CLI 儲存在 ~/.gemini/jetski-standalone-oauth-token 的登入。不會出現鑰匙圈提示。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "讀取 Cursor 本機資料庫中儲存的登入資訊。不會出現鑰匙圈提示。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "讀取 ~/.grok/auth.json 中儲存的登入資訊。不會出現鑰匙圈提示。";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "使用在設定中輸入的金鑰，或讀取 OpenCode 的 auth.json。不會出現鑰匙圈提示。";

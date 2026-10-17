@@ -302,8 +302,8 @@
 "Clearer to the right. Darker reads better over bright pages." = "右ほど透明になります。暗めにすると、明るいページの上でも読みやすくなります。";
 "Open Antigravity or run agy to see its usage." = "使用量を読むには Antigravity を開くか agy を実行してください。";
 "Asks the language server the Antigravity app or the agy CLI runs while it is open." = "Antigravity アプリまたは agy CLI が起動中に走らせている language server に問い合わせます。";
-"Only while Antigravity or agy is open." = "Antigravity または agy が開いているあいだだけ読めます。";
-"Antigravity or the agy CLI" = "Antigravity または agy CLI";
+"Uses the login agy already saved. Nothing has to be open." = "agy が保存したログインを使います。何も開いておく必要はありません。";
+"agy's own login" = "agy 自身のログイン";
 
 /* Cursor */
 "Sign in to Cursor to see usage." = "使用量を読むには Cursor でサインインしてください。";
@@ -625,7 +625,7 @@
 "Enable a service in its settings to start monitoring." = "左側でサービスを選び、「パネルに表示」をオンにすると監視を始めます。";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "キーチェーンまたは認証情報ファイルから Claude Code のログインを読み取ります。Claude デスクトップの Cookie 保存領域を含め、キーチェーンへのアクセスを求めることがあります。";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "~/.codex/auth.json を読み取り、保存済みのログインで codex app-server を起動する場合があります。Pulse はキーチェーンへのアクセスを求めません。";
-"Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt." = "この Mac で Antigravity アプリまたは agy CLI が走らせている language server と、設定されている接続トークンを読み取ります。キーチェーンの確認はありません。";
+"Reads the login saved in ~/.gemini/jetski-standalone-oauth-token by the agy CLI. No Keychain prompt." = "agy CLI が ~/.gemini/jetski-standalone-oauth-token に保存したログインを読み取ります。キーチェーンの確認はありません。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Cursor のローカルデータベースに保存されたログインを読み取ります。キーチェーンの確認はありません。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "~/.grok/auth.json に保存されたログインを読み取ります。キーチェーンの確認はありません。";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "設定で入力したキーを使うか、OpenCode の auth.json を読み取ります。キーチェーンの確認はありません。";
