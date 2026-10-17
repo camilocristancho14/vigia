@@ -30,6 +30,7 @@ extension ProviderProfile {
         keySubtitle: { .localized("Copied from your browser. Stored encrypted on this Mac.") },
         setupSlug: "augment",
         discoveryPaths: [".augment"],
+        discoveryCommands: ["auggie"],
         fetch: { await AugmentUsageService.fetch($0) }
     )
 }

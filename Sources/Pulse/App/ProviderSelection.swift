@@ -5,6 +5,12 @@ import Foundation
 struct ProviderSelection: Equatable {
     let enabledAccounts: Set<String>
     let suggestedProviders: Set<Provider>
+    /// Nothing of any release has run with these defaults before: no choice,
+    /// no offered list, no launch. The one case in which a first launch may
+    /// switch ready providers on by itself (`AppDelegate.beginFirstRun`) —
+    /// anyone who has seen Vigía before, including someone who closed the
+    /// chooser empty, is asked instead.
+    var isFreshInstall = false
 
     var needsSelection: Bool { enabledAccounts.isEmpty }
 
@@ -20,6 +26,9 @@ struct ProviderSelection: Equatable {
         detected: Set<Provider>
     ) -> Self {
         let offered = defaults.stringArray(forKey: offeredKey)
+        let isFresh = defaults.object(forKey: hasRunKey) == nil
+            && defaults.object(forKey: enabledKey) == nil
+            && defaults.object(forKey: offeredKey) == nil
         let stored: [String]?
         if defaults.object(forKey: enabledKey) != nil {
             // An empty or malformed stored choice is not 1.0.0's absent key.
@@ -39,6 +48,6 @@ struct ProviderSelection: Equatable {
         defaults.set(Array(enabled).sorted(), forKey: enabledKey)
         defaults.set(Provider.builtIn.map(\.rawValue), forKey: offeredKey)
         defaults.set(true, forKey: hasRunKey)
-        return Self(enabledAccounts: enabled, suggestedProviders: suggestions)
+        return Self(enabledAccounts: enabled, suggestedProviders: suggestions, isFreshInstall: isFresh)
     }
 }

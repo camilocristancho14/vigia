@@ -1,14 +1,22 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// Navigation only. A URL cannot change settings, run commands, or start a login.
 enum PulseLink: Equatable {
+    /// The scheme Vigía.app registers and every link it hands out uses.
+    static let scheme = "vigia"
+    /// Pulse's scheme, still understood when a link in that form reaches the
+    /// app. Not registered: Pulse.app owns it, and two apps claiming one
+    /// scheme leaves macOS to pick either.
+    static let acceptedSchemes: Set<String> = [scheme, "pulse"]
+
     case settings
     case integrations
     case account(AccountKey)
 
     init?(url: URL) {
         guard let parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              parts.scheme?.lowercased() == "pulse", parts.user == nil,
+              parts.scheme.map({ Self.acceptedSchemes.contains($0.lowercased()) }) == true, parts.user == nil,
               parts.password == nil, parts.port == nil, parts.query == nil,
               parts.fragment == nil else { return nil }
         switch parts.host?.lowercased() {
@@ -28,7 +36,7 @@ enum PulseLink: Equatable {
 
     var url: URL {
         var parts = URLComponents()
-        parts.scheme = "pulse"
+        parts.scheme = Self.scheme
         switch self {
         case .settings: parts.host = "settings"
         case .integrations: parts.host = "integrations"

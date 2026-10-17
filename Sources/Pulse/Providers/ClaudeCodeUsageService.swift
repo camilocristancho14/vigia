@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// Reads Claude Code's usage.
@@ -26,7 +27,9 @@ struct ClaudeCodeUsageService: Sendable {
 
     var endpoint = URL(string: "https://api.anthropic.com/api/oauth/usage")!
 
-    var cacheFile: URL = StatusLineHook.cacheFile
+    /// Vigía's file first, then the one builds before the rename wrote; see
+    /// `StatusLineHook.legacyCacheFile`.
+    var cacheFiles: [URL] = StatusLineHook.cacheFiles
 
     /// Past this, a status line reading is labelled as old rather than live. A
     /// session refreshes it after every response, so anything beyond a few
@@ -498,10 +501,26 @@ struct ClaudeCodeUsageService: Sendable {
 
     // MARK: - The status line fallback
 
+    /// The newest capture among `cacheFiles`. One that says when it was taken
+    /// beats one that doesn't; between two undated ones, the first listed.
+    func newestCapture() -> [String: Any]? {
+        let captures = cacheFiles.compactMap { file -> [String: Any]? in
+            guard let data = try? Data(contentsOf: file),
+                  let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  root["rate_limits"] is [String: Any]
+            else { return nil }
+            return root
+        }
+        return captures.enumerated().max { lhs, rhs in
+            let left = lhs.element["capturedAt"] as? Double ?? -.infinity
+            let right = rhs.element["capturedAt"] as? Double ?? -.infinity
+            return left == right ? lhs.offset > rhs.offset : left < right
+        }?.element
+    }
+
     private func readCapturedUsage() -> ProviderUsage? {
         guard
-            let data = try? Data(contentsOf: cacheFile),
-            let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let root = newestCapture(),
             let limits = root["rate_limits"] as? [String: Any]
         else { return nil }
 

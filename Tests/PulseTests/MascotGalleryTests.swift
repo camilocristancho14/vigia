@@ -109,6 +109,16 @@ struct MascotGalleryTests {
         }
     }
 
+    @Test("Float Bot's closed face keeps a light edge at menu-bar size")
+    func floatBotClosedFaceHasLightEdge() {
+        let image = Self.pixels(.floatBot, .tired, at: 0.2)
+        let light = image.filter { pixel in
+            let rgb = pixel & 0x00FF_FFFF
+            return (rgb >> 16) > 0xC0 && ((rgb >> 8) & 0xFF) > 0xC0 && (rgb & 0xFF) > 0xC0
+        }.count
+        #expect(light >= 3, "closed facial strokes should have a white edge against the blue body")
+    }
+
     @Test("In the bar Clawd is exactly the size he was in 0.5.0; the other marks are the larger ones")
     func barSizes() {
         #expect(MascotCharacter.clawd.menuBarSize == 20)

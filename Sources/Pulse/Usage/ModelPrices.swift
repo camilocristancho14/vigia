@@ -1,10 +1,11 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// What one model charges, per million tokens.
 ///
 /// Straight from models.dev, which publishes the providers' own list prices.
 /// Missing rates stay `nil` rather than falling back to a plausible number:
-/// a model Pulse has no price for is left out of the total and counted
+/// a model Vigía has no price for is left out of the total and counted
 /// separately, so a figure on screen is never part guesswork.
 struct ModelPrice: Codable, Sendable, Equatable {
     let input: Double
@@ -337,9 +338,60 @@ actor ModelPrices {
     }
 }
 
-/// Where Pulse keeps the things too big for `UserDefaults`.
+/// Where Vigía keeps the things too big for `UserDefaults`.
 enum PulseStorage {
-    static let directory: URL = URL.applicationSupportDirectory.appending(path: "Pulse")
+    /// `~/Library/Application Support/Vigia`. Builds before the rename kept
+    /// everything in `Pulse`; `migrateIfNeeded` carries that folder over.
+    static let folderName = "Vigia"
+    static let legacyFolderName = "Pulse"
+
+    static let directory: URL = URL.applicationSupportDirectory.appending(path: folderName)
+
+    /// What `migrateIfNeeded` found and did.
+    enum Migration: Equatable {
+        /// Nothing to carry over: no old folder, or only the new one.
+        case none
+        /// The old folder was renamed to the new one.
+        case moved
+        /// Both exist. The new one is used and the old one is left as it is.
+        case keptBoth
+        /// The rename failed; the old folder is still there, untouched.
+        case failed
+    }
+
+    /// Renames `Pulse` to `Vigia` inside `base` once, the first time a build
+    /// with the new name runs. Called at the top of `PulseMain.main()`, before
+    /// anything opens a file in either folder.
+    ///
+    /// **Never deletes anything.** It only ever renames, and only when the new
+    /// folder does not exist yet; when both are there — a second copy of the
+    /// app, or the upstream Pulse app writing its own — the old one stays
+    /// exactly as it is. A rename within one volume is atomic, so a crash
+    /// leaves one folder or the other, never half of each.
+    @discardableResult
+    static func migrateIfNeeded(
+        in base: URL = URL.applicationSupportDirectory,
+        fileManager: FileManager = .default
+    ) -> Migration {
+        let current = base.appending(path: folderName)
+        let legacy = base.appending(path: legacyFolderName)
+        // `attributesOfItem` rather than `fileExists`: a dangling symlink at
+        // either path still counts as something not to overwrite.
+        let hasCurrent = (try? fileManager.attributesOfItem(atPath: current.path)) != nil
+        var isDirectory: ObjCBool = false
+        let hasLegacy = fileManager.fileExists(atPath: legacy.path, isDirectory: &isDirectory) && isDirectory.boolValue
+        switch (hasCurrent, hasLegacy) {
+        case (_, false): return .none
+        case (true, true): return .keptBoth
+        case (false, true):
+            do {
+                try fileManager.moveItem(at: legacy, to: current)
+                return .moved
+            } catch {
+                return .failed
+            }
+        }
+    }
 
     static func prepare() {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

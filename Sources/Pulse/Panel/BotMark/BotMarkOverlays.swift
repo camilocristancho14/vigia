@@ -210,8 +210,10 @@ func drawQuestionMark(in context: inout GraphicsContext, size: CGSize, time: Tim
 
 /// Confetti thrown up and falling: a turn done.
 func drawConfetti(in context: inout GraphicsContext, size: CGSize, time: TimeInterval) {
+    // No blue: most of the marks are blue, and a blue piece over a blue head
+    // is not there at all.
     let colours: [Color] = [Color(red: 0.98, green: 0.74, blue: 0.02), Color(red: 0.99, green: 0.25, blue: 0.24),
-                            Color(red: 0.0, green: 0.73, blue: 0.36), Color(red: 0.19, green: 0.53, blue: 1.0)]
+                            Color(red: 0.0, green: 0.73, blue: 0.36), Color(red: 1.0, green: 0.44, blue: 0.71)]
     // Fewer and bigger when the mark is small: a pixel of confetti is noise.
     let count = size.width <= 34 ? 4 : 6
     for index in 0..<count {
@@ -269,6 +271,10 @@ func drawTestTube(in context: inout GraphicsContext, size: CGSize, time: TimeInt
     let green = Color(red: 0.47, green: 0.80, blue: 0.43)
     context.fill(Path(roundedRect: liquid, cornerRadius: tube.width / 2, style: .continuous),
                  with: .color(ink ?? green))
+    if ink == nil {
+        // A dark rim under the pale glass, or the tube is gone on a light bar.
+        context.stroke(glass, with: .color(Color(white: 0.2, opacity: 0.55)), lineWidth: line * 2)
+    }
     context.stroke(glass, with: .color(ink ?? Color(white: 0.88)), lineWidth: line)
     // Bubbles: two climbing inside, one escaping over the rim.
     for index in 0..<3 {

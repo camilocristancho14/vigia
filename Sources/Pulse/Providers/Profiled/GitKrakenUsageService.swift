@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// GitKraken AI: the account's AI credits used out of its allowance, and the
@@ -39,7 +40,7 @@ enum GitKrakenUsageService {
 
         var request = ProfileHTTP.bearer(endpoint, token: token)
         // GitKraken's API asks every caller to name itself.
-        request.setValue("Pulse", forHTTPHeaderField: "Client-Name")
+        request.setValue("Vigia", forHTTPHeaderField: "Client-Name")
         request.setValue(
             Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0",
             forHTTPHeaderField: "Client-Version"

@@ -32,6 +32,7 @@ extension ProviderProfile {
         spendingIsWatchedLocally: false,
         setupSlug: "mistral",
         discoveryPaths: [".vibe"],
+        discoveryCommands: ["vibe"],
         fetch: { await MistralUsageService.fetch($0) }
     )
 }

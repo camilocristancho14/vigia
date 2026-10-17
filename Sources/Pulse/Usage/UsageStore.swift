@@ -1205,6 +1205,22 @@ final class UsageStore {
         return adjusted
     }
 
+    /// The enabled accounts that need the person to do something, in rail
+    /// order — the first is where "N services need attention" takes them.
+    /// See `ProviderUsage.needsAttention` for what counts.
+    func accountsNeedingAttention() -> [AccountKey] {
+        Self.needingAttention(settings.shownAccounts, usage: usage(for:))
+    }
+
+    /// The rule itself, apart from the store so it can be tested on readings
+    /// made up for the purpose.
+    nonisolated static func needingAttention(
+        _ accounts: [AccountKey],
+        usage: (AccountKey) -> ProviderUsage
+    ) -> [AccountKey] {
+        accounts.filter { usage($0).needsAttention }
+    }
+
     // MARK: - The loop
 
     private func scheduleNext() {

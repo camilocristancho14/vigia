@@ -50,17 +50,22 @@ struct SettingsRow<Control: View>: View {
     /// A resource name rather than a `Provider` because the spend pane draws
     /// clients that are not providers at all; see `SpendAgent.iconResource`.
     let icon: String?
+    /// The subtitle's colour when it is news rather than a description — a
+    /// newer version waiting, in red. Nil for the usual secondary grey.
+    let subtitleTint: Color?
     @ViewBuilder let control: Control
 
     init(
         _ title: String,
         subtitle: String? = nil,
         icon: String? = nil,
+        subtitleTint: Color? = nil,
         @ViewBuilder control: () -> Control
     ) {
         self.title = title
         self.subtitle = subtitle
         self.icon = icon
+        self.subtitleTint = subtitleTint
         self.control = control()
     }
 
@@ -77,7 +82,7 @@ struct SettingsRow<Control: View>: View {
                 if let subtitle {
                     Text(subtitle)
                         .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(subtitleTint.map(AnyShapeStyle.init) ?? AnyShapeStyle(.secondary))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }

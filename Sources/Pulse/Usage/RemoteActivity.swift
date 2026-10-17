@@ -106,7 +106,7 @@ final class RemoteActivityReceiver: @unchecked Sendable {
     static let port: UInt16 = 7717
     static let maximumBody = 4 * 1024
 
-    private let queue = DispatchQueue(label: "com.pulse.remote-activity")
+    private let queue = DispatchQueue(label: "com.vigia.remote-activity")
     private let lock = NSLock()
     private var listener: NWListener?
     private var ledger = RemoteActivityLedger()
@@ -261,5 +261,5 @@ final class RemoteActivityReceiver: @unchecked Sendable {
 
 extension Notification.Name {
     /// The receiver was switched on or off, so what is being watched changes.
-    static let remoteActivityChanged = Notification.Name("com.pulse.remoteActivityChanged")
+    static let remoteActivityChanged = Notification.Name("com.vigia.remoteActivityChanged")
 }

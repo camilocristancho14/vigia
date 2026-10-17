@@ -69,6 +69,17 @@ struct ProviderProfile: Sendable {
     /// Presence-only hints for the chooser, relative to the home folder
     /// unless absolute. Never read, only checked for existence.
     var discoveryPaths: [String] = []
+    /// Files the provider's own tool writes once somebody has signed in with
+    /// it, relative to the home folder unless absolute. Any one of them being
+    /// there makes the provider *ready* — it works with nothing pasted — which
+    /// is what lets a first launch switch it on without asking. Checked for
+    /// existence only, like `discoveryPaths`. Empty for anything that needs a
+    /// key or a browser session, which no file on this Mac can stand in for.
+    var loginPaths: [String] = []
+    /// The names its command-line tool goes by, looked for the way
+    /// `CommandLocator` looks for one. Finding it says *installed*, never
+    /// *signed in*.
+    var discoveryCommands: [String] = []
     /// The reading. Runs off the main actor; must never throw, and must
     /// return `.unavailable` with a reason from the shared set rather than
     /// invent one.

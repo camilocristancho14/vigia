@@ -157,7 +157,7 @@
 "Keep Pulse running to update the cache. Every reading includes its age; an old reading is not a live check." = "Mantén Vigía abierto para actualizar la caché. Cada lectura incluye su antigüedad; una lectura antigua no es una comprobación en vivo.";
 "Integration files weren't found. Open the installation guide." = "No se encontraron los archivos de integración. Abre la guía de instalación.";
 "Export" = "Exportar";
-"Pulse Integrations already exists here. Choose another folder." = "Pulse Integrations ya existe aquí. Elige otra carpeta.";
+"Pulse Integrations already exists here. Choose another folder." = "Vigía Integrations ya existe aquí. Elige otra carpeta.";
 "Integration files exported." = "Archivos de integración exportados.";
 "Couldn't export integration files. Choose a writable folder." = "No se pudieron exportar los archivos de integración. Elige una carpeta con permiso de escritura.";
 "Connected. Use Claude Code to send a new reading." = "Conectado. Usa Claude Code para enviar una lectura nueva.";
@@ -455,7 +455,6 @@
 "This page can be closed." = "Puedes cerrar esta página.";
 "Sign-in failed. You can close this page." = "Falló el inicio de sesión. Puedes cerrar esta página.";
 "Signed in. You can close this page and go back to Pulse." = "Sesión iniciada. Puedes cerrar esta página y volver a Vigía.";
-"Pulse is built from a design he posted on X." = "Vigía está hecho a partir de un diseño que él publicó en X.";
 "under 15 minutes" = "menos de 15 minutos";
 "about an hour" = "cerca de una hora";
 "about %@ minutes" = "cerca de %@ minutos";
@@ -650,14 +649,14 @@
 "An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "Una extensión es un programa que agregas tú mismo y que informa el uso de una cuenta. Vigía dibuja lo que imprime como un anillo, la ejecuta solo cuando la activas y no le da credenciales.";
 "Another extension already uses the id %@." = "Otra extensión ya usa el id %@.";
 "Couldn't be used" = "No se pudo usar";
-"Each extension is a folder of its own, holding pulse-extension.json and its program." = "Cada extensión es una carpeta propia que contiene pulse-extension.json y su programa.";
+"Each extension is a folder of its own, holding pulse-extension.json and its program." = "Cada extensión es una carpeta propia que contiene vigia-extension.json y su programa.";
 "Extension" = "Extensión";
 "Extension program" = "Programa de la extensión";
 "Extensions" = "Extensiones";
 "Extensions folder" = "Carpeta de extensiones";
 "Folder" = "Carpeta";
 "Found" = "Encontrada";
-"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "De su pulse-extension.json. Vigía guarda bajo él los ajustes de esta extensión.";
+"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "De su vigia-extension.json. Vigía guarda bajo él los ajustes de esta extensión.";
 "How to write an extension" = "Cómo escribir una extensión";
 "Id" = "Id";
 "Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most." = "Su id debe ser de letras minúsculas, dígitos, puntos, guiones o guiones bajos, 64 como máximo.";
@@ -665,7 +664,7 @@
 "Its program has to be inside its own folder." = "Su programa debe estar dentro de su propia carpeta.";
 "Its program isn't there, or isn't executable." = "Su programa no está ahí o no es ejecutable.";
 "Look again" = "Buscar de nuevo";
-"No pulse-extension.json in this folder." = "No hay pulse-extension.json en esta carpeta.";
+"No pulse-extension.json in this folder." = "No hay vigia-extension.json en esta carpeta.";
 "None yet" = "Ninguna aún";
 "Program" = "Programa";
 "Pulse reads this folder when it starts. After adding or changing an extension, look again." = "Vigía lee esta carpeta al iniciar. Después de agregar o cambiar una extensión, busca de nuevo.";
@@ -679,7 +678,7 @@
 "This extension's program can't be run. Check its folder." = "El programa de esta extensión no se puede ejecutar. Revisa su carpeta.";
 "Time limit" = "Límite de tiempo";
 "Written for extension schema %@, which this version of Pulse doesn't read." = "Escrita para el esquema de extensión %@, que esta versión de Vigía no lee.";
-"pulse-extension.json isn't valid JSON, or is missing a field." = "pulse-extension.json no es un JSON válido o le falta un campo.";
+"pulse-extension.json isn't valid JSON, or is missing a field." = "vigia-extension.json no es un JSON válido o le falta un campo.";
 "No session found. Sign in at %@ first." = "No se encontró ninguna sesión. Inicia sesión primero en %@.";
 "Nothing saved on this Mac yet. Open the service's app once, then retry." = "Aún no hay nada guardado en este Mac. Abre la app del servicio una vez y reintenta.";
 "Read a browser session in Settings." = "Lee una sesión de navegador en Ajustes.";
@@ -838,3 +837,33 @@
 "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Dibuja a Cloud Ghost en lugar del logo de Codex. Sus ojos se vuelven un prompt mientras Codex trabaja.";
 "Used up until it resets" = "Agotado hasta el reinicio";
 "Claude and GPT" = "Claude y GPT";
+
+/* Updates and attention */
+"Couldn't download the update." = "No se pudo descargar la actualización.";
+"The downloaded update didn't check out, so nothing was changed." = "La actualización descargada no pasó la verificación, así que no se cambió nada.";
+"Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page." = "Vigía no puede reemplazarse a sí misma donde está. Muévela a Aplicaciones o descarga la actualización desde la página de la versión.";
+"Couldn't start the installer, so nothing was changed." = "No se pudo iniciar el instalador, así que no se cambió nada.";
+"Vigía %@ available — Update" = "Vigía %@ disponible — Actualizar";
+"Downloading Vigía %@…" = "Descargando Vigía %@…";
+"Installing… Vigía will reopen by itself." = "Instalando… Vigía se volverá a abrir sola.";
+"The update failed — open the release page" = "La actualización falló — abrir la página de la versión";
+"1 service needs attention" = "1 servicio necesita atención";
+"%lld services need attention" = "%lld servicios necesitan atención";
+"Needs attention" = "Necesita atención";
+"The update failed" = "La actualización falló";
+"Open release page" = "Abrir página de la versión";
+"Once a day, from GitHub. Nothing is installed until you choose Update now." = "Una vez al día, desde GitHub. No se instala nada hasta que elijas Actualizar ahora.";
+"Update now" = "Actualizar ahora";
+"Check for updates" = "Buscar actualizaciones";
+/* First-run auto-detection and welcome window */
+"Add services" = "Agregar servicios";
+"Choose any other services to monitor. The ones already on stay as they are." = "Elige otros servicios para monitorear. Los que ya están activos se quedan como están.";
+"Signed in on this Mac" = "Sesión iniciada en este Mac";
+"Vigía is ready" = "Vigía está listo";
+"These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings." = "Estos servicios ya tenían la sesión iniciada en este Mac, así que Vigía ya los está monitoreando. Puedes cambiarlo cuando quieras en Ajustes.";
+"Monitoring now" = "Monitoreando ahora";
+"Installed — sign in to add" = "Instalados: inicia sesión para agregarlos";
+"Connect Claude Code's status line" = "Conectar la línea de estado de Claude Code";
+"Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "Mantiene legible el uso de Claude Code cuando su sesión caduca. Esto edita ~/.claude/settings.json; puedes desconectarla en Ajustes.";
+"Add more services…" = "Agregar más servicios…";
+"Copied — run %@ in your terminal to sign in." = "Copiado: ejecuta %@ en tu terminal para iniciar sesión.";

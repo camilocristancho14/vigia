@@ -1,9 +1,9 @@
 /* Menu bar */
 "Settings…" = "設定…";
-"Quit Pulse" = "Pulse を終了";
+"Quit Pulse" = "Vigía を終了";
 
 /* Settings window */
-"Pulse Settings" = "Pulse 設定";
+"Pulse Settings" = "Vigía 設定";
 "Panel" = "パネル";
 "Application" = "アプリケーション";
 "General" = "一般";
@@ -48,13 +48,13 @@
 "Installation guide" = "インストールガイド";
 "Open an account" = "アカウント設定を直接開く";
 "Account link" = "アカウントリンク";
-"Opens this account's settings in the installed Pulse app." = "インストール済みの Pulse でこのアカウントの設定を直接開きます。";
+"Opens this account's settings in the installed Pulse app." = "インストール済みの Vigía でこのアカウントの設定を直接開きます。";
 "Copy link" = "リンクをコピー";
 "Open from terminal" = "ターミナルから開く";
-"Keep Pulse running to update the cache. Every reading includes its age; an old reading is not a live check." = "キャッシュを更新するには Pulse を起動したままにしてください。どの取得結果にも時刻が付きます。古い結果はリアルタイムの確認ではありません。";
+"Keep Pulse running to update the cache. Every reading includes its age; an old reading is not a live check." = "キャッシュを更新するには Vigía を起動したままにしてください。どの取得結果にも時刻が付きます。古い結果はリアルタイムの確認ではありません。";
 "Integration files weren't found. Open the installation guide." = "連携ファイルが見つかりません。インストールガイドを開いてください。";
 "Export" = "書き出す";
-"Pulse Integrations already exists here. Choose another folder." = "この場所には既に Pulse Integrations があります。別のフォルダを選んでください。";
+"Pulse Integrations already exists here. Choose another folder." = "この場所には既に Vigía Integrations があります。別のフォルダを選んでください。";
 "Integration files exported." = "連携ファイルを書き出しました。";
 "Couldn't export integration files. Choose a writable folder." = "連携ファイルを書き出せませんでした。書き込めるフォルダを選んでください。";
 "Connected. Use Claude Code to send a new reading." = "接続しました。Claude Code を使うと新しい取得結果が届きます。";
@@ -164,7 +164,7 @@
 
 
 /* Accessibility */
-"Pulse floating usage panel" = "Pulse フローティング使用量パネル";
+"Pulse floating usage panel" = "Vigía フローティング使用量パネル";
 "Provider usage selector" = "プロバイダ使用量セレクタ";
 "%@ usage" = "%@ の使用量";
 "%@ usage details" = "%@ の使用量の詳細";
@@ -288,12 +288,12 @@
 
 /* Launch at login */
 "Open at login" = "ログイン時に開く";
-"Start Pulse automatically when you log in." = "macOS にログインすると Pulse を自動的に起動します。";
+"Start Pulse automatically when you log in." = "macOS にログインすると Vigía を自動的に起動します。";
 "Waiting for approval in System Settings › General › Login Items." = "「システム設定 › 一般 › ログイン項目」での許可を待っています。";
 
 /* メニューバーのアイコン */
 "Hide menu bar icon" = "メニューバーのアイコンを隠す";
-"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "Pulse をメニューバーから外します。設定はパネルのメニューかショートカットで開けます。";
+"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "Vigía をメニューバーから外します。設定はパネルのメニューかショートカットで開けます。";
 
 /* Liquid Glass */
 "Liquid Glass" = "Liquid Glass";
@@ -318,11 +318,11 @@
 "Devin's own app" = "Devin 自身の App";
 "Reads what Devin saved the last time it started." = "Devin が前回の起動時に保存したプラン情報を読みます。";
 "Asks Devin for your quota, with the token you entered." = "入力したトークンで Devin に残量を問い合わせます。";
-"A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "app.devin.ai の Bearer トークン、半角スペース、組織名の順です。省略可能で、その場合は Devin の App が保存した内容を Pulse が読みます。この Mac に暗号化して保存されます。";
+"A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "app.devin.ai の Bearer トークン、半角スペース、組織名の順です。省略可能で、その場合は Devin の App が保存した内容を Vigía が読みます。この Mac に暗号化して保存されます。";
 "Grok Bot is billed to your Cursor account." = "Grok Bot の利用分は Cursor アカウントに請求されます。";
 "Uses the login Cursor already saved." = "Cursor が既に保存しているログインを使います。";
 "Refresh" = "更新";
-"Pulse %@ is available" = "Pulse %@ が利用できます";
+"Pulse %@ is available" = "Vigía %@ が利用できます";
 "Check now" = "今すぐ確認";
 "Checking…" = "確認中…";
 "Built from source — no update check." = "ソースからビルドされているため、更新は確認しません。";
@@ -365,7 +365,7 @@
 "That key was refused. Check it in Settings." = "このキーは拒否されました。設定で確認してください。";
 "Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Claude Code が保存したログインの期限が切れました。Claude Code を使うか、ステータスラインを接続してください。";
 "Keep reading Claude Code's usage after its login expires?" = "ログインの期限が切れた後も Claude Code の使用量を読み続けますか？";
-"Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code が保存するログインは数時間しか持たず、更新できるのは Claude Code 自身だけです。一方で Claude Code は、登録されたステータスラインコマンドに上限を報告します。Pulse がそのコマンドになれば、ログインが新しいかどうかに関係なく読み続けられます。\n\nこの操作は ~/.claude/settings.json を書き換え、Claude Code のセッション下部のステータスラインを変更します。既にお使いのステータスラインはそのまま動き、設定でいつでも接続を解除できます。";
+"Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code が保存するログインは数時間しか持たず、更新できるのは Claude Code 自身だけです。一方で Claude Code は、登録されたステータスラインコマンドに上限を報告します。Vigía がそのコマンドになれば、ログインが新しいかどうかに関係なく読み続けられます。\n\nこの操作は ~/.claude/settings.json を書き換え、Claude Code のセッション下部のステータスラインを変更します。既にお使いのステータスラインはそのまま動き、設定でいつでも接続を解除できます。";
 "Not now" = "あとで";
 "Order" = "並び順";
 "Add an API key in Settings." = "設定で API キーを入力してください。";
@@ -378,9 +378,9 @@
 "From bigmodel.cn. Stored encrypted on this Mac." = "bigmodel.cn で取得します。この Mac に暗号化して保存されます。";
 "From platform.minimax.io. Stored encrypted on this Mac." = "platform.minimax.io で取得します。この Mac に暗号化して保存されます。";
 "From platform.minimaxi.com. Stored encrypted on this Mac." = "platform.minimaxi.com で取得します。この Mac に暗号化して保存されます。";
-"From commandcode.ai. Optional — Pulse can use the login Command Code saved. Stored encrypted on this Mac." = "commandcode.ai で取得します。省略可能で、その場合は Command Code が保存したログインを Pulse が使います。この Mac に暗号化して保存されます。";
+"From commandcode.ai. Optional — Pulse can use the login Command Code saved. Stored encrypted on this Mac." = "commandcode.ai で取得します。省略可能で、その場合は Command Code が保存したログインを Vigía が使います。この Mac に暗号化して保存されます。";
 "Couldn't connect the status line" = "ステータスラインに接続できませんでした";
-"~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings." = "~/.claude/settings.json を読み取れず、Pulse は理解できないファイルを上書きしません。中身を確認してから、設定で接続してください。";
+"~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings." = "~/.claude/settings.json を読み取れず、Vigía は理解できないファイルを上書きしません。中身を確認してから、設定で接続してください。";
 "Move %@ up" = "%@ を上へ";
 "Move %@ down" = "%@ を下へ";
 "Not shown" = "非表示";
@@ -392,8 +392,8 @@
 "Sign in…" = "サインイン…";
 "Sign out" = "サインアウト";
 "GitHub account" = "GitHub アカウント";
-"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "GitHub 自身のページを開きます。Pulse が求めるのはプロフィールの読み取りだけです。";
-"Signed in. Pulse holds a read-only token for this Mac." = "サインイン済みです。Pulse はこの Mac に読み取り専用のトークンを保持します。";
+"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "GitHub 自身のページを開きます。Vigía が求めるのはプロフィールの読み取りだけです。";
+"Signed in. Pulse holds a read-only token for this Mac." = "サインイン済みです。Vigía はこの Mac に読み取り専用のトークンを保持します。";
 "The browser didn't come back." = "ブラウザから戻ってきませんでした。";
 "Cancel" = "キャンセル";
 "Code" = "確認コード";
@@ -410,15 +410,14 @@
 "Couldn't save the login on this Mac." = "この Mac にログインを保存できませんでした。";
 "Sign in to this account again in Settings." = "設定でこのアカウントにサインインし直してください。";
 "Sign in from Settings to see usage." = "設定でサインインすると使用量が表示されます。";
-"This provider can't be signed in to from Pulse." = "このプロバイダには Pulse からサインインできません。";
+"This provider can't be signed in to from Pulse." = "このプロバイダには Vigía からサインインできません。";
 "Finish or close the sign-in already running, then try again." = "進行中のサインインを完了するか閉じてから、もう一度お試しください。";
 "Sign-in was cancelled." = "サインインはキャンセルされました。";
 "The browser didn't come back. If it showed an error, try again." = "ブラウザから戻ってきませんでした。エラーが表示されていた場合は、もう一度お試しください。";
 "This page can be closed." = "このページは閉じて構いません。";
 "Sign-in failed. You can close this page." = "サインインに失敗しました。このページは閉じて構いません。";
-"Signed in. You can close this page and go back to Pulse." = "サインインしました。このページを閉じて Pulse に戻ってください。";
-"Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so." = "各プロバイダのアカウントから直接読み取ります。Pulse が表示するのは各社が報告する数字で、推定せざるを得ない箇所はその数字自身に明記します。";
-"Pulse is built from a design he posted on X." = "Pulse は彼が X に投稿したデザインをもとに作られています。";
+"Signed in. You can close this page and go back to Pulse." = "サインインしました。このページを閉じて Vigía に戻ってください。";
+"Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so." = "各プロバイダのアカウントから直接読み取ります。Vigía が表示するのは各社が報告する数字で、推定せざるを得ない箇所はその数字自身に明記します。";
 "Open" = "開く";
 "under 15 minutes" = "15 分未満";
 "about an hour" = "約 1 時間";
@@ -440,7 +439,7 @@
 "Off" = "オフ";
 "Warn at" = "警告する位置";
 "Notify when a limit passes this, and again when it is spent." = "上限がこの割合を超えたときに 1 回、使い切ったときにもう 1 回通知します。";
-"Turned off for Pulse in System Settings › Notifications." = "「システム設定 › 通知」で Pulse の通知がオフになっています。";
+"Turned off for Pulse in System Settings › Notifications." = "「システム設定 › 通知」で Vigía の通知がオフになっています。";
 "Notifications need the bundled app." = "通知にはバンドル済みの App が必要です。";
 "When a limit comes back" = "上限が戻ったとき";
 "Only for one you were warned about." = "以前に警告した上限だけが対象です。";
@@ -459,7 +458,7 @@
 
 /* Resetting the rail order */
 "Reset order" = "並び順をリセット";
-"Back to the order Pulse ships with." = "Pulse の初期の並びに戻します。";
+"Back to the order Pulse ships with." = "Vigía の初期の並びに戻します。";
 "Reset" = "リセット";
 
 /* Volcengine / Volcengine Ark */
@@ -487,7 +486,7 @@
 "Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "Gemini とサードパーティのモデルは別々の割り当てを使います。リングが 1 本では、多く使っている方しか追えません。";
 "%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "%@ から応答がなく、まだグラフにできません。しばらくしてからお試しください。";
 "Add a key above and Pulse can read this account's history." = "上でキーを入力すると、このアカウントの履歴を読めるようになります。";
-"This account is switched off, so Pulse hasn't asked for its history." = "このアカウントはオフのため、Pulse は履歴を取りに行っていません。";
+"This account is switched off, so Pulse hasn't asked for its history." = "このアカウントはオフのため、Vigía は履歴を取りに行っていません。";
 "Since top-up" = "前回のチャージ以降";
 "Balance only" = "残高のみ";
 "My budget" = "自分の予算";
@@ -495,7 +494,7 @@
 "of your budget" = "予算に対して";
 "Full tank" = "満額の基準";
 "What you call a full balance. The ring measures against it." = "いくらを満額とみなすかです。リングはこれを基準に測ります。";
-"How much of the balance Pulse last saw you top up to is gone." = "Pulse が最後に見たチャージ額から、どれだけ使ったかです。";
+"How much of the balance Pulse last saw you top up to is gone." = "Vigía が最後に見たチャージ額から、どれだけ使ったかです。";
 "How much of the figure you set is gone." = "設定した金額のうち、どれだけ使ったかです。";
 "From platform.deepseek.com. Stored encrypted on this Mac." = "platform.deepseek.com で取得します。この Mac に暗号化して保存されます。";
 "Balance" = "残高";
@@ -600,7 +599,7 @@
 /* ネットワークプロキシ */
 "Network" = "ネットワーク";
 "Proxy" = "プロキシ";
-"Use macOS settings or a proxy only for Pulse." = "macOS のシステム設定を使うか、Pulse 専用のプロキシを指定します。";
+"Use macOS settings or a proxy only for Pulse." = "macOS のシステム設定を使うか、Vigía 専用のプロキシを指定します。";
 "Follow System" = "システム設定に従う";
 "Manual" = "手動";
 "Type" = "種類";
@@ -624,7 +623,7 @@
 "Done" = "完了";
 "Enable a service in its settings to start monitoring." = "左側でサービスを選び、「パネルに表示」をオンにすると監視を始めます。";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "キーチェーンまたは認証情報ファイルから Claude Code のログインを読み取ります。Claude デスクトップの Cookie 保存領域を含め、キーチェーンへのアクセスを求めることがあります。";
-"Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "~/.codex/auth.json を読み取り、保存済みのログインで codex app-server を起動する場合があります。Pulse はキーチェーンへのアクセスを求めません。";
+"Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "~/.codex/auth.json を読み取り、保存済みのログインで codex app-server を起動する場合があります。Vigía はキーチェーンへのアクセスを求めません。";
 "Reads the login saved in ~/.gemini/jetski-standalone-oauth-token by the agy CLI. No Keychain prompt." = "agy CLI が ~/.gemini/jetski-standalone-oauth-token に保存したログインを読み取ります。キーチェーンの確認はありません。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Cursor のローカルデータベースに保存されたログインを読み取ります。キーチェーンの確認はありません。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "~/.grok/auth.json に保存されたログインを読み取ります。キーチェーンの確認はありません。";
@@ -632,13 +631,13 @@
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "設定で入力したキーを使うか、保存済みの GLM キーファイルを読み取ります。キーチェーンの確認はありません。";
 "Uses a key entered in Settings, or reads ~/.commandcode/auth.json. No Keychain prompt." = "設定で入力したキーを使うか、~/.commandcode/auth.json を読み取ります。キーチェーンの確認はありません。";
 "Reads Devin's web login from local Chromium browsers without a prompt; may also read the desktop app's saved plan." = "この Mac の Chromium 系ブラウザから Devin の Web ログインを読み取ります。確認ダイアログは出ません。デスクトップアプリの保存済みプランも読む場合があります。";
-"Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "保存済みのログインで arkcli を起動するか、設定で入力したアクセスキーを使います。Pulse はキーチェーンへのアクセスを求めません。";
+"Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "保存済みのログインで arkcli を起動するか、設定で入力したアクセスキーを使います。Vigía はキーチェーンへのアクセスを求めません。";
 "Kiro CLI ACP" = "Kiro CLI ACP";
 "Uses Kiro CLI's signed-in session without reading its credentials." = "Kiro CLI のサインイン済みセッションを使い、認証情報は読み取りません。";
 "Kiro CLI isn't installed." = "Kiro CLI がインストールされていません。";
 "Update Kiro CLI to read subscription usage." = "サブスクリプション使用量を読むには Kiro CLI を更新してください。";
 "Sign in to Kiro CLI to see usage." = "使用量を表示するには Kiro CLI にサインインしてください。";
-"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "保存済みログインで Kiro CLI のネイティブ ACP 使用量メソッドを実行します。Pulse は Kiro の認証情報を読み取りも保存もしません。";
+"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "保存済みログインで Kiro CLI のネイティブ ACP 使用量メソッドを実行します。Vigía は Kiro の認証情報を読み取りも保存もしません。";
 "Asks Kiro CLI over ACP, using the login it already saved." = "ACP 経由で Kiro CLI に問い合わせ、保存済みのログインを使います。";
 "Uses a browser session you import in Settings. Importing may ask for browser Keychain access." = "設定で読み込んだブラウザのログインセッションを使います。読み込み時にブラウザのキーチェーンへのアクセスを求めることがあります。";
 "Uses the GitHub login you connect in Settings. No Keychain prompt." = "設定で連携した GitHub のログインを使います。キーチェーンの確認はありません。";
@@ -651,7 +650,7 @@
 "Sends the key you enter only to the server address you enter. No Keychain prompt." = "入力したキーは、入力したサーバーのアドレスにだけ送られます。キーチェーンの確認はありません。";
 "A group API key from your sub2api deployment. Sent only to the address above. Stored encrypted on this Mac." = "あなたの sub2api のグループ API キーです。上のアドレスにだけ送られます。この Mac に暗号化して保存されます。";
 "A Personal Access Token from v2ex.com. Stored encrypted on this Mac." = "v2ex.com で発行した Personal Access Token です。この Mac に暗号化して保存されます。";
-"Your own deployment's address, such as https://gateway.example.com. Pulse asks it for usage and sends nothing else." = "あなた自身のゲートウェイのアドレスです。例: https://gateway.example.com。Pulse は使用状況を尋ねるだけで、ほかには何も送りません。";
+"Your own deployment's address, such as https://gateway.example.com. Pulse asks it for usage and sends nothing else." = "あなた自身のゲートウェイのアドレスです。例: https://gateway.example.com。Vigía は使用状況を尋ねるだけで、ほかには何も送りません。";
 "The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac." = "この ゲートウェイ に AI クライアントが使っているのと同じキーです。上のアドレスにだけ送られます。この Mac に暗号化して保存されます。";
 "Credit allowance" = "クレジット枠";
 "Team credits" = "チーム共有クレジット";
@@ -670,17 +669,17 @@
 "No StepFun session found. Sign in at %@ first." = "StepFun のセッションが見つかりません。先に %@ でサインインしてください。";
 
 /* Extensions */
-"An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "拡張機能は自分で追加するプログラムで、1 つのアカウントの使用量を報告します。Pulse はその出力をリングとして表示します。オンにするまでは実行せず、認証情報も一切渡しません。";
+"An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "拡張機能は自分で追加するプログラムで、1 つのアカウントの使用量を報告します。Vigía はその出力をリングとして表示します。オンにするまでは実行せず、認証情報も一切渡しません。";
 "Another extension already uses the id %@." = "ID「%@」は別の拡張機能がすでに使っています。";
 "Couldn't be used" = "使用できないもの";
-"Each extension is a folder of its own, holding pulse-extension.json and its program." = "拡張機能は 1 つにつき 1 フォルダで、pulse-extension.json とプログラム本体を入れます。";
+"Each extension is a folder of its own, holding pulse-extension.json and its program." = "拡張機能は 1 つにつき 1 フォルダで、vigia-extension.json とプログラム本体を入れます。";
 "Extension" = "拡張機能";
 "Extension program" = "拡張機能のプログラム";
 "Extensions" = "拡張機能";
 "Extensions folder" = "拡張機能フォルダ";
 "Folder" = "フォルダ";
 "Found" = "見つかったもの";
-"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "pulse-extension.json に書かれた値です。Pulse はこの拡張機能の設定をこの ID で保存します。";
+"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "vigia-extension.json に書かれた値です。Vigía はこの拡張機能の設定をこの ID で保存します。";
 "How to write an extension" = "拡張機能の作り方";
 "Id" = "ID";
 "Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most." = "ID に使えるのは小文字の英字・数字・ピリオド・ハイフン・アンダースコアのみで、64 文字までです。";
@@ -689,11 +688,11 @@
 "Its program isn't there, or isn't executable." = "プログラムが見つからないか、実行できません。";
 "Look again" = "再読み込み";
 "Manage extensions" = "拡張機能の管理";
-"No pulse-extension.json in this folder." = "このフォルダに pulse-extension.json がありません。";
+"No pulse-extension.json in this folder." = "このフォルダに vigia-extension.json がありません。";
 "None yet" = "まだありません";
 "Program" = "プログラム";
-"Pulse reads this folder when it starts. After adding or changing an extension, look again." = "Pulse は起動時にこのフォルダを読み込みます。拡張機能を追加・変更したら、再読み込みしてください。";
-"Runs a program from your extensions folder on the refresh schedule. Pulse passes it no credentials; what it reads and where it connects are up to the program." = "拡張機能フォルダ内のプログラムを更新のたびに実行します。Pulse は認証情報を渡しません。何を読み取り、どこに接続するかはプログラム次第です。";
+"Pulse reads this folder when it starts. After adding or changing an extension, look again." = "Vigía は起動時にこのフォルダを読み込みます。拡張機能を追加・変更したら、再読み込みしてください。";
+"Runs a program from your extensions folder on the refresh schedule. Pulse passes it no credentials; what it reads and where it connects are up to the program." = "拡張機能フォルダ内のプログラムを更新のたびに実行します。Vigía は認証情報を渡しません。何を読み取り、どこに接続するかはプログラム次第です。";
 "Show in Finder" = "Finder に表示";
 "Shown in the panel" = "パネルに表示中";
 "Stopped if it hasn't answered by then." = "この時間内に応答がなければ停止します。";
@@ -702,8 +701,8 @@
 "The extension stopped with an error." = "拡張機能がエラーで終了しました。";
 "This extension's program can't be run. Check its folder." = "この拡張機能のプログラムを実行できません。フォルダを確認してください。";
 "Time limit" = "制限時間";
-"Written for extension schema %@, which this version of Pulse doesn't read." = "拡張機能スキーマ %@ 向けに書かれていますが、このバージョンの Pulse は読み込めません。";
-"pulse-extension.json isn't valid JSON, or is missing a field." = "pulse-extension.json が正しい JSON ではないか、必要な項目が欠けています。";
+"Written for extension schema %@, which this version of Pulse doesn't read." = "拡張機能スキーマ %@ 向けに書かれていますが、このバージョンの Vigía は読み込めません。";
+"pulse-extension.json isn't valid JSON, or is missing a field." = "vigia-extension.json が正しい JSON ではないか、必要な項目が欠けています。";
 
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "セッションが見つかりません。先に %@ でサインインしてください。";
@@ -726,7 +725,7 @@
 
 /* Kilo Code */
 "Uses a key entered in Settings, or reads ~/.local/share/kilo/auth.json. No Keychain prompt." = "設定で入力したキーを使うか、~/.local/share/kilo/auth.json を読み取ります。キーチェーンの確認はありません。";
-"From app.kilo.ai. Optional — Pulse can use the login the Kilo CLI saved. Stored encrypted on this Mac." = "app.kilo.ai で取得します。省略可能で、その場合は Kilo CLI が保存したログインを Pulse が使います。この Mac に暗号化して保存されます。";
+"From app.kilo.ai. Optional — Pulse can use the login the Kilo CLI saved. Stored encrypted on this Mac." = "app.kilo.ai で取得します。省略可能で、その場合は Kilo CLI が保存したログインを Vigía が使います。この Mac に暗号化して保存されます。";
 
 /* Mistral */
 /* Factory */
@@ -802,12 +801,12 @@
 
 /* Alibaba Token Plan */
 "Bailian CLI" = "Bailian CLI";
-"Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "保存済みのログインで Bailian CLI（bl）を実行します。Pulse はその認証情報を読み取りも保存もしません。";
+"Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "保存済みのログインで Bailian CLI（bl）を実行します。Vigía はその認証情報を読み取りも保存もしません。";
 "Uses the login the Bailian CLI already saved." = "Bailian CLI が既に保存しているログインを使います。";
 /* Nous Portal */
 "Reads the Nous Portal login Hermes Agent saved in ~/.hermes. No Keychain prompt." = "Hermes Agent が ~/.hermes に保存した Nous Portal のログインを読み取ります。キーチェーンの確認はありません。";
 "Hermes Agent's login" = "Hermes Agent のログイン";
-"Uses the login Hermes Agent already saved. Pulse never renews it." = "Hermes Agent が既に保存しているログインを使います。Pulse がこのログインを更新することはありません。";
+"Uses the login Hermes Agent already saved. Pulse never renews it." = "Hermes Agent が既に保存しているログインを使います。Vigía がこのログインを更新することはありません。";
 
 /* Hugging Face */
 "Uses a token entered in Settings, or reads the one hf auth login saved in ~/.cache/huggingface. No Keychain prompt." = "設定で入力したトークンを使うか、hf auth login が ~/.cache/huggingface に保存したトークンを読み取ります。キーチェーンの確認はありません。";
@@ -818,7 +817,7 @@
 
 /* Codebuff */
 "Uses a key entered in Settings, or reads the login the codebuff CLI saved in ~/.config/manicode. No Keychain prompt." = "設定で入力したキーを使うか、codebuff CLI が ~/.config/manicode に保存したログインを読み取ります。キーチェーンの確認はありません。";
-"From codebuff.com. Optional — Pulse can use the login the codebuff CLI saved. Stored encrypted on this Mac." = "codebuff.com で取得します。省略可能で、その場合は codebuff CLI が保存したログインを Pulse が使います。この Mac に暗号化して保存されます。";
+"From codebuff.com. Optional — Pulse can use the login the codebuff CLI saved. Stored encrypted on this Mac." = "codebuff.com で取得します。省略可能で、その場合は codebuff CLI が保存したログインを Vigía が使います。この Mac に暗号化して保存されます。";
 
 /* Venice */
 "From venice.ai's API settings. Stored encrypted on this Mac." = "venice.ai の API 設定で取得します。この Mac に暗号化して保存されます。";
@@ -871,7 +870,7 @@
 "Last started" = "前回の自動開始";
 "Use at your own risk" = "自己責任でご利用ください";
 "I understand the risk, turn it on" = "リスクを理解して有効にする";
-"This is not a feature of Anthropic or OpenAI. Starting usage windows automatically may be treated as getting around usage limits, and could get your account restricted or suspended. Pulse only sends one short message through the tool you are already signed in to, and is not responsible for anything that happens to your account as a result. Turn it on only if you accept that." = "これは Anthropic や OpenAI が提供する機能ではありません。使用量ウィンドウを自動で開始することは使用制限の回避とみなされ、アカウントの制限や停止につながる可能性があります。Pulse はサインイン済みのツールから短いメッセージを 1 通送るだけで、その結果アカウントに生じたいかなる影響についても責任を負いません。これを受け入れる場合のみ有効にしてください。";
+"This is not a feature of Anthropic or OpenAI. Starting usage windows automatically may be treated as getting around usage limits, and could get your account restricted or suspended. Pulse only sends one short message through the tool you are already signed in to, and is not responsible for anything that happens to your account as a result. Turn it on only if you accept that." = "これは Anthropic や OpenAI が提供する機能ではありません。使用量ウィンドウを自動で開始することは使用制限の回避とみなされ、アカウントの制限や停止につながる可能性があります。Vigía はサインイン済みのツールから短いメッセージを 1 通送るだけで、その結果アカウントに生じたいかなる影響についても責任を負いません。これを受け入れる場合のみ有効にしてください。";
 "Not started yet" = "まだ自動開始していません";
 "%@ · the command-line tool was not found" = "%@ · コマンドラインツールが見つかりません";
 "%@ · it did not go through; check the tool is signed in" = "%@ · 送信できませんでした。ツールにサインインしているか確認してください";
@@ -909,3 +908,33 @@
 "No conversation is within its guaranteed cache time" = "保証時間内のキャッシュがある会話はありません";
 "Kept at least %@" = "最低 %@ 保持";
 "The latest one's guaranteed time ended at %@." = "直近の会話の保証時間は %@ に終わりました。";
+
+/* Updates and attention */
+"Couldn't download the update." = "アップデートをダウンロードできませんでした。";
+"The downloaded update didn't check out, so nothing was changed." = "ダウンロードしたアップデートを検証できなかったため、何も変更していません。";
+"Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page." = "Vigía は現在の場所では自身を置き換えられません。アプリケーションフォルダへ移動するか、リリースページからアップデートをダウンロードしてください。";
+"Couldn't start the installer, so nothing was changed." = "インストーラを起動できなかったため、何も変更していません。";
+"Vigía %@ available — Update" = "Vigía %@ が利用可能 — アップデート";
+"Downloading Vigía %@…" = "Vigía %@ をダウンロード中…";
+"Installing… Vigía will reopen by itself." = "インストール中… Vigía は自動的に再起動します。";
+"The update failed — open the release page" = "アップデートに失敗しました — リリースページを開く";
+"1 service needs attention" = "1 件のサービスに対応が必要です";
+"%lld services need attention" = "%lld 件のサービスに対応が必要です";
+"Needs attention" = "対応が必要";
+"The update failed" = "アップデートに失敗しました";
+"Open release page" = "リリースページを開く";
+"Once a day, from GitHub. Nothing is installed until you choose Update now." = "1 日 1 回、GitHub から確認します。「今すぐアップデート」を選ぶまで何もインストールされません。";
+"Update now" = "今すぐアップデート";
+"Check for updates" = "アップデートを確認";
+/* First-run auto-detection and welcome window */
+"Add services" = "サービスを追加";
+"Choose any other services to monitor. The ones already on stay as they are." = "ほかに監視するサービスを選択してください。すでにオンのサービスはそのままです。";
+"Signed in on this Mac" = "この Mac でサインイン済み";
+"Vigía is ready" = "Vigía の準備ができました";
+"These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings." = "これらのサービスはこの Mac ですでにサインインしていたため、Vigía が監視を始めました。設定からいつでも変更できます。";
+"Monitoring now" = "監視中";
+"Installed — sign in to add" = "インストール済み — サインインすると追加できます";
+"Connect Claude Code's status line" = "Claude Code のステータスラインに接続";
+"Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "ログインの有効期限が切れても Claude Code の使用量を読み取れるようにします。~/.claude/settings.json を編集します。設定から切断できます。";
+"Add more services…" = "ほかのサービスを追加…";
+"Copied — run %@ in your terminal to sign in." = "コピーしました — ターミナルで %@ を実行してサインインしてください。";

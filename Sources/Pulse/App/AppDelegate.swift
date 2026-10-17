@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var demoMenuPanel: NSPanel?
     private var settingsWindow: SettingsWindowController?
     private var providerSetupWindow: ProviderSetupWindowController?
+    private var welcomeWindow: WelcomeWindowController?
     private var preparedClaude = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -72,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // before anything reads the state, or both builds start at login.
         // Demo runs skip this: a screenshot session must not register a login item.
         if !DemoMode.isActive {
+            LoginItem.migrateLegacyAgentIfNeeded()
             LoginItem.adoptBundleIfNeeded()
             LoginItem.applyDefaultOnFirstRun()
             LoginItem.repairPathIfNeeded()
@@ -105,17 +107,84 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         updateMenuBarItem()
 
         if settings.needsProviderSelection {
-            showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
+            if settings.isFreshInstall && !DemoMode.isActive {
+                beginFirstRun()
+            } else {
+                showProviderSelection(providers: Set(Provider.builtIn), mode: .initial)
+            }
         } else {
             startMonitoring()
             if !settings.suggestedProviders.isEmpty {
-                showProviderSelection(providers: settings.suggestedProviders, isInitial: false)
+                showProviderSelection(providers: settings.suggestedProviders, mode: .newlyDetected)
             }
         }
 
         if DemoMode.isActive {
             presentDemo()
         }
+    }
+
+    /// A first launch: switch on whatever is already signed in, and say so.
+    ///
+    /// Looks again first, with the login shell's `PATH` — the launch's own
+    /// look had only the four folders an app opened from Finder inherits, and
+    /// a CLI installed with nvm or bun is invisible there. That look is bounded
+    /// (`LoginShellPath.resolve`) and runs off the main thread; the menu bar
+    /// item is already up and says to choose services in the meantime.
+    ///
+    /// Only here, never on a later launch: this is the one moment nobody has
+    /// chosen anything yet, so turning on the services that are signed in is
+    /// the choice they would make, made for them and then shown to them.
+    /// Someone upgrading has already chosen, and is asked (`newlyDetected`).
+    private func beginFirstRun() {
+        Task { [weak self] in
+            let folders = await LoginShellPath.resolve()
+            let readiness = await Task.detached(priority: .userInitiated) {
+                Provider.readiness(on: .live(searchPath: folders))
+            }.value
+            self?.finishFirstRun(readiness)
+        }
+    }
+
+    private func finishFirstRun(_ readiness: [Provider: ProviderReadiness]) {
+        // Somebody may have chosen from the menu while the shell was asked.
+        guard settings.needsProviderSelection else { return }
+        settings.applyReadiness(readiness)
+        let ready = settings.readyProviders
+        guard !ready.isEmpty else {
+            showProviderSelection(providers: Set(Provider.builtIn), mode: .initial)
+            return
+        }
+        // Asked in the welcome window instead of the alert that would follow
+        // Claude Code being switched on, so it is decided before that happens.
+        let offersStatusLine = ready.contains(.claudeCode) && StatusLineHook.wouldOfferOnFirstRun
+        if offersStatusLine { StatusLineHook.markOffered() }
+
+        providerSetupWindow?.close()
+        // Starts monitoring through `settingsChanged`.
+        settings.selectProviders(ready)
+
+        func byName(_ providers: Set<Provider>) -> [Provider] {
+            providers.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
+        }
+        let needsSignIn = Set(readiness.filter { $0.value == .installed }.keys)
+            .filter { $0.canBeReadyWithoutSetup }
+        let welcome = WelcomeWindowController(
+            settings: settings,
+            enabled: byName(ready),
+            needsSignIn: byName(needsSignIn),
+            offersStatusLine: offersStatusLine,
+            addMore: { [weak self] in self?.showAddServices() }
+        )
+        welcomeWindow = welcome
+        welcome.show()
+    }
+
+    /// Everything not already on, for the welcome window's "Add more".
+    private func showAddServices() {
+        let shown = Set(settings.shownAccounts.map(\.provider))
+        providerSetupWindow?.close()
+        showProviderSelection(providers: Set(Provider.builtIn).subtracting(shown), mode: .addMore)
     }
 
     /// Screenshot scenes. The panel and the menu are already in the state
@@ -335,7 +404,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if let chooser = providerSetupWindow {
                 chooser.show()
             } else {
-                showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
+                showProviderSelection(providers: Set(Provider.builtIn), mode: .initial)
             }
         } else {
             showSettings()
@@ -351,8 +420,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.showGeneral()
     }
 
-    private func showProviderSelection(providers: Set<Provider>, isInitial: Bool) {
-        let window = ProviderSetupWindowController(settings: settings, providers: providers, isInitial: isInitial)
+    private func showProviderSelection(providers: Set<Provider>, mode: ProviderSetupMode) {
+        let window = ProviderSetupWindowController(settings: settings, providers: providers, mode: mode)
         providerSetupWindow = window
         window.show()
     }
@@ -361,6 +430,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         restoreMenuBarEntryPointIfNeeded()
         settingsWindow?.refreshTitle()
         providerSetupWindow?.refreshTitle()
+        welcomeWindow?.refreshTitle()
         guard !settings.needsProviderSelection else { return }
         if panelController == nil {
             // Enabling a service in Settings is also an initial choice.
@@ -381,6 +451,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         controller.contextMenu = { [weak self] in self?.panelMenu() ?? NSMenu() }
         if settings.isPanelVisible { controller.show() }
         store.start()
+        // The dot on the menu bar icon reads the store only once monitoring
+        // has started; this is the redraw that starts it watching.
+        showMenuBarReading()
         if !DemoMode.isActive {
             primer.start()
             prepareClaudeIfSelected()
@@ -455,7 +528,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard let item = statusItem else { return }
         menuBarGeneration += 1
         let generation = menuBarGeneration
-        let (reading, remaining, style, label, accounts) = withObservationTracking {
+        let (reading, remaining, style, label, accounts, badged) = withObservationTracking {
             let reading = settings.showsUsageInMenuBar
                 ? MenuBarReading.choose(
                     among: settings.shownAccounts,
@@ -468,9 +541,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // The label inside too: renaming the account is a change to show.
             // Who is mid-turn is read here too: a turn starting or ending has
             // to redraw the item, and nothing else about it changes.
+            // The dot: a newer Vigía, or an account that needs fixing — but
+            // not one somebody took off the menu bar, who has said they do
+            // not want to hear about it there.
+            let badged = update.newer != nil || accountsNeedingAttention().contains {
+                !settings.menuBarHiddenAccounts.contains($0.id)
+            }
             return (reading, settings.showsRemaining, settings.menuBarStyle,
                     reading.map { settings.label(for: $0.account) },
-                    VigiaStatusFace.accounts(settings: settings, store: store))
+                    VigiaStatusFace.accounts(settings: settings, store: store),
+                    badged)
         } onChange: { [weak self] in
             Task { @MainActor in
                 guard let self, self.menuBarGeneration == generation else { return }
@@ -488,6 +568,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             store: store,
             on: item
         )
+        if let button = item.button { StatusAttentionDot.show(badged, on: button) }
     }
 
     /// An accessory app has no Dock icon. When the panel is also hidden, a
@@ -526,6 +607,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
+        // Above everything, the session rows included: what needs doing is
+        // the first thing read, not the last.
+        addAttentionItems(to: menu)
         // Only the menu bar's menu: the rail's own menu opens beside the rings
         // it would be repeating. Agent rows stay off any other menu so the
         // structural menu test still sees the original items.
@@ -549,6 +633,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func makeMenu() -> NSMenu {
         let menu = NSMenu()
+        addAttentionItems(to: menu)
         populateMenu(menu)
         return menu
     }
@@ -560,17 +645,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let item = NSMenuItem(
                 title: .localized("Choose services to start monitoring…"),
                 action: #selector(chooseServices),
-                keyEquivalent: ""
-            )
-            item.target = self
-            menu.addItem(item)
-            menu.addItem(.separator())
-        }
-
-        if let newer = update.newer {
-            let item = NSMenuItem(
-                title: .localized("Pulse \(newer.version) is available"),
-                action: #selector(checkForUpdate),
                 keyEquivalent: ""
             )
             item.target = self
@@ -615,15 +689,94 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func chooseServices() {
         providerSetupWindow?.close()
-        showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
+        showProviderSelection(providers: Set(Provider.builtIn), mode: .initial)
     }
 
     @objc private func openSettingsFromMenu() {
         showSettings()
     }
 
-    @objc private func checkForUpdate() {
-        update.check()
+    /// The red rows at the top of the menu: a newer Vigía, and the accounts
+    /// that need somebody to sign in, paste a key or open an app.
+    ///
+    /// Red because they are the only things on the menu that will not sort
+    /// themselves out. Nothing is added when there is nothing to say, so a
+    /// menu with red in it always means something.
+    private func addAttentionItems(to menu: NSMenu) {
+        var added = false
+        if let newer = update.newer {
+            let title: String
+            let action: Selector?
+            switch update.install {
+            case .idle:
+                title = .localized("Vigía \(newer.version) available — Update")
+                action = #selector(installUpdate)
+            case .downloading:
+                title = .localized("Downloading Vigía \(newer.version)…")
+                action = nil
+            case .installing:
+                title = .localized("Installing… Vigía will reopen by itself.")
+                action = nil
+            case .failed:
+                title = .localized("The update failed — open the release page")
+                action = #selector(openReleasePage)
+            }
+            menu.addItem(Self.attentionItem(title, action: action, target: self))
+            added = true
+        }
+
+        let accounts = accountsNeedingAttention()
+        if let first = accounts.first {
+            let title: String = accounts.count == 1
+                ? .localized("1 service needs attention")
+                : .localized("\(accounts.count) services need attention")
+            let item = Self.attentionItem(title, action: #selector(openAccountNeedingAttention(_:)), target: self)
+            item.representedObject = first.id
+            menu.addItem(item)
+            added = true
+        }
+
+        if added { menu.addItem(.separator()) }
+    }
+
+    /// Only once monitoring has started: before that nothing has been read,
+    /// and every account is still in the state it was created in.
+    private func accountsNeedingAttention() -> [AccountKey] {
+        guard panelController != nil, !settings.needsProviderSelection else { return [] }
+        return store.accountsNeedingAttention()
+    }
+
+    /// A menu row in the system's red, with the red mark beside it. An
+    /// attributed title rather than a custom view, so it highlights, reads to
+    /// VoiceOver and follows the menu's font like every other row.
+    private static func attentionItem(_ title: String, action: Selector?, target: AnyObject) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.target = action == nil ? nil : target
+        item.isEnabled = action != nil
+        item.attributedTitle = NSAttributedString(string: title, attributes: [
+            .foregroundColor: NSColor.systemRed,
+            .font: NSFont.menuFont(ofSize: 0)
+        ])
+        let configuration = NSImage.SymbolConfiguration(paletteColors: [.white, .systemRed])
+        item.image = NSImage(systemSymbolName: "exclamationmark.circle.fill", accessibilityDescription: nil)?
+            .withSymbolConfiguration(configuration)
+        return item
+    }
+
+    @objc private func installUpdate() {
+        update.installNewer()
+    }
+
+    @objc private func openReleasePage() {
+        update.openReleasePage()
+    }
+
+    @objc private func openAccountNeedingAttention(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String, let account = AccountKey(id: id) else {
+            showSettings()
+            return
+        }
+        showSettings(link: .account(account))
     }
 
     /// Opening Pulse while it is already running — a double-click in

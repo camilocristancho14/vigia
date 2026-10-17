@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// A short-lived connection to Kiro CLI's native Agent Client Protocol.
@@ -48,7 +49,7 @@ actor KiroACPClient {
             params: [
                 "protocolVersion": 1,
                 "clientCapabilities": [:],
-                "clientInfo": ["name": "Pulse", "version": "0.1"]
+                "clientInfo": ["name": "Vigia", "version": "0.1"]
             ]
         )
         return try await send(method: "_kiro/account/getUsage")

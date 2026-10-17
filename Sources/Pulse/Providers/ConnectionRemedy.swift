@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// Actions for the credential or tool that this account actually uses.
@@ -60,6 +61,23 @@ enum ConnectionRemedy: Equatable {
         }
     }
 
+    /// The step that signs a provider's own tool in, for the welcome window's
+    /// "installed, sign in first" list — the remedy its ring would offer for a
+    /// missing login, so the two never disagree. Nil for a provider that is
+    /// set up with a key or a browser session rather than a login of its own.
+    static func forSetup(of provider: Provider) -> Self? {
+        guard provider.canBeReadyWithoutSetup else { return nil }
+        let reason: ProviderUsage.Unavailability = switch provider {
+        case .claudeCode: .claudeSignInRequired
+        case .codex: .signInRequired
+        case .kiro: .kiroSignInRequired
+        case .grok: .grokSignInRequired
+        case .cursor, .grokBot: .cursorSignInRequired
+        default: .localLoginMissing
+        }
+        return forReason(reason, account: AccountKey(provider))
+    }
+
     var title: String {
         switch self {
         case .signIn: .localized("Sign in again…")
@@ -74,6 +92,11 @@ enum ConnectionRemedy: Equatable {
         }
     }
 
+    /// Vigía's own copy of the guides, adapted from Pulse's. The repository
+    /// tracks the folder as lowercase `docs`, and GitHub paths are
+    /// case-sensitive.
+    static let docsBase = "https://github.com/camilocristancho14/vigia/blob/main/docs"
+
     /// The user's setup page, not the provider's developer doc: where the key
     /// comes from and where it goes. One page per link — the two providers
     /// that share a service share a page too.
@@ -81,7 +104,7 @@ enum ConnectionRemedy: Equatable {
         // Not a setup page: what an extension has to print, which is what
         // anyone looking at a failing one needs.
         if provider == .pulseExtension {
-            return URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md")!
+            return URL(string: "\(docsBase)/extensions.md")!
         }
         let page: String
         if let written = provider.handWritten {
@@ -115,6 +138,6 @@ enum ConnectionRemedy: Equatable {
         } else {
             page = provider.profile?.setupSlug ?? provider.rawValue
         }
-        return URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/setup/\(page).md")!
+        return URL(string: "\(docsBase)/setup/\(page).md")!
     }
 }

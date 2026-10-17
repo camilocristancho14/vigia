@@ -31,6 +31,8 @@ extension ProviderProfile {
         },
         setupSlug: "gemini",
         discoveryPaths: [".gemini"],
+        loginPaths: [".gemini/oauth_creds.json"],
+        discoveryCommands: ["gemini"],
         fetch: { await GeminiUsageService.fetch($0) }
     )
 }

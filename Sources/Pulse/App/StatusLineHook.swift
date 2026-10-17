@@ -1,7 +1,8 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import AppKit
 import Foundation
 
-/// Pulse's side of Claude Code's status line.
+/// Vigía's side of Claude Code's status line.
 ///
 /// Claude Code doesn't publish a usage figure anywhere Pulse could read: the
 /// session transcripts carry token counts but no limits, and `rateLimits` only
@@ -23,8 +24,19 @@ enum StatusLineHook {
     /// Where the captured usage is parked for the app to pick up.
     static var cacheFile: URL {
         URL(fileURLWithPath: NSHomeDirectory())
+            .appending(path: ".claude/vigia-usage.json")
+    }
+
+    /// Where builds from before the rename parked it, and where the upstream
+    /// Pulse app still does. Read as well, never written: the figures in it are
+    /// Claude Code's own, whichever program banked them, so the newer of the
+    /// two files is the reading.
+    static var legacyCacheFile: URL {
+        URL(fileURLWithPath: NSHomeDirectory())
             .appending(path: ".claude/pulse-usage.json")
     }
+
+    static var cacheFiles: [URL] { [cacheFile, legacyCacheFile] }
 
     static var settingsFile: URL {
         URL(fileURLWithPath: NSHomeDirectory())
@@ -224,11 +236,13 @@ enum StatusLineHook {
             options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         ) else { return false }
 
-        // Keep a copy of the file as it was before Pulse first touched it.
-        let backup = settingsFile.appendingPathExtension("pulse-backup")
-        if !FileManager.default.fileExists(atPath: backup.path),
+        // Keep a copy of the file as it was before Vigía first touched it. A
+        // `.pulse-backup` from a build before the rename is that same copy
+        // already, so it counts and no second one is made.
+        let backups = backupExtensions.map { settingsFile.appendingPathExtension($0) }
+        if !backups.contains(where: { FileManager.default.fileExists(atPath: $0.path) }),
            let original = try? Data(contentsOf: settingsFile) {
-            try? original.write(to: backup)
+            try? original.write(to: backups[0])
         }
 
         return (try? data.write(to: settingsFile)) != nil
@@ -253,6 +267,21 @@ enum StatusLineHook {
     /// cannot turn into a second one. Declining is not a dead end — the row in
     /// Settings stays, and an expired login now says where to find it.
     @MainActor
+    /// Whether `offerOnFirstRun` would ask now: never asked, Claude Code is
+    /// here, and the status line is not already Vigía. The welcome window asks
+    /// the same question as a checkbox when this is true, and calls
+    /// `markOffered()` so the alert never follows it.
+    static var wouldOfferOnFirstRun: Bool {
+        !UserDefaults.standard.bool(forKey: Key.offered)
+            && FileManager.default.fileExists(atPath: settingsFile.deletingLastPathComponent().path)
+            && !isInstalled
+    }
+
+    /// The question has been put, whatever the answer turns out to be.
+    static func markOffered() {
+        UserDefaults.standard.set(true, forKey: Key.offered)
+    }
+
     static func offerOnFirstRun(willBeUsed: Bool) {
         guard willBeUsed else { return }
         let defaults = UserDefaults.standard
@@ -286,6 +315,10 @@ enum StatusLineHook {
             return
         }
     }
+
+    /// The settings.json backup, newest name first: `settings.json.vigia-backup`,
+    /// then the `settings.json.pulse-backup` builds before the rename wrote.
+    static let backupExtensions = ["vigia-backup", "pulse-backup"]
 
     private enum Key {
         static let previousCommand = "statusLine.previousCommand"

@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// A program in the extensions folder that reports one account's usage.
@@ -36,11 +37,14 @@ struct PulseExtension: Identifiable, Equatable, Sendable {
 /// switched on there — the same rule as every built-in provider, which is not
 /// fetched while it is off.
 enum ExtensionCatalog {
-    static let manifestName = "pulse-extension.json"
+    static let manifestName = "vigia-extension.json"
+    /// Pulse's name for the same manifest, read when a folder has no
+    /// `vigia-extension.json`, so an extension written for Pulse works as is.
+    static let legacyManifestName = "pulse-extension.json"
     /// The only schema this build reads, for the manifest and the report both.
     static let schemaVersion = 1
 
-    /// Where extensions live. Pulse's own Application Support folder, so it
+    /// Where extensions live. Vigía's own Application Support folder, so it
     /// is somewhere nothing else writes to and a user who asks can be told
     /// exactly where to look.
     static var folder: URL { PulseStorage.directory.appending(path: "Extensions") }
@@ -151,10 +155,10 @@ enum ExtensionCatalog {
     private struct LoadFailure: Error { let reason: Reason }
 
     private static func load(_ directory: URL) -> Result<PulseExtension, LoadFailure> {
-        let manifestURL = directory.appending(path: manifestName)
-        guard FileManager.default.fileExists(atPath: manifestURL.path) else {
-            return .failure(LoadFailure(reason: .noManifest))
-        }
+        guard let manifestURL = [manifestName, legacyManifestName]
+            .map({ directory.appending(path: $0) })
+            .first(where: { FileManager.default.fileExists(atPath: $0.path) })
+        else { return .failure(LoadFailure(reason: .noManifest)) }
         guard let data = try? Data(contentsOf: manifestURL),
               let manifest = try? JSONDecoder().decode(Manifest.self, from: data)
         else { return .failure(LoadFailure(reason: .unreadableManifest)) }
@@ -254,6 +258,9 @@ struct ExtensionUsageService: Sendable {
             environment[key] = value
         }
         environment["PATH"] = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        environment["VIGIA_EXTENSION_ID"] = pulseExtension.id
+        environment["VIGIA_EXTENSION_SCHEMA"] = String(ExtensionCatalog.schemaVersion)
+        // Pulse's names for the same two, for an extension written for Pulse.
         environment["PULSE_EXTENSION_ID"] = pulseExtension.id
         environment["PULSE_EXTENSION_SCHEMA"] = String(ExtensionCatalog.schemaVersion)
         return environment

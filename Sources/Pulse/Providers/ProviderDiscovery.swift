@@ -10,7 +10,7 @@ extension Provider {
         Set(allCases.filter { $0.discoveryPaths(home: home).contains(where: exists) })
     }
 
-    private func discoveryPaths(home: URL) -> [String] {
+    func discoveryPaths(home: URL) -> [String] {
         func local(_ path: String) -> String { home.appending(path: path).path }
         func app(_ name: String) -> [String] {
             ["/Applications/\(name).app", local("Applications/\(name).app")]

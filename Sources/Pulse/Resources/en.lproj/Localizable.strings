@@ -418,7 +418,6 @@
 "Sign-in failed. You can close this page." = "Sign-in failed. You can close this page.";
 "Signed in. You can close this page and go back to Pulse." = "Signed in. You can close this page and go back to Vigía.";
 "Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so." = "Read from each provider's own account. Vigía shows the figures they report; where it has to infer one, the figure itself says so.";
-"Pulse is built from a design he posted on X." = "Vigía is built from a design he posted on X.";
 "Open" = "Open";
 "under 15 minutes" = "under 15 minutes";
 "about an hour" = "about an hour";
@@ -673,14 +672,14 @@
 "An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "An extension is a program you add yourself that reports one account's usage. Vigía draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials.";
 "Another extension already uses the id %@." = "Another extension already uses the id %@.";
 "Couldn't be used" = "Couldn't be used";
-"Each extension is a folder of its own, holding pulse-extension.json and its program." = "Each extension is a folder of its own, holding pulse-extension.json and its program.";
+"Each extension is a folder of its own, holding pulse-extension.json and its program." = "Each extension is a folder of its own, holding vigia-extension.json and its program.";
 "Extension" = "Extension";
 "Extension program" = "Extension program";
 "Extensions" = "Extensions";
 "Extensions folder" = "Extensions folder";
 "Folder" = "Folder";
 "Found" = "Found";
-"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "From its pulse-extension.json. Vigía keeps this extension's settings under it.";
+"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "From its vigia-extension.json. Vigía keeps this extension's settings under it.";
 "How to write an extension" = "How to write an extension";
 "Id" = "Id";
 "Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most." = "Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most.";
@@ -689,7 +688,7 @@
 "Its program isn't there, or isn't executable." = "Its program isn't there, or isn't executable.";
 "Look again" = "Look again";
 "Manage extensions" = "Manage extensions";
-"No pulse-extension.json in this folder." = "No pulse-extension.json in this folder.";
+"No pulse-extension.json in this folder." = "No vigia-extension.json in this folder.";
 "None yet" = "None yet";
 "Program" = "Program";
 "Pulse reads this folder when it starts. After adding or changing an extension, look again." = "Vigía reads this folder when it starts. After adding or changing an extension, look again.";
@@ -703,7 +702,7 @@
 "This extension's program can't be run. Check its folder." = "This extension's program can't be run. Check its folder.";
 "Time limit" = "Time limit";
 "Written for extension schema %@, which this version of Pulse doesn't read." = "Written for extension schema %@, which this version of Vigía doesn't read.";
-"pulse-extension.json isn't valid JSON, or is missing a field." = "pulse-extension.json isn't valid JSON, or is missing a field.";
+"pulse-extension.json isn't valid JSON, or is missing a field." = "vigia-extension.json isn't valid JSON, or is missing a field.";
 
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "No session found. Sign in at %@ first.";
@@ -963,3 +962,33 @@
 "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working.";
 "Used up until it resets" = "Used up until it resets";
 "Claude and GPT" = "Claude and GPT";
+
+/* Updates and attention */
+"Couldn't download the update." = "Couldn't download the update.";
+"The downloaded update didn't check out, so nothing was changed." = "The downloaded update didn't check out, so nothing was changed.";
+"Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page." = "Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page.";
+"Couldn't start the installer, so nothing was changed." = "Couldn't start the installer, so nothing was changed.";
+"Vigía %@ available — Update" = "Vigía %@ available — Update";
+"Downloading Vigía %@…" = "Downloading Vigía %@…";
+"Installing… Vigía will reopen by itself." = "Installing… Vigía will reopen by itself.";
+"The update failed — open the release page" = "The update failed — open the release page";
+"1 service needs attention" = "1 service needs attention";
+"%lld services need attention" = "%lld services need attention";
+"Needs attention" = "Needs attention";
+"The update failed" = "The update failed";
+"Open release page" = "Open release page";
+"Once a day, from GitHub. Nothing is installed until you choose Update now." = "Once a day, from GitHub. Nothing is installed until you choose Update now.";
+"Update now" = "Update now";
+"Check for updates" = "Check for updates";
+/* First-run auto-detection and welcome window */
+"Add services" = "Add services";
+"Choose any other services to monitor. The ones already on stay as they are." = "Choose any other services to monitor. The ones already on stay as they are.";
+"Signed in on this Mac" = "Signed in on this Mac";
+"Vigía is ready" = "Vigía is ready";
+"These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings." = "These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings.";
+"Monitoring now" = "Monitoring now";
+"Installed — sign in to add" = "Installed — sign in to add";
+"Connect Claude Code's status line" = "Connect Claude Code's status line";
+"Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings.";
+"Add more services…" = "Add more services…";
+"Copied — run %@ in your terminal to sign in." = "Copied — run %@ in your terminal to sign in.";

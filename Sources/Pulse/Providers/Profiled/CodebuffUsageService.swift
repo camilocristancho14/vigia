@@ -25,6 +25,8 @@ extension ProviderProfile {
         keySubtitle: { .localized("From codebuff.com. Optional — Pulse can use the login the codebuff CLI saved. Stored encrypted on this Mac.") },
         setupSlug: "codebuff",
         discoveryPaths: [".config/manicode"],
+        loginPaths: [".config/manicode/credentials.json"],
+        discoveryCommands: ["codebuff"],
         fetch: { await CodebuffUsageService.fetch($0) }
     )
 }
