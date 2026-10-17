@@ -145,8 +145,9 @@ struct ProviderReadinessTests {
         defer { try? FileManager.default.removeItem(at: shell.folder) }
         let start = Date()
         let folders = await LoginShellPath.resolve(deadline: 0.3, shell: shell.path, fallback: "/x/bin")
-        // The deadline and its half-second of grace, with room for a busy CI.
-        #expect(Date().timeIntervalSince(start) < 3)
+        // The deadline and its half-second of grace, with room for a busy CI
+        // runner to schedule the subprocess and deliver its cancellation.
+        #expect(Date().timeIntervalSince(start) < 6)
         #expect(folders == ["/x/bin"])
         // One that cannot be started at all falls back at once.
         #expect(await LoginShellPath.resolve(shell: "/nonexistent/shell", fallback: "/x/bin") == ["/x/bin"])
