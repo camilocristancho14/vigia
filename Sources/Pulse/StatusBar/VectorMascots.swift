@@ -104,7 +104,19 @@ enum VectorMascots {
         // Wider, but never a tilt that reads as a different shape.
         moment.rotation = max(-10, min(10, moment.rotation * gain))
         moment.scale = CGSize(width: 1 + (moment.scale.width - 1) * gain, height: 1 + (moment.scale.height - 1) * gain)
+        if character == .cloudGhost { keepCloudInFrame(&moment) }
         return moment
+    }
+
+    /// The cloud fills its box nearly edge to edge, so the widened motion a
+    /// small mark needs would flatten it into a pill and push it out of the
+    /// frame. A pillow gives a little, never more: it stays round and whole.
+    private static func keepCloudInFrame(_ moment: inout Moment) {
+        moment.scale = CGSize(width: min(1.06, max(0.96, moment.scale.width)),
+                              height: min(1.07, max(0.91, moment.scale.height)))
+        moment.offset = CGSize(width: min(2.2, max(-2.2, moment.offset.width)),
+                               height: min(2.4, max(-3.4, moment.offset.height)))
+        moment.rotation = min(6, max(-6, moment.rotation))
     }
 
     // MARK: - Beats
@@ -570,7 +582,7 @@ enum VectorMascots {
             moment.eyes = prompt(look)
             moment.mouth = .small
         case .waking:
-            wakeUp(time, depth: 0.24, lift: 1.4, awake: prompt(.zero), into: &moment)
+            wakeUp(time, depth: 0.08, lift: 1.6, awake: prompt(.zero), into: &moment)
         case .waiting:
             let jump = bounce(time, period: 1.08, hang: 0.18, weight: 0.9)
             moment.fromFeet = true
@@ -660,7 +672,8 @@ enum VectorMascots {
         case .error:
             let sag = breath(time, period: 2.6)
             moment.fromFeet = true
-            moment.scale = CGSize(width: 1.12 + 0.05 * sag, height: 0.80 - 0.05 * sag)
+            moment.offset.height = 1.2 + 0.4 * sag
+            moment.scale = CGSize(width: 1.04 + 0.02 * sag, height: 0.95 - 0.025 * sag)
             moment.rotation = -2 + 1.2 * sine(time, 5.2)
             moment.eyes = .cross
             moment.mouth = .frown
@@ -843,7 +856,7 @@ enum VectorMascots {
     private static func fit(_ character: MascotCharacter) -> (scale: Double, centre: CGPoint) {
         switch character {
         case .starBuddy: (1.12, CGPoint(x: 32, y: 32))
-        case .cloudGhost: (1.12, CGPoint(x: 31, y: 33.5))
+        case .cloudGhost: (1.02, CGPoint(x: 32.6, y: 34.7))
         default: (1.04, CGPoint(x: 32, y: 30.5))
         }
     }
@@ -853,7 +866,7 @@ enum VectorMascots {
         let style = Style.of(size: size)
         let moment = moment(for: pose, character: character, at: time, gain: style.simple ? 1.8 : 1)
         let unit = min(size.width, size.height) / 64
-        let face = Face.of(character)
+        let face = Face.of(character, simple: style.simple)
         let ink = GraphicsContext.Shading.foreground
         // Working leaves room for the cue: the body steps back a little.
         let room = style.simple && pose.isWorking ? 0.95 : 1.0
@@ -1234,9 +1247,18 @@ enum VectorMascots {
         var blush: Color
         /// Codex's face is the logo's `>_`, punched through the cloud.
         var promptMark = false
+        /// White round the pupils, so two eyes read as two at bar size.
+        var sclera = false
 
-        static func of(_ character: MascotCharacter) -> Face {
+        static func of(_ character: MascotCharacter, simple: Bool = false) -> Face {
             switch character {
+            case .floatBot where simple:
+                // Lower and wider than the design's: at twenty pixels its eyes
+                // sit on the cap's colours and run together into one smudge.
+                // Here they are on plain blue, apart, each with its white.
+                Face(left: CGPoint(x: 25.4, y: 27.8), right: CGPoint(x: 38.6, y: 27.8), blushY: 31.6,
+                     blushX: (21.6, 42.4), mouthY: 35.2, feet: 56, ink: Color(hex: 0x231F4A), blush: Color(hex: 0xFF9FB8),
+                     promptMark: false, sclera: true)
             case .starBuddy:
                 Face(left: CGPoint(x: 25.5, y: 31), right: CGPoint(x: 38.5, y: 31), blushY: 36.2,
                      blushX: (20.8, 43.2), mouthY: 38.6, feet: 59, ink: Color(hex: 0x231F4A), blush: Color(hex: 0xFF9FB8),
@@ -1317,6 +1339,16 @@ enum VectorMascots {
                 }
                 // Closing and opening: the eye squashes toward its lower lid.
                 let open = 1 - 0.8 * moment.lid
+                if face.sclera, colour {
+                    // The white stays put; the pupil does the looking.
+                    let white = (wide ? 5.6 : 5.2) * open
+                    context.fill(ellipse(eye.x, eye.y + 5.2 * (1 - open) * 0.5, wide ? 4.9 : 4.6, max(1.2, white)),
+                                 with: .color(.white))
+                    let pupil = CGPoint(x: eye.x + 0.7 * look.x, y: eye.y + 0.7 * look.y)
+                    context.fill(ellipse(pupil.x, pupil.y + 3.4 * (1 - open) * 0.5, wide ? 3.0 : 2.8,
+                                         max(0.9, 3.4 * open)), with: ink)
+                    continue
+                }
                 let height = (wide ? 4.4 : 4) * grow
                 context.fill(ellipse(centre.x, centre.y + height * (1 - open) * 0.5,
                                      (wide ? 3.3 : 3) * grow, max(0.9, height * open)), with: ink)
