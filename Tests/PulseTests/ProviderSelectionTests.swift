@@ -123,10 +123,10 @@ struct ProviderSelectionTests {
         #expect(found == [.openCodeGo, .glmCoding, .commandCode, .cursor, .devin])
     }
 
-    @Test("Detection includes user Applications and an empty CLI directory")
+    @Test("Detection includes user Applications, an empty CLI directory and agy's login")
     func appAndDirectoryDiscovery() {
         let home = URL(fileURLWithPath: "/synthetic-home")
-        let paths = Set([".codex", ".kiro", "Applications/Grok Bot.app", "Applications/Antigravity.app", ".claude"]
+        let paths = Set([".codex", ".kiro", "Applications/Grok Bot.app", ".gemini/jetski-standalone-oauth-token", ".claude"]
             .map { home.appending(path: $0).path })
         #expect(Provider.installedOnThisMac(home: home, exists: paths.contains)
             == [.codex, .kiro, .grokBot, .antigravity, .claudeCode])

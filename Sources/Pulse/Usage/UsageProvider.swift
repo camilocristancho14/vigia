@@ -430,8 +430,8 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         guard let written = handWritten else { return profile?.soleRoute?() }
         return switch written {
         case .antigravity:
-            (String.localized("Antigravity or the agy CLI"),
-             String.localized("Only while Antigravity or agy is open."))
+            (String.localized("agy's own login"),
+             String.localized("Uses the login agy already saved. Nothing has to be open."))
         case .cursor:
             (String.localized("Cursor's own login"),
              String.localized("Uses the login Cursor already saved."))

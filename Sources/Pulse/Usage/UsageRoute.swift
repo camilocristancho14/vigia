@@ -47,11 +47,10 @@ enum UsageRoute: String, Codable, Sendable {
         }
         switch written {
         case .claudeCode, .codex, .volcengine, .devin: return nil
-        case .antigravity: return .languageServer
-        // All four read a signed-in browser session rather than a key.
+                // All four read a signed-in browser session rather than a key.
         case .ollamaCloud, .xiaomiMiMo, .qoder, .stepFun: return .webSession
         case .kiro: return .kiroACP
-        case .cursor, .openCodeGo, .kimiCode, .zai, .glmCoding, .minimax,
+        case .antigravity, .cursor, .openCodeGo, .kimiCode, .zai, .glmCoding, .minimax,
              .minimaxCN, .copilot, .grok, .grokBot, .commandCode, .deepSeek,
              .sub2api, .newAPI, .v2ex:
             return .endpoint
