@@ -1281,12 +1281,15 @@ enum VectorMascots {
     /// the caller has already set `.destinationOut`.
     /// `lid` is a blink: the `>` folds flat about its middle and opens again,
     /// while the cursor keeps its own time.
-    private static func drawLogoPrompt(cursor: Bool, offset: CGPoint, lid: Double, colour: Bool,
+    /// At bar size the colour mark paints it in navy instead: a hole shows
+    /// whatever the menu bar is behind it, and on a tinted bar that is a
+    /// blue-green face lost in the purple.
+    private static func drawLogoPrompt(cursor: Bool, offset: CGPoint, lid: Double, colour: Bool, solid: Bool = false,
                                        in context: inout GraphicsContext) {
         var layer = context
         layer.translateBy(x: offset.x, y: offset.y)
-        if colour { layer.blendMode = .destinationOut }
-        let ink = GraphicsContext.Shading.color(.black)
+        if colour, !solid { layer.blendMode = .destinationOut }
+        let ink = GraphicsContext.Shading.color(colour && solid ? Color(hex: 0x0E0B30) : .black)
         if lid > 0.01 {
             var chevron = layer
             let middle = 35.1
@@ -1323,7 +1326,8 @@ enum VectorMascots {
             case .open(let look), .wide(let look):
                 if face.promptMark {
                     guard index == 0 else { continue }
-                    drawLogoPrompt(cursor: true, offset: look, lid: moment.lid, colour: colour, in: &context)
+                    drawLogoPrompt(cursor: true, offset: look, lid: moment.lid, colour: colour,
+                                   solid: style.simple, in: &context)
                     continue
                 }
                 let wide = { if case .wide = moment.eyes { return true } else { return false } }()
@@ -1387,7 +1391,8 @@ enum VectorMascots {
             case .prompt(let cursor, let look):
                 // The logo's `>_`, the cursor (the dash) blinking.
                 guard index == 0 else { continue }
-                drawLogoPrompt(cursor: cursor, offset: look, lid: moment.lid, colour: colour, in: &context)
+                drawLogoPrompt(cursor: cursor, offset: look, lid: moment.lid, colour: colour,
+                                   solid: style.simple, in: &context)
             }
         }
         if face.promptMark {
