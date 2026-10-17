@@ -721,7 +721,7 @@ final class UsageAlerts {
     /// pass, and the memory changes whenever a figure moves — so this was an
     /// encode plus an atomic write (temp file, rename) on the UI thread
     /// several times a refresh. Small file, wrong thread.
-    private static let disk = DispatchQueue(label: "Pulse.alerts", qos: .utility)
+    private static let disk = DispatchQueue(label: "Vigia.alerts", qos: .utility)
 
     private func save() {
         // Snapshot on the actor, write off it: `AlertMemory` is a value type,

@@ -47,6 +47,23 @@ private struct Sandbox {
 
 @Suite("Extension discovery")
 struct ExtensionCatalogTests {
+    @Test("A folder written for Pulse, with pulse-extension.json, is still an extension")
+    func readsPulseManifest() throws {
+        let sandbox = try Sandbox()
+        defer { sandbox.remove() }
+        let legacy = try sandbox.add("legacy", manifest: nil)
+        try Data(Sandbox.manifest(id: "legacy").utf8)
+            .write(to: legacy.appending(path: ExtensionCatalog.legacyManifestName))
+        // Both present: Vigía's own name wins.
+        let both = try sandbox.add("both", manifest: Sandbox.manifest(id: "own"))
+        try Data(Sandbox.manifest(id: "old").utf8)
+            .write(to: both.appending(path: ExtensionCatalog.legacyManifestName))
+
+        let scan = ExtensionCatalog.scan(in: sandbox.root)
+        #expect(scan.problems.isEmpty)
+        #expect(Set(scan.extensions.map(\.id)) == ["legacy", "own"])
+    }
+
     @Test("A folder with a manifest and a program inside it is an extension")
     func findsValidExtension() throws {
         let sandbox = try Sandbox()
@@ -321,7 +338,7 @@ struct ExtensionRunTests {
     func environmentAndDirectory() async throws {
         let (service, sandbox) = try service("""
         #!/bin/sh
-        if [ "$PULSE_EXTENSION_ID" = acme ] && [ "$PULSE_EXTENSION_SCHEMA" = 1 ] && [ -f pulse-extension.json ]; then
+        if [ "$VIGIA_EXTENSION_ID" = acme ] && [ "$VIGIA_EXTENSION_SCHEMA" = 1 ] && [ "$PULSE_EXTENSION_ID" = acme ] && [ -f vigia-extension.json ]; then
           echo '{"schemaVersion": 1, "limits": [{"label": "ok", "usedPercent": 1}]}'
         else
           echo '{"schemaVersion": 1, "status": "serverError"}'
@@ -346,6 +363,7 @@ struct ExtensionRunTests {
         #expect(environment["OPENAI_API_KEY"] == nil)
         #expect(environment["GITHUB_TOKEN"] == nil)
         #expect(environment["PATH"]?.hasPrefix("/opt/homebrew/bin:") == true)
+        #expect(environment["VIGIA_EXTENSION_ID"] == "acme")
         #expect(environment["PULSE_EXTENSION_ID"] == "acme")
     }
 
@@ -429,7 +447,7 @@ struct ExtensionAccountTests {
 
     @Test("A settings link to an extension opens it")
     func link() throws {
-        let url = try #require(URL(string: "pulse://account/extension%23acme"))
+        let url = try #require(URL(string: "vigia://account/extension%23acme"))
         #expect(PulseLink(url: url) == .account(found.account))
     }
 }

@@ -214,7 +214,7 @@ struct UsageReportTests {
         #expect(entry["provider"] as? String == "extension")
         #expect(entry["label"] as? String == "Acme Quota")
         #expect(entry["source"] as? String == "extension")
-        #expect(entry["settingsURL"] as? String == "pulse://account/extension%23acme")
+        #expect(entry["settingsURL"] as? String == "vigia://account/extension%23acme")
         let windows = try #require(entry["windows"] as? [[String: Any]])
         #expect(windows.first?["label"] as? String == "Monthly requests")
         #expect(windows.first?["reportsLength"] as? Bool == false)
@@ -231,7 +231,7 @@ struct UsageReportTests {
         // The product is still named, so a script can group by it.
         #expect(entry["name"] as? String == "Claude Code")
         #expect(entry["provider"] as? String == "claudeCode")
-        #expect(entry["settingsURL"] as? String == "pulse://account/claudeCode%23work")
+        #expect(entry["settingsURL"] as? String == "vigia://account/claudeCode%23work")
         #expect(entry["source"] == nil)
     }
 
@@ -243,6 +243,6 @@ struct UsageReportTests {
             .recording(.desktopSession)
         let entry = try Self.accounts(try Self.object(rail: rail, readings: [account.id: reading]))[0]
         #expect(entry["source"] as? String == "desktopSession")
-        #expect(entry["settingsURL"] as? String == "pulse://account/claudeCode")
+        #expect(entry["settingsURL"] as? String == "vigia://account/claudeCode")
     }
 }

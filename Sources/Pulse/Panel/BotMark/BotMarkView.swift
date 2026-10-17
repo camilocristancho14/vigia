@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import SwiftUI
 
 /// Draws one frame of the mark.
@@ -194,7 +195,7 @@ struct BotMarkView: View {
 
     /// The panel's coordinate space, which is also the space the pointer is
     /// reported in.
-    static let panelSpace = "pulse.panel"
+    static let panelSpace = "vigia.panel"
 
     /// The pointer as the engine wants it: a fraction of this mark's own
     /// radius, from its centre.

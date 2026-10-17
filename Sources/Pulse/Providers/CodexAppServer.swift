@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import AppKit
 
 /// A JSON-RPC client for `codex app-server`.
@@ -137,7 +138,7 @@ actor CodexAppServer {
         // The protocol opens with a handshake before anything else is accepted.
         _ = try await send(
             method: "initialize",
-            params: ["clientInfo": ["name": "Pulse", "title": "Pulse", "version": "0.1"]]
+            params: ["clientInfo": ["name": "Vigia", "title": "Vigía", "version": "0.1"]]
         )
         notify(method: "initialized")
     }

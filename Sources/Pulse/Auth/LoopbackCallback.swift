@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 import Network
 
@@ -22,7 +23,7 @@ final class LoopbackCallback: @unchecked Sendable {
     private let path: String
     private let requestedPort: UInt16?
     private let listener: NWListener
-    private let queue = DispatchQueue(label: "com.pulse.oauth-callback")
+    private let queue = DispatchQueue(label: "com.vigia.oauth-callback")
 
     private let lock = NSLock()
     private var ready: CheckedContinuation<Void, Error>?

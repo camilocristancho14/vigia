@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import AppKit
 import SwiftUI
 
@@ -6,15 +7,22 @@ struct DeveloperIntegrationsView: View {
     @State private var selectedAccount = AccountKey(.claudeCode)
     @State private var message: String?
 
+    static let guideURL = URL(string: "https://github.com/camilocristancho14/vigia/blob/main/docs/integrations.md")!
+
+    /// What the export copies. A fixed list excludes a checkout's
+    /// node_modules and build output; scripts/make-app.sh bundles the same.
+    static let kitFiles = ["vigia-status.sh", "vigia-sketchybar.sh", "raycast/package.json",
+                           "raycast/package-lock.json", "raycast/tsconfig.json", "raycast/src", "raycast/assets", "raycast/tests"]
+
     private var executable: String {
-        Bundle.main.executableURL?.path ?? "/Applications/Pulse.app/Contents/MacOS/Pulse"
+        Bundle.main.executableURL?.path ?? "/Applications/Vigia.app/Contents/MacOS/Vigia"
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup(String.localized("Read cached usage")) {
                 SettingsRow(
-                    "Pulse --json",
+                    "Vigia --json",
                     subtitle: String.localized("Reads saved figures without fetching or opening credentials.")
                 ) {
                     Button(String.localized("Copy command")) { copy(Self.quote(executable) + " --json") }
@@ -28,7 +36,7 @@ struct DeveloperIntegrationsView: View {
                 }
                 SettingsRowDivider()
                 SettingsRow(String.localized("Installation guide")) {
-                    Link(destination: URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/integrations.md")!) {
+                    Link(destination: Self.guideURL) {
                         Text(localized: "Open")
                     }
                 }
@@ -88,7 +96,7 @@ struct DeveloperIntegrationsView: View {
             .deletingLastPathComponent().deletingLastPathComponent()
             .appending(path: "Integrations")
         guard let source = [bundled, checkout].compactMap({ $0 }).first(where: {
-            FileManager.default.fileExists(atPath: $0.appending(path: "pulse-status.sh").path)
+            FileManager.default.fileExists(atPath: $0.appending(path: "vigia-status.sh").path)
         }) else {
             message = String.localized("Integration files weren't found. Open the installation guide.")
             return
@@ -101,8 +109,8 @@ struct DeveloperIntegrationsView: View {
         panel.prompt = String.localized("Export")
         panel.begin { response in
             guard response == .OK, let directory = panel.url else { return }
-            let destination = directory.appending(path: "Pulse Integrations")
-            let staging = directory.appending(path: ".pulse-export-\(UUID().uuidString)")
+            let destination = directory.appending(path: "Vigía Integrations")
+            let staging = directory.appending(path: ".vigia-export-\(UUID().uuidString)")
             do {
                 guard !FileManager.default.fileExists(atPath: destination.path) else {
                     message = String.localized("Pulse Integrations already exists here. Choose another folder.")
@@ -111,9 +119,7 @@ struct DeveloperIntegrationsView: View {
                 try FileManager.default.createDirectory(at: staging, withIntermediateDirectories: false)
                 defer { try? FileManager.default.removeItem(at: staging) }
                 try FileManager.default.createDirectory(at: staging.appending(path: "raycast"), withIntermediateDirectories: false)
-                // A fixed list excludes a checkout's node_modules and build output.
-                for file in ["pulse-status.sh", "pulse-sketchybar.sh", "raycast/package.json",
-                             "raycast/package-lock.json", "raycast/tsconfig.json", "raycast/src", "raycast/assets", "raycast/tests"] {
+                for file in Self.kitFiles {
                     try FileManager.default.copyItem(at: source.appending(path: file), to: staging.appending(path: file))
                 }
                 try FileManager.default.moveItem(at: staging, to: destination)

@@ -73,6 +73,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // before anything reads the state, or both builds start at login.
         // Demo runs skip this: a screenshot session must not register a login item.
         if !DemoMode.isActive {
+            LoginItem.migrateLegacyAgentIfNeeded()
             LoginItem.adoptBundleIfNeeded()
             LoginItem.applyDefaultOnFirstRun()
             LoginItem.repairPathIfNeeded()

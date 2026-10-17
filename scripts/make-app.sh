@@ -31,6 +31,15 @@ if [ -f "$RES_PLIST" ]; then
         || true
 fi
 
+# The developer kit Settings › Developer integrations exports. A fixed list,
+# so a checkout's node_modules and Raycast build output never ship.
+KIT="$APP/Contents/Resources/Integrations"
+mkdir -p "$KIT/raycast"
+cp Integrations/vigia-status.sh Integrations/vigia-sketchybar.sh "$KIT/"
+for item in package.json package-lock.json tsconfig.json src assets tests; do
+    cp -R "Integrations/raycast/$item" "$KIT/raycast/"
+done
+
 ICON_SRC="icons/AppIcon.jpg"
 test -f "$ICON_SRC"
 ICONSET="$(mktemp -d)/AppIcon.iconset"
@@ -77,7 +86,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>CFBundleURLTypes</key>
     <array><dict>
         <key>CFBundleURLName</key><string>com.vigia.mac.navigation</string>
-        <key>CFBundleURLSchemes</key><array><string>pulse</string></array>
+        <key>CFBundleURLSchemes</key><array><string>vigia</string></array>
         <key>CFBundleTypeRole</key><string>Viewer</string>
     </dict></array>
     <key>NSHighResolutionCapable</key><true/>

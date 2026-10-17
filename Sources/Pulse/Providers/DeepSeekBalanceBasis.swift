@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// How the DeepSeek ring gets a denominator, and where that denominator comes
@@ -99,7 +100,7 @@ enum DeepSeekBaseline {
     /// Off the main thread, and serial so two refreshes cannot land out of
     /// order — the same arrangement `UsageAlerts` writes its memory with, and
     /// for the same reason: this is written on every pass.
-    private static let disk = DispatchQueue(label: "Pulse.deepseek", qos: .utility)
+    private static let disk = DispatchQueue(label: "Vigia.deepseek", qos: .utility)
 
     private static var file: URL {
         PulseStorage.directory.appending(path: "deepseek-baseline.json")
