@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import AppKit
 import SwiftUI
 
@@ -11,7 +12,7 @@ struct ExtensionsSettingsView: View {
     /// Opens an extension's own pane.
     let open: (AccountKey) -> Void
 
-    static let guideURL = URL(string: "https://github.com/qunqin24/Pulse/blob/main/Docs/extensions.md")!
+    static let guideURL = URL(string: "\(ConnectionRemedy.docsBase)/extensions.md")!
 
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {

@@ -2,20 +2,30 @@ import Foundation
 import Testing
 @testable import Pulse
 
-@Suite("Pulse navigation links")
+@Suite("Vigía navigation links")
 struct PulseLinkTests {
     @Test("Added-account separators are encoded as path data, not fragments")
     func roundTrip() {
         let account = AccountKey(.claudeCode, slot: "work")
         let link = PulseLink.account(account)
-        #expect(link.url.absoluteString == "pulse://account/claudeCode%23work")
+        #expect(link.url.absoluteString == "vigia://account/claudeCode%23work")
         #expect(PulseLink(url: link.url) == link)
         #expect(PulseLink(url: PulseLink.settings.url) == .settings)
         #expect(PulseLink(url: PulseLink.integrations.url) == .integrations)
     }
 
+    @Test("Links in Pulse's older scheme still open the same place")
+    func acceptsPulseScheme() throws {
+        #expect(PulseLink(url: try #require(URL(string: "pulse://settings"))) == .settings)
+        #expect(PulseLink(url: try #require(URL(string: "PULSE://integrations"))) == .integrations)
+        #expect(PulseLink(url: try #require(URL(string: "pulse://account/claudeCode%23work")))
+            == .account(AccountKey(.claudeCode, slot: "work")))
+        #expect(PulseLink(url: try #require(URL(string: "vigia://settings"))) == .settings)
+    }
+
     @Test("Malformed or action-bearing URLs are rejected", arguments: [
-        "https://account/codex", "pulse://account/codex#work", "pulse://account/codex%23",
+        "https://account/codex", "other://settings", "vigia://account/codex#work", "vigia://refresh/codex",
+        "vigia://account/codex?refresh=true", "pulse://account/codex#work", "pulse://account/codex%23",
         "pulse://account/codex/extra", "pulse://account/codex?refresh=true", "pulse://account/unknown",
         "pulse://user@account/codex", "pulse://account:80/codex", "pulse://settings/extra",
         "pulse://refresh/codex", "pulse://account/claudeCode%23work%23other"

@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// The Group E agents, read **only** from a local export, cache or capture.
@@ -20,7 +21,7 @@ import Foundation
 ///
 /// Pulse itself does not log in, capture a cookie, call a language server or
 /// sync anything. `inputs` names the standard cache/capture location plus
-/// Pulse's own drop folder, `UsageImports/<client>`; the readers only ever read
+/// Vigía's own drop folder, `UsageImports/<client>`; the readers only ever read
 /// what is already there. Nothing here creates, copies or runs a program.
 enum CapturedUsageReaders {
     /// Every client this family answers for. The catalog dispatch test walks
@@ -93,9 +94,10 @@ enum CapturedUsageReaders {
         return home.appending(path: ".hindsight/usage")
     }
 
-    /// Pulse's own drop folder for a client's export. Nothing is created here;
-    /// it is read only when the user has put a file in it.
+    /// Vigía's own drop folder for a client's export, inside its Application
+    /// Support folder (see `PulseStorage`). Nothing is created here; it is
+    /// read only when the user has put a file in it.
     static func importRoot(home: URL, client: String) -> URL {
-        home.appending(path: "Library/Application Support/Pulse/UsageImports/\(client)")
+        home.appending(path: "Library/Application Support/\(PulseStorage.folderName)/UsageImports/\(client)")
     }
 }

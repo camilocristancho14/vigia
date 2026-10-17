@@ -1,9 +1,9 @@
 /* 菜单栏 */
 "Settings…" = "设置…";
-"Quit Pulse" = "退出 Pulse";
+"Quit Pulse" = "退出 Vigía";
 
 /* 设置窗口 */
-"Pulse Settings" = "Pulse 设置";
+"Pulse Settings" = "Vigía 设置";
 "Panel" = "面板";
 "Application" = "应用";
 "General" = "通用";
@@ -48,13 +48,13 @@
 "Installation guide" = "安装指南";
 "Open an account" = "直达账户设置";
 "Account link" = "账户链接";
-"Opens this account's settings in the installed Pulse app." = "在已安装的 Pulse 中直接打开此账户的设置。";
+"Opens this account's settings in the installed Pulse app." = "在已安装的 Vigía 中直接打开此账户的设置。";
 "Copy link" = "复制链接";
 "Open from terminal" = "从终端打开";
-"Keep Pulse running to update the cache. Every reading includes its age; an old reading is not a live check." = "保持 Pulse 运行以更新缓存。每条读数均附带时间，旧读数不代表实时检查结果。";
+"Keep Pulse running to update the cache. Every reading includes its age; an old reading is not a live check." = "保持 Vigía 运行以更新缓存。每条读数均附带时间，旧读数不代表实时检查结果。";
 "Integration files weren't found. Open the installation guide." = "未找到集成文件，请打开安装指南。";
 "Export" = "导出";
-"Pulse Integrations already exists here. Choose another folder." = "此位置已存在 Pulse Integrations，请选择其他文件夹。";
+"Pulse Integrations already exists here. Choose another folder." = "此位置已存在 Vigía Integrations，请选择其他文件夹。";
 "Integration files exported." = "集成文件已导出。";
 "Couldn't export integration files. Choose a writable folder." = "无法导出集成文件，请选择可写入的文件夹。";
 "Connected. Use Claude Code to send a new reading." = "已连接，使用 Claude Code 即可产生新的读数。";
@@ -164,7 +164,7 @@
 
 
 /* 辅助功能 */
-"Pulse floating usage panel" = "Pulse 悬浮用量面板";
+"Pulse floating usage panel" = "Vigía 悬浮用量面板";
 "Provider usage selector" = "服务用量选择器";
 "%@ usage" = "%@ 用量";
 "%@ usage details" = "%@ 用量详情";
@@ -288,12 +288,12 @@
 
 /* Launch at login */
 "Open at login" = "开机自启";
-"Start Pulse automatically when you log in." = "登录 macOS 后自动启动 Pulse。";
+"Start Pulse automatically when you log in." = "登录 macOS 后自动启动 Vigía。";
 "Waiting for approval in System Settings › General › Login Items." = "等待在「系统设置 › 通用 › 登录项」中允许。";
 
 /* 菜单栏图标 */
 "Hide menu bar icon" = "隐藏菜单栏图标";
-"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "从菜单栏移除 Pulse；需要设置时可用面板菜单或快捷键打开。";
+"Remove Pulse from the menu bar; use the panel menu or shortcut to open settings." = "从菜单栏移除 Vigía；需要设置时可用面板菜单或快捷键打开。";
 
 /* Liquid Glass */
 "Liquid Glass" = "液态玻璃";
@@ -318,11 +318,11 @@
 "Devin's own app" = "Devin 自己的应用";
 "Reads what Devin saved the last time it started." = "读取 Devin 上次启动时存下的套餐信息。";
 "Asks Devin for your quota, with the token you entered." = "用你填入的 token 向 Devin 查询额度。";
-"A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "从 app.devin.ai 取的 Bearer token，空一格，再填组织。可不填——不填时 Pulse 读取 Devin 应用自己存下的套餐。加密保存在本机。";
+"A Bearer token from app.devin.ai, then a space, then your organization. Optional — Pulse can read what Devin's app saved. Stored encrypted on this Mac." = "从 app.devin.ai 取的 Bearer token，空一格，再填组织。可不填——不填时 Vigía 读取 Devin 应用自己存下的套餐。加密保存在本机。";
 "Grok Bot is billed to your Cursor account." = "Grok Bot 的额度算在你的 Cursor 账户上。";
 "Uses the login Cursor already saved." = "用 Cursor 已保存的登录读取。";
 "Refresh" = "刷新";
-"Pulse %@ is available" = "Pulse %@ 可更新";
+"Pulse %@ is available" = "Vigía %@ 可更新";
 "Check now" = "检查更新";
 "Checking…" = "正在检查…";
 "Built from source — no update check." = "源码构建，不检查更新。";
@@ -365,7 +365,7 @@
 "That key was refused. Check it in Settings." = "这个 key 被拒绝了，去设置里检查一下。";
 "Claude Code's saved login expired. Use Claude Code, or connect the status line." = "Claude Code 存的登录已过期。用一下 Claude Code，或在设置里连接状态栏。";
 "Keep reading Claude Code's usage after its login expires?" = "登录过期后仍能读到 Claude Code 的用量？";
-"Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code 存的登录只有几小时有效，而且只有它自己能续期。它同时会把额度报给已注册的状态栏命令——Pulse 可以当这个命令，那样无论登录是否新鲜都读得到。\n\n这会改写 ~/.claude/settings.json，并改变你 Claude Code 会话底部那行状态栏。你原有的状态栏仍然照常工作，随时可以在设置里断开。";
+"Claude Code saves a login that lasts a few hours, and only Claude Code can renew it. It also reports your limits to whatever status line command is registered — Pulse can be that command, and then it keeps working whether the login is fresh or not.\n\nThis edits ~/.claude/settings.json and changes the status line at the bottom of your Claude Code sessions. Any status line you already have keeps working, and you can disconnect it in Settings." = "Claude Code 存的登录只有几小时有效，而且只有它自己能续期。它同时会把额度报给已注册的状态栏命令——Vigía 可以当这个命令，那样无论登录是否新鲜都读得到。\n\n这会改写 ~/.claude/settings.json，并改变你 Claude Code 会话底部那行状态栏。你原有的状态栏仍然照常工作，随时可以在设置里断开。";
 "Not now" = "以后再说";
 "Order" = "顺序";
 "Add an API key in Settings." = "在设置里填入 API key。";
@@ -378,9 +378,9 @@
 "From bigmodel.cn. Stored encrypted on this Mac." = "在 bigmodel.cn 获取。加密保存在本机。";
 "From platform.minimax.io. Stored encrypted on this Mac." = "在 platform.minimax.io 获取。加密保存在本机。";
 "From platform.minimaxi.com. Stored encrypted on this Mac." = "在 platform.minimaxi.com 获取。加密保存在本机。";
-"From commandcode.ai. Optional — Pulse can use the login Command Code saved. Stored encrypted on this Mac." = "在 commandcode.ai 获取。可不填——Pulse 能用 Command Code 已保存的登录。加密保存在本机。";
+"From commandcode.ai. Optional — Pulse can use the login Command Code saved. Stored encrypted on this Mac." = "在 commandcode.ai 获取。可不填——Vigía 能用 Command Code 已保存的登录。加密保存在本机。";
 "Couldn't connect the status line" = "没能连接状态栏";
-"~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings." = "~/.claude/settings.json 读不出来，Pulse 不会覆盖一个它看不懂的文件。检查一下，然后在设置里连接。";
+"~/.claude/settings.json couldn't be read, and Pulse won't overwrite a file it doesn't understand. Check it, then connect from Settings." = "~/.claude/settings.json 读不出来，Vigía 不会覆盖一个它看不懂的文件。检查一下，然后在设置里连接。";
 "Move %@ up" = "把 %@ 上移";
 "Move %@ down" = "把 %@ 下移";
 "Not shown" = "未显示";
@@ -392,8 +392,8 @@
 "Sign in…" = "登录…";
 "Sign out" = "退出登录";
 "GitHub account" = "GitHub 账号";
-"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "会打开 GitHub 自己的页面。Pulse 只申请读取你的资料，别的都不要。";
-"Signed in. Pulse holds a read-only token for this Mac." = "已登录。Pulse 在本机保存了一个只读令牌。";
+"Opens GitHub's own page. Pulse asks to read your profile, nothing else." = "会打开 GitHub 自己的页面。Vigía 只申请读取你的资料，别的都不要。";
+"Signed in. Pulse holds a read-only token for this Mac." = "已登录。Vigía 在本机保存了一个只读令牌。";
 "The browser didn't come back." = "浏览器没有回来。";
 "Cancel" = "取消";
 "Code" = "验证码";
@@ -410,15 +410,14 @@
 "Couldn't save the login on this Mac." = "无法在本机保存登录信息。";
 "Sign in to this account again in Settings." = "请在设置中重新登录这个账号。";
 "Sign in from Settings to see usage." = "在设置中登录后即可看到用量。";
-"This provider can't be signed in to from Pulse." = "这个服务无法从 Pulse 登录。";
+"This provider can't be signed in to from Pulse." = "这个服务无法从 Vigía 登录。";
 "Finish or close the sign-in already running, then try again." = "先完成或关闭正在进行的登录，然后重试。";
 "Sign-in was cancelled." = "登录已取消。";
 "The browser didn't come back. If it showed an error, try again." = "浏览器没有回来。如果它显示了错误，请重试。";
 "This page can be closed." = "这个页面可以关闭了。";
 "Sign-in failed. You can close this page." = "登录失败，可以关闭这个页面。";
-"Signed in. You can close this page and go back to Pulse." = "已登录，可以关闭页面回到 Pulse 了。";
-"Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so." = "直接读各家自己的账号。Pulse 只显示它们报告的数字；个别必须推算的地方，会在数字旁标明。";
-"Pulse is built from a design he posted on X." = "Pulse 是照着他在 X 上发的设计做的。";
+"Signed in. You can close this page and go back to Pulse." = "已登录，可以关闭页面回到 Vigía 了。";
+"Read from each provider's own account. Pulse shows the figures they report; where it has to infer one, the figure itself says so." = "直接读各家自己的账号。Vigía 只显示它们报告的数字；个别必须推算的地方，会在数字旁标明。";
 "Open" = "打开";
 "under 15 minutes" = "不到 15 分钟";
 "about an hour" = "约 1 小时";
@@ -432,7 +431,7 @@
 "Desktop app" = "桌面端";
 "Uses the session the Claude desktop app is signed in with." = "用 Claude 桌面端已登录的会话读取。";
 "Sign in to the Claude desktop app to see usage." = "登录 Claude 桌面端后即可看到用量。";
-"Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Pulse 需要钥匙串权限才能读取 Claude 桌面端的会话。点刷新可再问一次。";
+"Pulse needs your keychain to read the Claude desktop app's session. Refresh to be asked again." = "Vigía 需要钥匙串权限才能读取 Claude 桌面端的会话。点刷新可再问一次。";
 "The Claude desktop app's session was refused. Open it and sign in again." = "Claude 桌面端的会话被拒绝。请打开它重新登录。";
 
 /* 通知 */
@@ -440,7 +439,7 @@
 "Off" = "关闭";
 "Warn at" = "提醒阈值";
 "Notify when a limit passes this, and again when it is spent." = "限额超过所选比例时提醒一次，用尽时再提醒一次。";
-"Turned off for Pulse in System Settings › Notifications." = "已在「系统设置 › 通知」里关闭了 Pulse 的通知。";
+"Turned off for Pulse in System Settings › Notifications." = "已在「系统设置 › 通知」里关闭了 Vigía 的通知。";
 "Notifications need the bundled app." = "通知需要打包后的 App 才能发出。";
 "When a limit comes back" = "限额恢复时";
 "Only for one you were warned about." = "仅提醒此前已预警过的限额。";
@@ -459,7 +458,7 @@
 
 /* 重置排序 */
 "Reset order" = "重置顺序";
-"Back to the order Pulse ships with." = "恢复成 Pulse 默认的排列。";
+"Back to the order Pulse ships with." = "恢复成 Vigía 默认的排列。";
 "Reset" = "重置";
 
 /* 火山引擎方舟 */
@@ -487,7 +486,7 @@
 "Gemini and the third-party models draw on separate allowances. One ring can only follow the busier of the two." = "Gemini 与第三方模型的额度相互独立，一个环只能跟随用得多的那一边。";
 "%@ didn't answer, so there is nothing to chart yet. Try again in a moment." = "%@ 没有返回数据，暂时无法绘制。请稍后重试。";
 "Add a key above and Pulse can read this account's history." = "在上方填入密钥，即可读取该账号的用量历史。";
-"This account is switched off, so Pulse hasn't asked for its history." = "该账号已关闭，Pulse 没有去读取它的用量历史。";
+"This account is switched off, so Pulse hasn't asked for its history." = "该账号已关闭，Vigía 没有去读取它的用量历史。";
 "Since top-up" = "自上次充值";
 "Balance only" = "只看余额";
 "My budget" = "我的预算";
@@ -495,7 +494,7 @@
 "of your budget" = "按你的预算";
 "Full tank" = "满额基准";
 "What you call a full balance. The ring measures against it." = "你认为多少算满，圆环按它来量。";
-"How much of the balance Pulse last saw you top up to is gone." = "自 Pulse 上次看到你充值以来，用掉了多少。";
+"How much of the balance Pulse last saw you top up to is gone." = "自 Vigía 上次看到你充值以来，用掉了多少。";
 "How much of the figure you set is gone." = "你设定的金额用掉了多少。";
 "From platform.deepseek.com. Stored encrypted on this Mac." = "在 platform.deepseek.com 获取。加密保存在本机。";
 "Balance" = "余额";
@@ -600,7 +599,7 @@
 /* 网络代理 */
 "Network" = "网络";
 "Proxy" = "代理";
-"Use macOS settings or a proxy only for Pulse." = "使用 macOS 系统设置，或只为 Pulse 指定代理。";
+"Use macOS settings or a proxy only for Pulse." = "使用 macOS 系统设置，或只为 Vigía 指定代理。";
 "Follow System" = "跟随系统";
 "Manual" = "手动";
 "Type" = "类型";
@@ -617,14 +616,14 @@
 "Choose services to monitor" = "选择要监控的服务";
 "Choose services to start monitoring…" = "选择服务，开始监控…";
 "New services detected" = "发现新支持的服务";
-"Choose at least one service. Pulse reads its login and checks usage only after you finish. You can change this later in Settings." = "请至少勾选一个服务。点「完成」后，Pulse 才会读取所选服务的登录信息并查询用量。之后可以在设置里更改。";
+"Choose at least one service. Pulse reads its login and checks usage only after you finish. You can change this later in Settings." = "请至少勾选一个服务。点「完成」后，Vigía 才会读取所选服务的登录信息并查询用量。之后可以在设置里更改。";
 "This version supports more services found on your Mac. Choose any you want to add; your existing choices stay in place." = "这个版本新支持了以下服务，本机检测到了它们。勾选想添加的即可，原有选择会保留。";
 "Detected on this Mac" = "本机已检测到";
 "Select detected services" = "勾选已检测到的";
 "Done" = "完成";
 "Enable a service in its settings to start monitoring." = "在左侧选择服务，开启「在面板中显示」即可开始监控。";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "读取 Claude Code 保存在钥匙串或凭据文件里的登录信息。可能弹出钥匙串授权，包括 Claude 桌面版的 cookie 存储授权。";
-"Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "读取 ~/.codex/auth.json，也可能启动 codex app-server 使用它保存的登录。Pulse 不请求钥匙串授权。";
+"Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "读取 ~/.codex/auth.json，也可能启动 codex app-server 使用它保存的登录。Vigía 不请求钥匙串授权。";
 "Reads the login saved in ~/.gemini/jetski-standalone-oauth-token by the agy CLI. No Keychain prompt." = "读取 agy CLI 保存在 ~/.gemini/jetski-standalone-oauth-token 的登录。不弹钥匙串。";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "读取 Cursor 本地数据库里保存的登录信息。不弹钥匙串。";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "读取 ~/.grok/auth.json 里保存的登录信息。不弹钥匙串。";
@@ -632,13 +631,13 @@
 "Uses a key entered in Settings, or reads the saved GLM key files. No Keychain prompt." = "使用在设置里填入的 key，或读取本机保存的 GLM key 文件。不弹钥匙串。";
 "Uses a key entered in Settings, or reads ~/.commandcode/auth.json. No Keychain prompt." = "使用在设置里填入的 key，或读取 ~/.commandcode/auth.json。不弹钥匙串。";
 "Reads Devin's web login from local Chromium browsers without a prompt; may also read the desktop app's saved plan." = "读取本机 Chromium 浏览器里 Devin 网页版的登录信息，不弹授权窗口；也可能读取桌面版保存的套餐。";
-"Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "启动 arkcli 使用它保存的登录，或使用在设置里填入的访问密钥。Pulse 不请求钥匙串授权。";
+"Runs arkcli with its saved login, or uses access keys entered in Settings. Pulse does not request Keychain access." = "启动 arkcli 使用它保存的登录，或使用在设置里填入的访问密钥。Vigía 不请求钥匙串授权。";
 "Kiro CLI ACP" = "Kiro CLI ACP";
 "Uses Kiro CLI's signed-in session without reading its credentials." = "使用 Kiro CLI 已登录的会话，不读取其凭据。";
 "Kiro CLI isn't installed." = "未检测到 Kiro CLI。";
 "Update Kiro CLI to read subscription usage." = "请更新 Kiro CLI 以读取订阅用量。";
 "Sign in to Kiro CLI to see usage." = "请先登录 Kiro CLI 以查看用量。";
-"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "通过 Kiro CLI 原生 ACP 用量方法使用其已保存的登录。Pulse 不读取或存储 Kiro 凭据。";
+"Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials." = "通过 Kiro CLI 原生 ACP 用量方法使用其已保存的登录。Vigía 不读取或存储 Kiro 凭据。";
 "Asks Kiro CLI over ACP, using the login it already saved." = "通过 ACP 查询 Kiro CLI，并使用它已保存的登录。";
 "Uses a browser session you import in Settings. Importing may ask for browser Keychain access." = "使用你在设置里导入的浏览器登录会话。导入时可能请求浏览器的钥匙串授权。";
 "Uses the GitHub login you connect in Settings. No Keychain prompt." = "使用你在设置里连接的 GitHub 登录。不弹钥匙串。";
@@ -651,7 +650,7 @@
 "Sends the key you enter only to the server address you enter. No Keychain prompt." = "只把你填的 key 发到你填的那个服务器地址。不弹钥匙串。";
 "A group API key from your sub2api deployment. Sent only to the address above. Stored encrypted on this Mac." = "你那台 sub2api 上的分组 API key。只发到上面那个地址。加密保存在本机。";
 "A Personal Access Token from v2ex.com. Stored encrypted on this Mac." = "在 v2ex.com 生成的个人访问令牌。加密保存在本机。";
-"Your own deployment's address, such as https://gateway.example.com. Pulse asks it for usage and sends nothing else." = "你自己那台网关的地址，例如 https://gateway.example.com。Pulse 只向它查用量，别的什么都不发。";
+"Your own deployment's address, such as https://gateway.example.com. Pulse asks it for usage and sends nothing else." = "你自己那台网关的地址，例如 https://gateway.example.com。Vigía 只向它查用量，别的什么都不发。";
 "The same key your AI client uses for this gateway. Sent only to the address above. Stored encrypted on this Mac." = "你的 AI 客户端连这台网关用的那个 key。只发到上面那个地址。加密保存在本机。";
 "Credit allowance" = "积分额度";
 "Team credits" = "团队共享积分";
@@ -670,17 +669,17 @@
 "No StepFun session found. Sign in at %@ first." = "没找到阶跃星辰的登录信息。请先在 %@ 登录。";
 
 /* Extensions */
-"An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "扩展是你自己添加的程序，用来报告某一个账号的用量，Pulse 会把它输出的数据画成圆环。只有你开启后 Pulse 才会运行它，也不会交给它任何登录凭据。";
+"An extension is a program you add yourself that reports one account's usage. Pulse draws what it prints as a ring, runs it only once you switch it on, and gives it no credentials." = "扩展是你自己添加的程序，用来报告某一个账号的用量，Vigía 会把它输出的数据画成圆环。只有你开启后 Vigía 才会运行它，也不会交给它任何登录凭据。";
 "Another extension already uses the id %@." = "另一个扩展已经在用 ID「%@」。";
 "Couldn't be used" = "无法使用";
-"Each extension is a folder of its own, holding pulse-extension.json and its program." = "每个扩展单独一个文件夹，里面放 pulse-extension.json 和它的程序。";
+"Each extension is a folder of its own, holding pulse-extension.json and its program." = "每个扩展单独一个文件夹，里面放 vigia-extension.json 和它的程序。";
 "Extension" = "扩展";
 "Extension program" = "扩展程序";
 "Extensions" = "扩展";
 "Extensions folder" = "扩展文件夹";
 "Folder" = "文件夹";
 "Found" = "已找到";
-"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "来自它的 pulse-extension.json。Pulse 用这个 ID 保存这个扩展的设置。";
+"From its pulse-extension.json. Pulse keeps this extension's settings under it." = "来自它的 vigia-extension.json。Vigía 用这个 ID 保存这个扩展的设置。";
 "How to write an extension" = "如何编写扩展";
 "Id" = "ID";
 "Its id must be lowercase letters, digits, dots, dashes or underscores, 64 at most." = "ID 只能用小写字母、数字、点、连字符和下划线，最多 64 个字符。";
@@ -689,11 +688,11 @@
 "Its program isn't there, or isn't executable." = "找不到它的程序，或者程序不可执行。";
 "Look again" = "重新查找";
 "Manage extensions" = "管理扩展";
-"No pulse-extension.json in this folder." = "这个文件夹里没有 pulse-extension.json。";
+"No pulse-extension.json in this folder." = "这个文件夹里没有 vigia-extension.json。";
 "None yet" = "还没有";
 "Program" = "程序";
-"Pulse reads this folder when it starts. After adding or changing an extension, look again." = "Pulse 在启动时读取这个文件夹。添加或修改扩展后，请点「重新查找」。";
-"Runs a program from your extensions folder on the refresh schedule. Pulse passes it no credentials; what it reads and where it connects are up to the program." = "每次刷新时运行扩展文件夹里的这个程序。Pulse 不会交给它任何凭据；它读取什么、连接到哪里，由程序自己决定。";
+"Pulse reads this folder when it starts. After adding or changing an extension, look again." = "Vigía 在启动时读取这个文件夹。添加或修改扩展后，请点「重新查找」。";
+"Runs a program from your extensions folder on the refresh schedule. Pulse passes it no credentials; what it reads and where it connects are up to the program." = "每次刷新时运行扩展文件夹里的这个程序。Vigía 不会交给它任何凭据；它读取什么、连接到哪里，由程序自己决定。";
 "Show in Finder" = "在访达中显示";
 "Shown in the panel" = "已在面板中显示";
 "Stopped if it hasn't answered by then." = "超过这个时间还没有返回结果，就会被停止。";
@@ -702,8 +701,8 @@
 "The extension stopped with an error." = "扩展运行出错，已退出。";
 "This extension's program can't be run. Check its folder." = "无法运行这个扩展的程序，请检查它的文件夹。";
 "Time limit" = "时间限制";
-"Written for extension schema %@, which this version of Pulse doesn't read." = "它按扩展格式第 %@ 版编写，这个版本的 Pulse 读不了。";
-"pulse-extension.json isn't valid JSON, or is missing a field." = "pulse-extension.json 不是有效的 JSON，或者缺少必填字段。";
+"Written for extension schema %@, which this version of Pulse doesn't read." = "它按扩展格式第 %@ 版编写，这个版本的 Vigía 读不了。";
+"pulse-extension.json isn't valid JSON, or is missing a field." = "vigia-extension.json 不是有效的 JSON，或者缺少必填字段。";
 
 /* Profiled providers: shared wording */
 "No session found. Sign in at %@ first." = "没有找到登录信息。请先在 %@ 登录。";
@@ -726,7 +725,7 @@
 
 /* Kilo Code */
 "Uses a key entered in Settings, or reads ~/.local/share/kilo/auth.json. No Keychain prompt." = "使用在设置里填入的 key，或读取 ~/.local/share/kilo/auth.json。不弹钥匙串。";
-"From app.kilo.ai. Optional — Pulse can use the login the Kilo CLI saved. Stored encrypted on this Mac." = "在 app.kilo.ai 获取。可不填——Pulse 能用 Kilo CLI 已保存的登录。加密保存在本机。";
+"From app.kilo.ai. Optional — Pulse can use the login the Kilo CLI saved. Stored encrypted on this Mac." = "在 app.kilo.ai 获取。可不填——Vigía 能用 Kilo CLI 已保存的登录。加密保存在本机。";
 
 /* Mistral */
 /* Factory */
@@ -802,12 +801,12 @@
 
 /* Alibaba Token Plan */
 "Bailian CLI" = "百炼 CLI";
-"Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "启动百炼 CLI（bl），使用它已保存的登录。Pulse 不读取或存储其凭据。";
+"Runs the Bailian CLI (bl) with its saved login. Pulse does not read or store its credentials." = "启动百炼 CLI（bl），使用它已保存的登录。Vigía 不读取或存储其凭据。";
 "Uses the login the Bailian CLI already saved." = "用百炼 CLI 已保存的登录读取。";
 /* Nous Portal */
 "Reads the Nous Portal login Hermes Agent saved in ~/.hermes. No Keychain prompt." = "读取 Hermes Agent 保存在 ~/.hermes 里的 Nous Portal 登录信息。不弹钥匙串。";
 "Hermes Agent's login" = "Hermes Agent 的登录信息";
-"Uses the login Hermes Agent already saved. Pulse never renews it." = "使用 Hermes Agent 已保存的登录信息。Pulse 从不替它续期。";
+"Uses the login Hermes Agent already saved. Pulse never renews it." = "使用 Hermes Agent 已保存的登录信息。Vigía 从不替它续期。";
 
 /* Hugging Face */
 "Uses a token entered in Settings, or reads the one hf auth login saved in ~/.cache/huggingface. No Keychain prompt." = "使用在设置里填入的 token，或读取 hf auth login 保存在 ~/.cache/huggingface 里的 token。不弹钥匙串。";
@@ -818,7 +817,7 @@
 
 /* Codebuff */
 "Uses a key entered in Settings, or reads the login the codebuff CLI saved in ~/.config/manicode. No Keychain prompt." = "使用在设置里填入的 key，或读取 codebuff CLI 保存在 ~/.config/manicode 里的登录信息。不弹钥匙串。";
-"From codebuff.com. Optional — Pulse can use the login the codebuff CLI saved. Stored encrypted on this Mac." = "在 codebuff.com 获取。可不填——Pulse 能用 codebuff CLI 已保存的登录。加密保存在本机。";
+"From codebuff.com. Optional — Pulse can use the login the codebuff CLI saved. Stored encrypted on this Mac." = "在 codebuff.com 获取。可不填——Vigía 能用 codebuff CLI 已保存的登录。加密保存在本机。";
 
 /* Venice */
 "From venice.ai's API settings. Stored encrypted on this Mac." = "在 venice.ai 的 API 设置里获取。加密保存在本机。";
@@ -871,7 +870,7 @@
 "Last started" = "上次自动开始";
 "Use at your own risk" = "请自行承担风险";
 "I understand the risk, turn it on" = "我了解风险，开启";
-"This is not a feature of Anthropic or OpenAI. Starting usage windows automatically may be treated as getting around usage limits, and could get your account restricted or suspended. Pulse only sends one short message through the tool you are already signed in to, and is not responsible for anything that happens to your account as a result. Turn it on only if you accept that." = "这不是 Anthropic 或 OpenAI 提供的功能。自动开始用量窗口可能被视为规避用量限制，可能导致你的账号被限制或封禁。Pulse 只会通过你已登录的命令行工具发送一条简短消息，对你的账号因此受到的任何影响不承担责任。请确认接受这一点后再开启。";
+"This is not a feature of Anthropic or OpenAI. Starting usage windows automatically may be treated as getting around usage limits, and could get your account restricted or suspended. Pulse only sends one short message through the tool you are already signed in to, and is not responsible for anything that happens to your account as a result. Turn it on only if you accept that." = "这不是 Anthropic 或 OpenAI 提供的功能。自动开始用量窗口可能被视为规避用量限制，可能导致你的账号被限制或封禁。Vigía 只会通过你已登录的命令行工具发送一条简短消息，对你的账号因此受到的任何影响不承担责任。请确认接受这一点后再开启。";
 "Not started yet" = "还没有自动开始过";
 "%@ · the command-line tool was not found" = "%@ · 找不到命令行工具";
 "%@ · it did not go through; check the tool is signed in" = "%@ · 没有发送成功，请检查工具是否已登录";

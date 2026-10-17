@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// A ring for an account that reports money and no allowance.
@@ -122,7 +123,7 @@ final class BalanceBaselines {
         return mark
     }
 
-    private static let disk = DispatchQueue(label: "Pulse.balance-baseline", qos: .utility)
+    private static let disk = DispatchQueue(label: "Vigia.balance-baseline", qos: .utility)
 
     nonisolated private static func load(_ file: URL) -> [String: DeepSeekBaseline.Mark] {
         guard let data = try? Data(contentsOf: file) else { return [:] }

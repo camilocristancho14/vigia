@@ -1,6 +1,7 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
-/// `Pulse --json`: the app's last readings, on stdout, for anything that isn't
+/// `Vigia --json`: the app's last readings, on stdout, for anything that isn't
 /// the panel — a tmux status line, sketchybar, Raycast, a shell prompt.
 ///
 /// **It prints the cache and never fetches.** A status line polls every couple
@@ -16,7 +17,7 @@ import Foundation
 /// are localized in the app and would change under a script's feet, so they
 /// are not here: `kind` is a stable token, and `scope` and the provider's name
 /// are product names that are the same in every language. See
-/// [Docs/json-output.md](../../Docs/json-output.md).
+/// [docs/json-output.md](../../../docs/json-output.md).
 enum UsageReport {
     static let modeArgument = "--json"
 
@@ -41,7 +42,7 @@ enum UsageReport {
         done.wait()
 
         guard let data = encode(rail: rail, readings: readings.value, generatedAt: Date()) else {
-            FileHandle.standardError.write(Data("Pulse: could not encode the report\n".utf8))
+            FileHandle.standardError.write(Data("Vigía: could not encode the report\n".utf8))
             return 1
         }
 

@@ -6,6 +6,8 @@ Vigía is built from three open-source macOS apps. Their licenses are in `LICENS
 
 The application, the notch and edge panel, the usage rings, and the provider readers are modified from [Pulse](https://github.com/qunqin24/Pulse) by qunqin24, Apache License 2.0. See `LICENSES/Pulse-Apache-2.0.txt`. Modified files carry the line `Modified for Vigía from Pulse (Apache-2.0).`
 
+The user guides in `docs/setup/`, `docs/extensions.md`, `docs/integrations.md` and `docs/json-output.md`, and the developer kit in `Integrations/` (shell, sketchybar and Raycast), are adapted from Pulse's `Docs/` and `Integrations/` with the app's name, paths and URL scheme changed to Vigía's.
+
 This build does not include Pulse's Sparkle updater or its phone, window, or site extras. Installs come from GitHub Releases of this repository.
 
 ## codenotch

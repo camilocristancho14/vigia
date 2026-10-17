@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// Freebuff, which shares Codebuff's `manicode*` trees but persists no usage.
@@ -19,7 +20,7 @@ enum FreebuffUsageReader {
     /// The line a caller shows in place of a figure: no counters are persisted.
     static let limitation =
         "Freebuff stores no token counters; only character-based estimates exist, "
-        + "which Pulse does not report as usage."
+        + "which Vigía does not report as usage."
 
     /// Whether a chat belongs to Freebuff by its agent type.
     static func isFreebuff(_ message: [String: Any]) -> Bool {

@@ -69,27 +69,27 @@ struct CapturedUsageReadersTests {
 
         #expect(paths("cursor") == [
             "/opt/tokscale/cursor-cache",
-            "/home/tester/Library/Application Support/Pulse/UsageImports/cursor",
+            "/home/tester/Library/Application Support/Vigia/UsageImports/cursor",
         ])
         #expect(paths("antigravity") == [
             "/opt/tokscale/antigravity-cache/sessions",
-            "/home/tester/Library/Application Support/Pulse/UsageImports/antigravity",
+            "/home/tester/Library/Application Support/Vigia/UsageImports/antigravity",
         ])
         #expect(paths("trae") == [
             "/opt/tokscale/trae-cache/sessions",
-            "/home/tester/Library/Application Support/Pulse/UsageImports/trae",
+            "/home/tester/Library/Application Support/Vigia/UsageImports/trae",
         ])
         #expect(paths("warp") == [
             "/opt/tokscale/warp-cache",
-            "/home/tester/Library/Application Support/Pulse/UsageImports/warp",
+            "/home/tester/Library/Application Support/Vigia/UsageImports/warp",
         ])
         #expect(paths("hindsight") == [
             "/opt/hindsight/usage",
-            "/home/tester/Library/Application Support/Pulse/UsageImports/hindsight",
+            "/home/tester/Library/Application Support/Vigia/UsageImports/hindsight",
         ])
         #expect(paths("mcode") == [
             "/opt/tokscale/headless/mcode",
-            "/home/tester/Library/Application Support/Pulse/UsageImports/mcode",
+            "/home/tester/Library/Application Support/Vigia/UsageImports/mcode",
         ])
 
         // Defaults when no override is set.

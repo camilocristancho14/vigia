@@ -1,0 +1,56 @@
+#!/bin/bash
+# Modified for Vigía from Pulse (Apache-2.0).
+# Cached usage for a shell prompt or tmux. Requires jq; never fetches a provider.
+set -euo pipefail
+export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+format=plain
+stdin=false
+for argument in "$@"; do
+    case "$argument" in
+        --tmux) format=tmux ;;
+        --stdin) stdin=true ;;
+        *) printf 'Usage: vigia-status.sh [--tmux] [--stdin]\n' >&2; exit 2 ;;
+    esac
+done
+
+if ! command -v jq >/dev/null 2>&1; then
+    printf 'Vigía: install jq to use this integration.\n' >&2
+    exit 1
+fi
+max_age="${VIGIA_MAX_AGE:-1800}"
+case "$max_age" in ''|*[!0-9]*) printf 'Vigía: VIGIA_MAX_AGE must be seconds.\n' >&2; exit 2 ;; esac
+
+read_report() {
+    if "$stdin"; then
+        # jq receives stdin directly; this path also makes fixture checks possible.
+        jq -c .
+        return
+    fi
+    local binary="${VIGIA_BIN:-/Applications/Vigia.app/Contents/MacOS/Vigia}"
+    if [ -z "${VIGIA_BIN:-}" ] && [ ! -x "$binary" ]; then
+        binary="$HOME/Applications/Vigia.app/Contents/MacOS/Vigia"
+    fi
+    if [ ! -x "$binary" ]; then
+        printf 'Vigía: app not found. Set VIGIA_BIN to its executable.\n' >&2
+        return 1
+    fi
+    "$binary" --json
+}
+
+read_report | jq -er --arg account "${VIGIA_ACCOUNT:-}" --arg format "$format" --argjson maxAge "$max_age" '
+    def clean: gsub("[\u0000-\u001f\u007f]"; " ");
+    if (.accounts | type) != "array" then error("Invalid Vigía report") else . end |
+    [.accounts[] | select($account == "" or .id == $account) |
+        . as $a | .headline as $h |
+        ([.windows[]? | select(.id == $h.windowId)][0].estimated // false) as $estimated |
+        ((.label // .name) | clean) + ": " +
+        (if $h.usedPercent != null then
+            (if $estimated then "≈" else "" end) + ($h.usedPercent | tostring) + "% used"
+         elif .creditBalance != null then (.creditBalance | clean)
+         else "—" end) +
+        (if .observedAt == null or .ageSeconds == null then " (no reading)"
+         elif .ageSeconds >= $maxAge then " (old)" else "" end)
+    ] | if length == 0 then "Vigía —" else join(" · ") end |
+    if $format == "tmux" then gsub("#"; "##") else . end
+'

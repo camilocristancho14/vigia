@@ -1,7 +1,8 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 import ServiceManagement
 
-/// Starting Pulse when the user logs in.
+/// Starting Vigía when the user logs in.
 ///
 /// Two routes, for the same reason the usage services have two: the modern one
 /// is better but doesn't always apply.
@@ -105,11 +106,50 @@ enum LoginItem {
         _ = writeAgent()
     }
 
+    /// Carries a launch agent written under Pulse's label over to Vigía's.
+    ///
+    /// Builds from before the rename wrote `com.pulse.launch-at-login.plist`.
+    /// Left alone it would go on starting this app at login under a label that
+    /// `state` no longer looks at, so the switch in Settings would read off
+    /// while the app still started. It is only taken over when it starts
+    /// *this* app (`legacyAgentBelongsToVigia`); an agent of the upstream Pulse
+    /// app is somebody else's, and stays.
+    static func migrateLegacyAgentIfNeeded() {
+        let legacy = agentURL(label: legacyLabel)
+        guard FileManager.default.fileExists(atPath: legacy.path) else { return }
+        let arguments = (try? Data(contentsOf: legacy))
+            .flatMap { try? PropertyListSerialization.propertyList(from: $0, format: nil) as? [String: Any] }
+            .flatMap { $0["ProgramArguments"] as? [String] }
+        guard legacyAgentBelongsToVigia(programArguments: arguments, currentExecutable: Bundle.main.executablePath)
+        else { return }
+
+        // The new route first, and the old file removed only once that worked,
+        // so a failure leaves login launch as it was rather than off.
+        let adopted = usesAppService ? setEnabled(true) : writeAgent()
+        if adopted { try? FileManager.default.removeItem(at: legacy) }
+    }
+
+    /// Whether a launch agent's program is this app: the running executable,
+    /// or any build named Vigia (`Vigia.app/Contents/MacOS/Vigia`, wherever
+    /// it was installed). A program named `Pulse` that isn't this very binary
+    /// may be the upstream app, so it is not claimed.
+    static func legacyAgentBelongsToVigia(programArguments: [String]?, currentExecutable: String?) -> Bool {
+        guard let program = programArguments?.first, !program.isEmpty else { return false }
+        if let currentExecutable, program == currentExecutable { return true }
+        let url = URL(fileURLWithPath: program)
+        return url.lastPathComponent.caseInsensitiveCompare("Vigia") == .orderedSame
+            || url.pathComponents.contains { $0.caseInsensitiveCompare("Vigia.app") == .orderedSame }
+    }
+
     // MARK: - The launch agent
 
-    private static let label = "com.pulse.launch-at-login"
+    private static let label = "com.vigia.launch-at-login"
+    /// The label builds from before the rename used.
+    private static let legacyLabel = "com.pulse.launch-at-login"
 
-    private static var agentURL: URL {
+    private static var agentURL: URL { agentURL(label: label) }
+
+    private static func agentURL(label: String) -> URL {
         URL(fileURLWithPath: NSHomeDirectory())
             .appending(path: "Library/LaunchAgents/\(label).plist")
     }

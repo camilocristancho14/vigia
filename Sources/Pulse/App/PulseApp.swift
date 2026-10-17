@@ -28,6 +28,12 @@ enum PulseMain {
             exit(0)
         }
 
+        // Before anything opens a file in Application Support: builds from
+        // before the rename kept it in a folder called Pulse. Only renames,
+        // and only when Vigia's folder isn't there yet. After the status line
+        // branches, which never open that folder and run every few seconds.
+        PulseStorage.migrateIfNeeded()
+
         // Before `LegacyDefaults.migrateIfNeeded()` deliberately: this command
         // reads settings and must not be the thing that migrates them. A
         // status line running it every couple of seconds is not the moment to

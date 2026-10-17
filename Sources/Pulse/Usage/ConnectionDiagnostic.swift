@@ -1,3 +1,4 @@
+// Modified for Vigía from Pulse (Apache-2.0).
 import Foundation
 
 /// The latest completed check, kept separately from the reading the cache chose.
@@ -49,7 +50,7 @@ struct ConnectionDiagnostic: Equatable, Sendable {
         let formatter = ISO8601DateFormatter()
         func stamp(_ date: Date?) -> String { date.map(formatter.string) ?? "unknown" }
         var lines = [
-            "Pulse connection diagnostic (v1)",
+            "Vigía connection diagnostic (v1)",
             "version: \(version)",
             "generatedAt: \(stamp(now))",
             "provider: \(account.provider.rawValue)",
