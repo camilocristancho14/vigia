@@ -1584,10 +1584,11 @@ enum VectorMascots {
         case .testing: drawTestTube(in: &context, size: size, time: time, ink: colour ? nil : mono)
         case .longCommand: drawHourglass(in: &context, size: size, time: time, ink: colour ? nil : mono)
         case .sleep:
-            // The design's own Zs: drawn strokes in the character's blue.
+            // The design's own Zs. In colour they are white with a navy rim: in
+            // the character's own blue they vanished into agy's and Star
+            // Buddy's blue heads, which they overlap at bar size.
             var layer = context
             layer.scaleBy(x: unit, y: unit)
-            let hex: UInt32 = character == .cloudGhost ? 0x3941FF : 0x4893FC
             for index in 0..<2 {
                 let phase = (time * 0.35 + Double(index) / 2).truncatingRemainder(dividingBy: 1)
                 let side = style.simple ? 9 + 3 * phase : 3 + 2 * phase
@@ -1597,8 +1598,13 @@ enum VectorMascots {
                 z.addLine(to: CGPoint(x: origin.x + side, y: origin.y))
                 z.addLine(to: CGPoint(x: origin.x, y: origin.y + side))
                 z.addLine(to: CGPoint(x: origin.x + side, y: origin.y + side))
-                layer.stroke(z, with: .color(colour ? Color(hex: hex, opacity: 1 - phase) : mono.opacity(1 - phase)),
-                             style: StrokeStyle(lineWidth: style.stroke(style.simple ? 3 : 2), lineCap: .round, lineJoin: .round))
+                let width = style.stroke(style.simple ? 3 : 2)
+                if colour {
+                    layer.stroke(z, with: .color(Color(hex: 0x0E0B30, opacity: 1 - phase)),
+                                 style: StrokeStyle(lineWidth: width * 2, lineCap: .round, lineJoin: .round))
+                }
+                layer.stroke(z, with: .color(colour ? Color.white.opacity(1 - phase) : mono.opacity(1 - phase)),
+                             style: StrokeStyle(lineWidth: width, lineCap: .round, lineJoin: .round))
             }
         case .run, .type, .waking, .awake, .stretch: break
         }
