@@ -302,8 +302,8 @@
 "Clearer to the right. Darker reads better over bright pages." = "Clearer to the right. Darker reads better over bright pages.";
 "Open Antigravity or run agy to see its usage." = "Open Antigravity or run agy to see its usage.";
 "Asks the language server the Antigravity app or the agy CLI runs while it is open." = "Asks the language server the Antigravity app or the agy CLI runs while it is open.";
-"Only while Antigravity or agy is open." = "Only while Antigravity or agy is open.";
-"Antigravity or the agy CLI" = "Antigravity or the agy CLI";
+"Uses the login agy already saved. Nothing has to be open." = "Uses the login agy already saved. Nothing has to be open.";
+"agy's own login" = "agy's own login";
 
 /* Cursor */
 "Sign in to Cursor to see usage." = "Sign in to Cursor to see usage.";
@@ -625,7 +625,7 @@
 "Enable a service in its settings to start monitoring." = "Enable a service in its settings to start monitoring.";
 "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage." = "Reads Claude Code's saved login from Keychain or its credentials file. May ask for Keychain access, including Claude Desktop's cookie storage.";
 "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Pulse does not request Keychain access." = "Reads ~/.codex/auth.json and may run codex app-server with its saved login. Vigía does not request Keychain access.";
-"Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt." = "Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt.";
+"Reads the login saved in ~/.gemini/jetski-standalone-oauth-token by the agy CLI. No Keychain prompt." = "Reads the login saved in ~/.gemini/jetski-standalone-oauth-token by the agy CLI. No Keychain prompt.";
 "Reads the login saved in Cursor's local database. No Keychain prompt." = "Reads the login saved in Cursor's local database. No Keychain prompt.";
 "Reads the login saved in ~/.grok/auth.json. No Keychain prompt." = "Reads the login saved in ~/.grok/auth.json. No Keychain prompt.";
 "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt." = "Uses a key entered in Settings, or reads OpenCode's auth.json. No Keychain prompt.";

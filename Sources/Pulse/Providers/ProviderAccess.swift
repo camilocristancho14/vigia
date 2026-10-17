@@ -13,7 +13,7 @@ extension Provider {
         case .kiro:
             .localized("Runs Kiro CLI's native ACP usage method with its saved login. Pulse does not read or store Kiro credentials.")
         case .antigravity:
-            .localized("Reads the language server the Antigravity app or the agy CLI runs on this Mac, and its connection token when one is set. No Keychain prompt.")
+            .localized("Reads the login saved in ~/.gemini/jetski-standalone-oauth-token by the agy CLI. No Keychain prompt.")
         case .cursor, .grokBot:
             .localized("Reads the login saved in Cursor's local database. No Keychain prompt.")
         case .grok:

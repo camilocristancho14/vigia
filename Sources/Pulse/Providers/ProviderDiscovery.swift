@@ -27,7 +27,7 @@ extension Provider {
             return [local(".kiro"), local("Library/Application Support/kiro-cli")] + app("Kiro") + app("Kiro CLI")
         case .grok: return [local(".grok")]
         case .grokBot: return app("Grok Bot")
-        case .antigravity: return app("Antigravity")
+        case .antigravity: return [local(".gemini/jetski-standalone-oauth-token")]
         case .cursor:
             return [local("Library/Application Support/Cursor/User/globalStorage/state.vscdb")]
         case .openCodeGo: return [local(".local/share/opencode/auth.json")]
