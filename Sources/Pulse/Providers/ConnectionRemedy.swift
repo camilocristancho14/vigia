@@ -60,6 +60,23 @@ enum ConnectionRemedy: Equatable {
         }
     }
 
+    /// The step that signs a provider's own tool in, for the welcome window's
+    /// "installed, sign in first" list — the remedy its ring would offer for a
+    /// missing login, so the two never disagree. Nil for a provider that is
+    /// set up with a key or a browser session rather than a login of its own.
+    static func forSetup(of provider: Provider) -> Self? {
+        guard provider.canBeReadyWithoutSetup else { return nil }
+        let reason: ProviderUsage.Unavailability = switch provider {
+        case .claudeCode: .claudeSignInRequired
+        case .codex: .signInRequired
+        case .kiro: .kiroSignInRequired
+        case .grok: .grokSignInRequired
+        case .cursor, .grokBot: .cursorSignInRequired
+        default: .localLoginMissing
+        }
+        return forReason(reason, account: AccountKey(provider))
+    }
+
     var title: String {
         switch self {
         case .signIn: .localized("Sign in again…")

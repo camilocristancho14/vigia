@@ -60,17 +60,28 @@ enum JetBrainsAIUsageService {
         return reading(from: data, context: context)
     }
 
+    /// Every IDE's quota file that is there. A file only exists once AI
+    /// Assistant has signed in and been told its quota, so finding one is
+    /// also what makes this provider ready on a first launch — which is why
+    /// the folder listing and the existence check are handed in.
+    static func quotaFiles(home: URL, list: (String) -> [String], exists: (String) -> Bool) -> [URL] {
+        settingsRoots.flatMap { root -> [URL] in
+            let folder = home.appending(path: root)
+            return list(folder.path)
+                .filter { name in ideFolders.contains { name.lowercased().hasPrefix($0.lowercased()) } }
+                .map { folder.appending(path: $0).appending(path: quotaFile) }
+                .filter { exists($0.path) }
+        }
+    }
+
     /// The quota file written last, across every IDE that has one.
     static func newestQuotaFile(home: URL) -> URL? {
         let files = FileManager.default
-        let candidates = settingsRoots.flatMap { root -> [URL] in
-            let folder = home.appending(path: root)
-            let names = (try? files.contentsOfDirectory(atPath: folder.path)) ?? []
-            return names
-                .filter { name in ideFolders.contains { name.lowercased().hasPrefix($0.lowercased()) } }
-                .map { folder.appending(path: $0).appending(path: quotaFile) }
-                .filter { files.fileExists(atPath: $0.path) }
-        }
+        let candidates = quotaFiles(
+            home: home,
+            list: { (try? files.contentsOfDirectory(atPath: $0)) ?? [] },
+            exists: { files.fileExists(atPath: $0) }
+        )
         func modified(_ url: URL) -> Date {
             (try? files.attributesOfItem(atPath: url.path)[.modificationDate] as? Date) ?? .distantPast
         }

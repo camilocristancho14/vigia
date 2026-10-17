@@ -927,3 +927,15 @@
 "Once a day, from GitHub. Nothing is installed until you choose Update now." = "하루에 한 번 GitHub에서 확인합니다. '지금 업데이트'를 선택하기 전에는 아무것도 설치되지 않습니다.";
 "Update now" = "지금 업데이트";
 "Check for updates" = "업데이트 확인";
+/* First-run auto-detection and welcome window */
+"Add services" = "서비스 추가";
+"Choose any other services to monitor. The ones already on stay as they are." = "모니터링할 다른 서비스를 선택하세요. 이미 켜져 있는 서비스는 그대로 유지됩니다.";
+"Signed in on this Mac" = "이 Mac에서 로그인됨";
+"Vigía is ready" = "Vigía 준비 완료";
+"These services were already signed in on this Mac, so Vigía is monitoring them now. You can change this anytime in Settings." = "이 서비스들은 이 Mac에 이미 로그인되어 있어 Vigía가 지금 모니터링하고 있습니다. 설정에서 언제든지 변경할 수 있습니다.";
+"Monitoring now" = "모니터링 중";
+"Installed — sign in to add" = "설치됨 — 로그인하면 추가할 수 있음";
+"Connect Claude Code's status line" = "Claude Code 상태 표시줄 연결";
+"Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "로그인이 만료된 후에도 Claude Code 사용량을 읽을 수 있게 합니다. ~/.claude/settings.json을 편집하며, 설정에서 연결을 해제할 수 있습니다.";
+"Add more services…" = "다른 서비스 추가…";
+"Copied — run %@ in your terminal to sign in." = "복사됨 — 터미널에서 %@ 명령을 실행해 로그인하세요.";

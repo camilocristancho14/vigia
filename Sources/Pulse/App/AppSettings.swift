@@ -673,6 +673,21 @@ final class AppSettings {
     /// Discovery is metadata only. Neither list enables anything on its own.
     var detectedProviders: Set<Provider> = []
     var suggestedProviders: Set<Provider> = []
+    /// The detected providers whose own tool's login is saved, so they work
+    /// with no setup (`ProviderReadiness.ready`). A subset of
+    /// `detectedProviders`. Still metadata: the chooser ticks these for the
+    /// person to confirm, and only a first launch switches them on itself.
+    var readyProviders: Set<Provider> = []
+    /// Whether these defaults had never seen a launch — see
+    /// `ProviderSelection.isFreshInstall`.
+    var isFreshInstall = false
+
+    /// Replaces what discovery found with a newer look, as the first launch
+    /// does once the login shell has said where its tools are.
+    func applyReadiness(_ readiness: [Provider: ProviderReadiness]) {
+        detectedProviders = Set(readiness.filter { $0.value >= .installed }.keys)
+        readyProviders = Set(readiness.filter { $0.value == .ready }.keys)
+    }
 
     func selectProviders(_ providers: Set<Provider>) {
         guard !providers.isEmpty else { return }
@@ -1712,7 +1727,10 @@ final class AppSettings {
 
         let extras = (defaults.data(forKey: Key.extraAccounts))
             .flatMap { try? JSONDecoder().decode([ExtraAccount].self, from: $0) } ?? []
-        let detected = Provider.installedOnThisMac()
+        // Presence checks only, with Vigía's own `PATH`: quick enough for
+        // here, and the first launch looks again with the login shell's.
+        let readiness = Provider.readiness(on: .live())
+        let detected = Set(readiness.keys)
         // Before the stored choice is restored, which keeps only accounts it
         // knows: an extension missing from this list would lose its switch on
         // every launch.
@@ -1815,8 +1833,9 @@ final class AppSettings {
         settings.balanceBases = defaults.dictionary(forKey: Key.balanceBases) as? [String: String] ?? [:]
         settings.balanceBudgets = (defaults.dictionary(forKey: Key.balanceBudgets) as? [String: Double] ?? [:])
             .filter { $0.value.isFinite && $0.value > 0 }
-        settings.detectedProviders = detected
+        settings.applyReadiness(readiness)
         settings.suggestedProviders = selection.suggestedProviders
+        settings.isFreshInstall = selection.isFreshInstall
         settings.extensions = scan.extensions
         settings.extensionProblems = scan.problems
         settings.applyLanguage()

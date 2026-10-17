@@ -49,6 +49,11 @@ enum PulseMain {
             DemoMode.prepareDefaults()
         }
 
+        // Every window Vigía shows is made on purpose by `AppDelegate`; none
+        // is meant to come back by itself at launch because it was open at
+        // quit. Registered, not set, so a person's own choice still wins.
+        UserDefaults.standard.register(defaults: ["NSQuitAlwaysKeepsWindows": false])
+
         PulseApp.main()
     }
 }
@@ -57,14 +62,21 @@ struct PulseApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        // The AppKit delegate owns the status item so it can remove it at
-        // runtime. This scene supplies SwiftUI's required app scene without
-        // opening a second settings window; AppDelegate owns the real one.
-        Settings {
+        // SwiftUI needs one scene, and AppKit owns everything Vigía shows: the
+        // status item (so it can be removed at runtime) and the real settings
+        // window. So the scene is one that can never put anything on screen —
+        // a menu bar extra that is never inserted.
+        //
+        // **Not `Settings { EmptyView() }`, which this was.** That is a window,
+        // and macOS opened it on its own — on a first launch, and on any
+        // launch that restored it — so the first thing a new person saw was a
+        // blank white window titled "Vigía" that `AppDelegate` then closed and
+        // replaced. A scene with no window cannot be opened by anybody.
+        // `windowBecameKey` stays as the net under any window that still is.
+        MenuBarExtra("Vigía", isInserted: .constant(false)) {
             EmptyView()
         }
-        // The delegate owns the real settings window. Replacing the standard
-        // command keeps Command-, from opening this required but empty scene.
+        // The delegate owns the real settings window, and Command, opens it.
         .commands {
             CommandGroup(replacing: .appSettings) {
                 Button(String.localized("Settings…")) {

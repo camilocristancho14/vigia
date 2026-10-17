@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var demoMenuPanel: NSPanel?
     private var settingsWindow: SettingsWindowController?
     private var providerSetupWindow: ProviderSetupWindowController?
+    private var welcomeWindow: WelcomeWindowController?
     private var preparedClaude = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -105,17 +106,84 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         updateMenuBarItem()
 
         if settings.needsProviderSelection {
-            showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
+            if settings.isFreshInstall && !DemoMode.isActive {
+                beginFirstRun()
+            } else {
+                showProviderSelection(providers: Set(Provider.builtIn), mode: .initial)
+            }
         } else {
             startMonitoring()
             if !settings.suggestedProviders.isEmpty {
-                showProviderSelection(providers: settings.suggestedProviders, isInitial: false)
+                showProviderSelection(providers: settings.suggestedProviders, mode: .newlyDetected)
             }
         }
 
         if DemoMode.isActive {
             presentDemo()
         }
+    }
+
+    /// A first launch: switch on whatever is already signed in, and say so.
+    ///
+    /// Looks again first, with the login shell's `PATH` — the launch's own
+    /// look had only the four folders an app opened from Finder inherits, and
+    /// a CLI installed with nvm or bun is invisible there. That look is bounded
+    /// (`LoginShellPath.resolve`) and runs off the main thread; the menu bar
+    /// item is already up and says to choose services in the meantime.
+    ///
+    /// Only here, never on a later launch: this is the one moment nobody has
+    /// chosen anything yet, so turning on the services that are signed in is
+    /// the choice they would make, made for them and then shown to them.
+    /// Someone upgrading has already chosen, and is asked (`newlyDetected`).
+    private func beginFirstRun() {
+        Task { [weak self] in
+            let folders = await LoginShellPath.resolve()
+            let readiness = await Task.detached(priority: .userInitiated) {
+                Provider.readiness(on: .live(searchPath: folders))
+            }.value
+            self?.finishFirstRun(readiness)
+        }
+    }
+
+    private func finishFirstRun(_ readiness: [Provider: ProviderReadiness]) {
+        // Somebody may have chosen from the menu while the shell was asked.
+        guard settings.needsProviderSelection else { return }
+        settings.applyReadiness(readiness)
+        let ready = settings.readyProviders
+        guard !ready.isEmpty else {
+            showProviderSelection(providers: Set(Provider.builtIn), mode: .initial)
+            return
+        }
+        // Asked in the welcome window instead of the alert that would follow
+        // Claude Code being switched on, so it is decided before that happens.
+        let offersStatusLine = ready.contains(.claudeCode) && StatusLineHook.wouldOfferOnFirstRun
+        if offersStatusLine { StatusLineHook.markOffered() }
+
+        providerSetupWindow?.close()
+        // Starts monitoring through `settingsChanged`.
+        settings.selectProviders(ready)
+
+        func byName(_ providers: Set<Provider>) -> [Provider] {
+            providers.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
+        }
+        let needsSignIn = Set(readiness.filter { $0.value == .installed }.keys)
+            .filter { $0.canBeReadyWithoutSetup }
+        let welcome = WelcomeWindowController(
+            settings: settings,
+            enabled: byName(ready),
+            needsSignIn: byName(needsSignIn),
+            offersStatusLine: offersStatusLine,
+            addMore: { [weak self] in self?.showAddServices() }
+        )
+        welcomeWindow = welcome
+        welcome.show()
+    }
+
+    /// Everything not already on, for the welcome window's "Add more".
+    private func showAddServices() {
+        let shown = Set(settings.shownAccounts.map(\.provider))
+        providerSetupWindow?.close()
+        showProviderSelection(providers: Set(Provider.builtIn).subtracting(shown), mode: .addMore)
     }
 
     /// Screenshot scenes. The panel and the menu are already in the state
@@ -335,7 +403,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if let chooser = providerSetupWindow {
                 chooser.show()
             } else {
-                showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
+                showProviderSelection(providers: Set(Provider.builtIn), mode: .initial)
             }
         } else {
             showSettings()
@@ -351,8 +419,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.showGeneral()
     }
 
-    private func showProviderSelection(providers: Set<Provider>, isInitial: Bool) {
-        let window = ProviderSetupWindowController(settings: settings, providers: providers, isInitial: isInitial)
+    private func showProviderSelection(providers: Set<Provider>, mode: ProviderSetupMode) {
+        let window = ProviderSetupWindowController(settings: settings, providers: providers, mode: mode)
         providerSetupWindow = window
         window.show()
     }
@@ -361,6 +429,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         restoreMenuBarEntryPointIfNeeded()
         settingsWindow?.refreshTitle()
         providerSetupWindow?.refreshTitle()
+        welcomeWindow?.refreshTitle()
         guard !settings.needsProviderSelection else { return }
         if panelController == nil {
             // Enabling a service in Settings is also an initial choice.
@@ -619,7 +688,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func chooseServices() {
         providerSetupWindow?.close()
-        showProviderSelection(providers: Set(Provider.builtIn), isInitial: true)
+        showProviderSelection(providers: Set(Provider.builtIn), mode: .initial)
     }
 
     @objc private func openSettingsFromMenu() {

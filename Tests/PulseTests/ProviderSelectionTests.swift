@@ -22,10 +22,16 @@ struct ProviderSelectionTests {
             #expect(first.needsSelection)
             #expect(first.enabledAccounts.isEmpty)
             #expect(first.suggestedProviders.isEmpty)
+            // Restoring enables nothing; only the app's first launch may, and
+            // only this once.
+            #expect(first.isFreshInstall)
             // Closing without a selection does not become an implicit choice
             // from the offered list that restoration just stamped.
             let second = ProviderSelection.restore(in: defaults, knownAccounts: primaryAccounts, detected: detected)
-            #expect(second == first)
+            #expect(second.enabledAccounts == first.enabledAccounts)
+            #expect(second.suggestedProviders == first.suggestedProviders)
+            // And the second launch is no longer a first one.
+            #expect(!second.isFreshInstall)
         }
     }
 

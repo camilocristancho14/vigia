@@ -40,6 +40,7 @@ extension ProviderProfile {
         reportsSpendableBalance: false,
         setupSlug: "factory",
         discoveryPaths: [".factory"],
+        discoveryCommands: ["droid"],
         fetch: { await FactoryUsageService.fetch($0) }
     )
 }
