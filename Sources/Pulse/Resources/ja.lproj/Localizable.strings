@@ -909,3 +909,21 @@
 "No conversation is within its guaranteed cache time" = "保証時間内のキャッシュがある会話はありません";
 "Kept at least %@" = "最低 %@ 保持";
 "The latest one's guaranteed time ended at %@." = "直近の会話の保証時間は %@ に終わりました。";
+
+/* Updates and attention */
+"Couldn't download the update." = "アップデートをダウンロードできませんでした。";
+"The downloaded update didn't check out, so nothing was changed." = "ダウンロードしたアップデートを検証できなかったため、何も変更していません。";
+"Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page." = "Vigía は現在の場所では自身を置き換えられません。アプリケーションフォルダへ移動するか、リリースページからアップデートをダウンロードしてください。";
+"Couldn't start the installer, so nothing was changed." = "インストーラを起動できなかったため、何も変更していません。";
+"Vigía %@ available — Update" = "Vigía %@ が利用可能 — アップデート";
+"Downloading Vigía %@…" = "Vigía %@ をダウンロード中…";
+"Installing… Vigía will reopen by itself." = "インストール中… Vigía は自動的に再起動します。";
+"The update failed — open the release page" = "アップデートに失敗しました — リリースページを開く";
+"1 service needs attention" = "1 件のサービスに対応が必要です";
+"%lld services need attention" = "%lld 件のサービスに対応が必要です";
+"Needs attention" = "対応が必要";
+"The update failed" = "アップデートに失敗しました";
+"Open release page" = "リリースページを開く";
+"Once a day, from GitHub. Nothing is installed until you choose Update now." = "1 日 1 回、GitHub から確認します。「今すぐアップデート」を選ぶまで何もインストールされません。";
+"Update now" = "今すぐアップデート";
+"Check for updates" = "アップデートを確認";

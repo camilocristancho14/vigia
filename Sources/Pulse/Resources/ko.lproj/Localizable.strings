@@ -909,3 +909,21 @@
 "No conversation is within its guaranteed cache time" = "보장 시간 안에 캐시가 남은 대화가 없습니다";
 "Kept at least %@" = "최소 %@ 유지";
 "The latest one's guaranteed time ended at %@." = "가장 최근 대화의 보장 시간은 %@에 끝났습니다.";
+
+/* Updates and attention */
+"Couldn't download the update." = "업데이트를 다운로드할 수 없습니다.";
+"The downloaded update didn't check out, so nothing was changed." = "다운로드한 업데이트를 확인할 수 없어 아무것도 변경하지 않았습니다.";
+"Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page." = "Vigía는 현재 위치에서 스스로를 교체할 수 없습니다. 응용 프로그램 폴더로 옮기거나 릴리스 페이지에서 업데이트를 다운로드하세요.";
+"Couldn't start the installer, so nothing was changed." = "설치 프로그램을 시작할 수 없어 아무것도 변경하지 않았습니다.";
+"Vigía %@ available — Update" = "Vigía %@ 사용 가능 — 업데이트";
+"Downloading Vigía %@…" = "Vigía %@ 다운로드 중…";
+"Installing… Vigía will reopen by itself." = "설치 중… Vigía가 자동으로 다시 열립니다.";
+"The update failed — open the release page" = "업데이트 실패 — 릴리스 페이지 열기";
+"1 service needs attention" = "서비스 1개에 조치가 필요합니다";
+"%lld services need attention" = "서비스 %lld개에 조치가 필요합니다";
+"Needs attention" = "조치 필요";
+"The update failed" = "업데이트 실패";
+"Open release page" = "릴리스 페이지 열기";
+"Once a day, from GitHub. Nothing is installed until you choose Update now." = "하루에 한 번 GitHub에서 확인합니다. '지금 업데이트'를 선택하기 전에는 아무것도 설치되지 않습니다.";
+"Update now" = "지금 업데이트";
+"Check for updates" = "업데이트 확인";

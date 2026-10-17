@@ -646,6 +646,38 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
         /// answer, not an outage.
         case noPlan
 
+        /// See `ProviderUsage.needsAttention`. Exhaustive on purpose: a new
+        /// reason has to be decided here, not fall into one side by default.
+        var needsAttention: Bool {
+            switch self {
+            case .loading, .awaitingResponse, .noLimitsReported,
+                 .unreachable, .rateLimited, .serverError, .unreadableReply,
+                 .noPlan, .grokBotNotIncluded, .zaiNoCodingPlan, .xiaomiNoCodingPlan,
+                 .qoderNoCredits, .stepFunNoPlan:
+                return false
+            case .notConnected, .signInRequired, .claudeSignInRequired, .claudeLoginExpired,
+                 .claudeDesktopNotSignedIn, .claudeDesktopKeyRefused, .claudeDesktopSessionExpired,
+                 .codexNotInstalled, .codexServerFailed,
+                 .kiroNotInstalled, .kiroVersionUnsupported, .kiroSignInRequired,
+                 .antigravityNotRunning, .antigravityNotAnswering,
+                 .cursorSignInRequired, .cursorLoginExpired,
+                 .grokSignInRequired, .grokLoginExpired,
+                 .signedOut, .notSignedIn,
+                 .ollamaSessionMissing, .ollamaSessionExpired, .ollamaPageChanged,
+                 .volcengineCLIMissing, .volcengineSignInRequired,
+                 .devinAppMissing, .devinPlanUnread, .devinOrganizationMissing,
+                 .xiaomiSessionMissing, .xiaomiSessionExpired,
+                 .qoderSessionMissing, .qoderSessionExpired,
+                 .stepFunSessionMissing, .stepFunSessionExpired,
+                 .serverAddressMissing, .serverAddressRefused,
+                 .apiKeyMissing, .apiKeyRefused,
+                 .extensionMissing, .extensionTimedOut, .extensionFailed, .extensionSignedOut,
+                 .sessionMissing, .sessionExpired,
+                 .localLoginMissing, .localLoginExpired, .localAppMissing:
+                return true
+            }
+        }
+
         var message: String {
             switch self {
             case .loading: .localized("Loading…")
@@ -710,6 +742,21 @@ struct ProviderUsage: Identifiable, Equatable, Sendable {
             case .noPlan: .localized("This account has no plan with usage limits.")
             }
         }
+    }
+
+    /// Whether this reading is something the person has to act on — the red
+    /// in the menu, the menu bar icon and the settings sidebar.
+    ///
+    /// **A reason is not an alarm by itself.** Still loading, waiting for the
+    /// next Claude Code reply, a service that briefly did not answer or asked
+    /// us to slow down: each clears on its own, and painting them red would
+    /// teach people to ignore the colour — an offline laptop would light up
+    /// every account at once. An account that has no plan, or a plan without
+    /// limits, is an answer about the account, not a fault in the connection.
+    /// What is left needs a sign-in, a key, an app or a tool, and says so.
+    var needsAttention: Bool {
+        guard case .unavailable(let reason) = state else { return false }
+        return reason.needsAttention
     }
 
     enum State: Equatable, Sendable {

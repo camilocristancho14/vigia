@@ -446,17 +446,38 @@ struct SettingsView: View {
     }
 
     private func row(_ pane: SettingsPane) -> some View {
-        Label {
-            Text(title(pane))
-        } icon: {
-            switch pane {
-            case .account(let account):
-                LobeIconView(provider: account.provider, size: 14)
-            default:
-                Image(systemName: pane.symbol)
+        HStack(spacing: 6) {
+            Label {
+                Text(title(pane))
+            } icon: {
+                switch pane {
+                case .account(let account):
+                    LobeIconView(provider: account.provider, size: 14)
+                default:
+                    Image(systemName: pane.symbol)
+                }
+            }
+            if needsAttention(pane) {
+                Spacer(minLength: 0)
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 7, height: 7)
+                    .accessibilityLabel(Text(localized: "Needs attention"))
             }
         }
         .tag(pane)
+    }
+
+    /// The red dot in the sidebar: About when a newer Vigía is out, and an
+    /// enabled account whose reading needs somebody to act — the same rule as
+    /// the menu's "N services need attention" (`ProviderUsage.needsAttention`).
+    /// A switched-off account is never red; nobody asked it to work.
+    private func needsAttention(_ pane: SettingsPane) -> Bool {
+        switch pane {
+        case .about: update.newer != nil
+        case .account(let account): settings.isEnabled(account) && store.usage(for: account).needsAttention
+        default: false
+        }
     }
 
     // MARK: - Panes
@@ -3529,22 +3550,30 @@ struct SettingsView: View {
     private var about: some View {
         VStack(alignment: .leading, spacing: 22) {
             SettingsGroup {
-                SettingsRow(String.localized("Version"), subtitle: updateSubtitle) {
+                SettingsRow(
+                    String.localized("Version"),
+                    subtitle: updateSubtitle,
+                    subtitleTint: update.newer != nil ? .red : nil
+                ) {
                     if update.canCheck {
-                        // Sparkle puts up its own window with whatever it
-                        // finds, so this is the same button either way — there
-                        // is nothing for Pulse to draw on top of it.
-                        Button(
-                            update.newer.map { String.localized("Update to \($0.version)") }
-                                ?? String.localized("Check now")
-                        ) {
-                            update.check()
-                        }
-                        .disabled(update.isChecking)
+                        updateControl
                     } else {
                         Text(Self.version)
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
+                    }
+                }
+
+                if update.newer != nil, case .failed(let failure) = update.install {
+                    SettingsRowDivider()
+                    SettingsRow(
+                        String.localized("The update failed"),
+                        subtitle: failure.message,
+                        subtitleTint: .red
+                    ) {
+                        Button(String.localized("Open release page")) {
+                            update.openReleasePage()
+                        }
                     }
                 }
 
@@ -3553,7 +3582,7 @@ struct SettingsView: View {
 
                     SettingsRow(
                         String.localized("Check automatically"),
-                        subtitle: String.localized("Every two hours. Updates are offered, never installed on their own.")
+                        subtitle: String.localized("Once a day, from GitHub. Nothing is installed until you choose Update now.")
                     ) {
                         Toggle("", isOn: Binding(
                             get: { update.checksAutomatically },
@@ -3648,13 +3677,47 @@ struct SettingsView: View {
         }
     }
 
+    /// "Update now" while a newer version is waiting, its progress while it
+    /// installs, and "Check for updates" otherwise.
+    @ViewBuilder
+    private var updateControl: some View {
+        if update.newer != nil {
+            switch update.install {
+            case .downloading, .installing:
+                ProgressView()
+                    .controlSize(.small)
+            case .idle, .failed:
+                Button(String.localized("Update now")) {
+                    update.installNewer()
+                }
+                .tint(.red)
+                .buttonStyle(.borderedProminent)
+            }
+        } else {
+            HStack(spacing: 8) {
+                if update.isChecking {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+                Button(String.localized("Check for updates")) {
+                    update.check()
+                }
+                .disabled(update.isChecking)
+            }
+        }
+    }
+
     /// The version, and what is known about a newer one. All four states are
     /// distinguishable on purpose: "no update" and "couldn't ask" look
     /// identical otherwise, and a check that silently failed is worse than one
     /// that says so.
     private var updateSubtitle: String {
         if let newer = update.newer {
-            return .localized("\(Self.version) installed · \(newer.version) available")
+            switch update.install {
+            case .downloading: return .localized("Downloading Vigía \(newer.version)…")
+            case .installing: return .localized("Installing… Vigía will reopen by itself.")
+            case .idle, .failed: return .localized("\(Self.version) installed · \(newer.version) available")
+            }
         }
         if update.isChecking { return .localized("Checking…") }
         if update.didFail { return .localized("Couldn't reach the update feed.") }

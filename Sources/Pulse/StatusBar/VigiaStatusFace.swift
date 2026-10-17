@@ -102,6 +102,61 @@ enum VigiaStatusFace {
     }
 }
 
+/// The small red dot in the menu bar item's top-right corner: a newer Vigía,
+/// or an account that needs fixing.
+///
+/// **A view of its own on top of the button, never part of what is drawn.**
+/// The item's face is either the live mascots (a hosting view inside the
+/// button) or an image `MenuBarReading` composes; painting into either would
+/// mean teaching every mascot, ring and colour mode about it, and the
+/// snapshot taken while the menu is open would freeze it in or out. Laid over
+/// the corner instead, it is the same six points whatever is underneath, and
+/// takes no width — the item does not move when it comes or goes.
+@MainActor
+enum StatusAttentionDot {
+    private static var dot: DotView?
+    static let diameter: CGFloat = 6
+
+    static func show(_ visible: Bool, on button: NSStatusBarButton) {
+        guard visible else {
+            dot?.isHidden = true
+            return
+        }
+        let dot = dot ?? {
+            let made = DotView(frame: NSRect(x: 0, y: 0, width: diameter, height: diameter))
+            made.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                made.widthAnchor.constraint(equalToConstant: diameter),
+                made.heightAnchor.constraint(equalToConstant: diameter)
+            ])
+            return made
+        }()
+        self.dot = dot
+        // Last among the button's subviews, so it sits over the mascots'
+        // hosting view, which can be added after it.
+        if dot.superview !== button || button.subviews.last !== dot {
+            dot.removeFromSuperview()
+            button.addSubview(dot, positioned: .above, relativeTo: nil)
+            NSLayoutConstraint.activate([
+                dot.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -1),
+                dot.topAnchor.constraint(equalTo: button.topAnchor, constant: 2)
+            ])
+        }
+        dot.isHidden = false
+    }
+
+    private final class DotView: NSView {
+        override var isFlipped: Bool { true }
+        /// Clicks go to the button, which opens the menu.
+        override func hitTest(_ point: NSPoint) -> NSView? { nil }
+
+        override func draw(_ dirtyRect: NSRect) {
+            NSColor.systemRed.setFill()
+            NSBezierPath(ovalIn: bounds).fill()
+        }
+    }
+}
+
 /// Lets the SwiftUI row decide how wide the status item is, and lets every
 /// click through to the button underneath, which opens the menu.
 final class MascotHostingView: NSHostingView<MenuBarMascotsView> {

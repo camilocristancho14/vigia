@@ -963,3 +963,21 @@
 "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working.";
 "Used up until it resets" = "Used up until it resets";
 "Claude and GPT" = "Claude and GPT";
+
+/* Updates and attention */
+"Couldn't download the update." = "Couldn't download the update.";
+"The downloaded update didn't check out, so nothing was changed." = "The downloaded update didn't check out, so nothing was changed.";
+"Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page." = "Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page.";
+"Couldn't start the installer, so nothing was changed." = "Couldn't start the installer, so nothing was changed.";
+"Vigía %@ available — Update" = "Vigía %@ available — Update";
+"Downloading Vigía %@…" = "Downloading Vigía %@…";
+"Installing… Vigía will reopen by itself." = "Installing… Vigía will reopen by itself.";
+"The update failed — open the release page" = "The update failed — open the release page";
+"1 service needs attention" = "1 service needs attention";
+"%lld services need attention" = "%lld services need attention";
+"Needs attention" = "Needs attention";
+"The update failed" = "The update failed";
+"Open release page" = "Open release page";
+"Once a day, from GitHub. Nothing is installed until you choose Update now." = "Once a day, from GitHub. Nothing is installed until you choose Update now.";
+"Update now" = "Update now";
+"Check for updates" = "Check for updates";

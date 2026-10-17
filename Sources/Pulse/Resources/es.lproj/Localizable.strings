@@ -838,3 +838,21 @@
 "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Dibuja a Cloud Ghost en lugar del logo de Codex. Sus ojos se vuelven un prompt mientras Codex trabaja.";
 "Used up until it resets" = "Agotado hasta el reinicio";
 "Claude and GPT" = "Claude y GPT";
+
+/* Updates and attention */
+"Couldn't download the update." = "No se pudo descargar la actualización.";
+"The downloaded update didn't check out, so nothing was changed." = "La actualización descargada no pasó la verificación, así que no se cambió nada.";
+"Vigía can't replace itself where it is. Move it to Applications, or download the update from the release page." = "Vigía no puede reemplazarse a sí misma donde está. Muévela a Aplicaciones o descarga la actualización desde la página de la versión.";
+"Couldn't start the installer, so nothing was changed." = "No se pudo iniciar el instalador, así que no se cambió nada.";
+"Vigía %@ available — Update" = "Vigía %@ disponible — Actualizar";
+"Downloading Vigía %@…" = "Descargando Vigía %@…";
+"Installing… Vigía will reopen by itself." = "Instalando… Vigía se volverá a abrir sola.";
+"The update failed — open the release page" = "La actualización falló — abrir la página de la versión";
+"1 service needs attention" = "1 servicio necesita atención";
+"%lld services need attention" = "%lld servicios necesitan atención";
+"Needs attention" = "Necesita atención";
+"The update failed" = "La actualización falló";
+"Open release page" = "Abrir página de la versión";
+"Once a day, from GitHub. Nothing is installed until you choose Update now." = "Una vez al día, desde GitHub. No se instala nada hasta que elijas Actualizar ahora.";
+"Update now" = "Actualizar ahora";
+"Check for updates" = "Buscar actualizaciones";
