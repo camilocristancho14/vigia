@@ -1,0 +1,65 @@
+#!/bin/bash
+# Notificador manual de Grok Bot -> Vigía. Nunca bloquea, siempre sale 0, nunca envía el comando.
+# Uso: vigia-grok UserPromptSubmit | PreToolUse <tool> [cmd...] | PostToolUse <tool> [cmd...] | Stop
+# VIGIA_URL_OVERRIDE: solo para pruebas (reemplaza la URL principal y omite las extra).
+# VIGIA_AGENT=<nombre>: agente que avisa (Alfred, Dobby...). Default Alfred.
+# VIGIA_GROK_SYNC=1: espera a los POST (pruebas).
+#
+# Cada llamada también se asegura (barato, sin bloquear) de que
+# vigia-grok-watch -- el detector de bots sin configuración de
+# scripts/grok-bot-watch -- esté corriendo, para no depender de que alguien lo
+# arranque a mano. Y si el watcher y un aviso manual coinciden, uno de los dos
+# se descarta (dedupe por agente+evento, stamp en $VIGIA_STATE_DIR/dedupe).
+{
+  state_dir="${VIGIA_STATE_DIR:-$HOME/.cache/vigia}"
+  watch_bin="$HOME/bin/vigia-grok-watch"
+  mkdir -p "$state_dir" 2>/dev/null
+  if [ -x "$watch_bin" ]; then
+    watch_pidfile="$state_dir/watch.pid"
+    running=0
+    if [ -f "$watch_pidfile" ]; then
+      wpid=$(cat "$watch_pidfile" 2>/dev/null)
+      [ -n "$wpid" ] && kill -0 "$wpid" 2>/dev/null && running=1
+    fi
+    [ "$running" -eq 0 ] && ( nohup "$watch_bin" >>/tmp/vigia-grok-watch.log 2>&1 & ) 2>/dev/null
+  fi
+
+  . /home/box/.claude/vigia-notify.sh   # solo define el clasificador (vigia_command_kind)
+  event=${1-}; tool=${2-}; shift 2 2>/dev/null; cmd="$*"
+  case "$event" in UserPromptSubmit|Stop) tool= ;; PreToolUse|PostToolUse) [ -n "$tool" ] || exit 0 ;; *) exit 0 ;; esac
+
+  agent=${VIGIA_AGENT:-Alfred}
+  safe_agent=$(printf '%s' "$agent" | tr -c 'A-Za-z0-9_-' '_')
+  dedupe_dir="$state_dir/dedupe"
+  mkdir -p "$dedupe_dir" 2>/dev/null
+  stamp="$dedupe_dir/${safe_agent}__${event}"
+  window=${VIGIA_DEDUPE_WINDOW:-5}
+  if [ -f "$stamp" ]; then
+    last=$(stat -c %Y "$stamp" 2>/dev/null || stat -f %m "$stamp" 2>/dev/null || echo 0)
+    now=$(date +%s)
+    if [ "$((now - last))" -lt "$window" ] 2>/dev/null; then
+      exit 0
+    fi
+  fi
+
+  CONF="$HOME/.config/vigia/env"; [ -r "$CONF" ] || exit 0
+  . "$CONF"
+  extra=$VIGIA_URLS_EXTRA
+  if [ -n "$VIGIA_URL_OVERRIDE" ]; then VIGIA_URL=$VIGIA_URL_OVERRIDE; extra=; fi
+  [ -n "$VIGIA_URL" ] && [ -n "$VIGIA_TOKEN" ] || exit 0
+  touch "$stamp" 2>/dev/null
+  kind=; [ -n "$cmd" ] && kind=$(LC_ALL=C vigia_command_kind "$cmd"); unset cmd
+  body=$(jq -cn --arg e "$event" --arg t "$tool" --arg k "$kind" --arg a "$agent" \
+    '{provider:"grokBot",source:"grok-bot",event:$e,agent:$a} + (if $t=="" then {} else {tool:$t} end) + (if $k=="" then {} else {kind:$k} end)')
+  n=0
+  for url in $VIGIA_URL $extra; do
+    if [ $n -eq 0 ]; then target=principal; tok=$VIGIA_TOKEN; else target="extra $n"; tok=$VIGIA_TOKEN; [ -n "$VIGIA_TOKEN_NEO" ] && tok=$VIGIA_TOKEN_NEO; fi
+    ( code=$(timeout 5 curl -s --connect-timeout 2 --max-time 3 -o /dev/null -w '%{http_code}' -X POST "$url" \
+        -H "Authorization: Bearer $tok" -H 'Content-Type: application/json' -d "$body" 2>/dev/null)
+      [ -n "$code" ] || code=000
+      echo "$(date -Iseconds) grokBot[$agent] $event ${tool:--} ${kind:--} target=\"$target\" http=$code" >> /tmp/vigia-notify.log ) &
+    n=$((n+1))
+  done
+  [ "$VIGIA_GROK_SYNC" = 1 ] && wait
+} >/dev/null 2>&1 </dev/null
+exit 0

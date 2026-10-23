@@ -65,6 +65,12 @@ Claude en el navegador o en la app de Mac se detecta mirando la conversación m�
 
 **Color de la barra.** Vigía lee el fondo de pantalla bajo la barra de menú de cada pantalla (sin pedir permisos) y, si una mascota se confunde con él —Clawd naranja sobre un fondo naranja, por ejemplo—, la dibuja en blanco o negro, la que se vea en todas tus pantallas a la vez. Está apagado por defecto; úsalo solo por una red privada (Tailscale o un túnel SSH).
 
+### Grok Bot, sin configurar nada
+
+En la máquina donde corren los bots de Grok (el "box"), `scripts/vigia-grok` es el aviso manual: `VIGIA_AGENT=Dobby vigia-grok UserPromptSubmit|Stop` (y `PreToolUse`/`PostToolUse` con el nombre de la herramienta) manda `{"provider":"grokBot","agent":"Dobby",...}` a Vigía. Varios bots a la vez se ven aparte: "Dobby trabajando", "Dobby y Alfred trabajando", "3 bots trabajando", y "Dobby terminó" unos segundos tras su `Stop`.
+
+Para no depender de que cada bot avise a mano, `scripts/grok-bot-watch` vigila el box cada 2 s: agrupa los procesos activos por conversación, los relaciona con un bot leyendo `profile.json` en la carpeta de agentes (sin nombres fijos en el código), y llama a `vigia-grok` solo. `scripts/install-grok-bot-watch.sh` instala ambos scripts en `~/bin` y arranca el vigilante en segundo plano (idempotente: no hace falta pararlo para reinstalar, y `vigia-grok` lo vuelve a levantar solo si se cae). Registro en `/tmp/vigia-grok-watch.log`, sin comandos ni secretos.
+
 ## Capturas
 
 El notch plegado, el notch abierto, la barra de menú con su menú, y la ventana de ajustes:
@@ -107,9 +113,10 @@ También puedes descargar `Vigia.zip` y descomprimirlo. Requiere macOS 14 o post
 Requiere Swift 6 y macOS 14 o posterior.
 
 ```bash
-swift test                  # pruebas
+swift test                     # pruebas
 scripts/test-vigia-notify.sh   # reglas de comandos del hook contra la misma tabla que swift test
-scripts/make-app.sh         # arma build.noindex/Vigia.app, Vigia.dmg y Vigia.zip
+scripts/test-grok-bot-watch.py # atribución/transiciones del vigilante de Grok Bot (sin red, sin box real)
+scripts/make-app.sh            # arma build.noindex/Vigia.app, Vigia.dmg y Vigia.zip
 ```
 
 Las capturas de `docs/` salen de `scripts/capture-screenshots.sh`, que lanza la app real en modo demo (datos de ejemplo, sin red ni sesiones reales) y la CI las publica como artefacto. La rama `main` está protegida: los cambios entran por Pull Request.
