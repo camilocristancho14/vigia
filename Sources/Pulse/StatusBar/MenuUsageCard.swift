@@ -7,12 +7,41 @@ import SwiftUI
 
 enum MenuCardLayout {
     static let width: CGFloat = 292
-    static let padding: CGFloat = 12
-    static let percentColumn: CGFloat = 42
-    static let resetColumn: CGFloat = 96
-    static let barHeight: CGFloat = 5
+    static let padding: CGFloat = 10
+    static let nameColumn: CGFloat = 88
+    static let percentColumn: CGFloat = 34
+    static let resetColumn: CGFloat = 76
+    static let barHeight: CGFloat = 4
+    static let cornerRadius: CGFloat = 12
     /// A reading older than this is no longer called fresh.
     static let freshFor: TimeInterval = 15 * 60
+}
+
+/// A translucent, softly bordered card background: Liquid Glass where the
+/// system offers it, `.ultraThinMaterial` everywhere else. `#if
+/// compiler(>=6.2)` keeps `glassEffect` (macOS 26+ SDK only) from breaking a
+/// build on an older Xcode entirely — `if #available` alone only guards the
+/// runtime check, not whether the symbol exists to compile against.
+private extension View {
+    @ViewBuilder
+    func glassCard(cornerRadius: CGFloat) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        #if compiler(>=6.2)
+        if #available(macOS 26, *) {
+            self.glassEffect(in: shape)
+                .overlay(shape.strokeBorder(Color.white.opacity(0.14), lineWidth: 0.5))
+                .shadow(color: .black.opacity(0.22), radius: 12, y: 5)
+        } else {
+            self.background(.ultraThinMaterial, in: shape)
+                .overlay(shape.strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5))
+                .shadow(color: .black.opacity(0.22), radius: 10, y: 4)
+        }
+        #else
+        self.background(.ultraThinMaterial, in: shape)
+            .overlay(shape.strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.22), radius: 10, y: 4)
+        #endif
+    }
 }
 
 struct MenuUsageCard: View {
@@ -26,7 +55,7 @@ struct MenuUsageCard: View {
     @Environment(\.usageWarningThreshold) private var warningThreshold
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 9) {
+        VStack(alignment: .leading, spacing: 6) {
             header
 
             ForEach(usage.windows) { window in
@@ -53,9 +82,7 @@ struct MenuUsageCard: View {
         }
         .padding(MenuCardLayout.padding)
         .frame(width: MenuCardLayout.width, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color(white: 0.07)))
-        .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1))
+        .glassCard(cornerRadius: MenuCardLayout.cornerRadius)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(String.localized("\(title ?? usage.provider.displayName) usage details"))
     }
@@ -106,32 +133,34 @@ struct MenuUsageCard: View {
 
     // MARK: Rows
 
+    /// One thin line per limit: label, bar, percent, reset -- all the notch
+    /// card's second screenful used to take two lines for.
     private func row(_ window: UsageWindow) -> some View {
         let spent = UsageTint.isSpent(window)
         let risk = Self.risk(of: window, warningAt: warningThreshold, forecast: showsForecast, now: now)
         let progress = showsRemaining ? window.remainingFraction : window.usedFraction
         let reset = Self.resetText(window, now: now)
-        return VStack(alignment: .leading, spacing: 4) {
-            Text(verbatim: window.name)
-                .font(.system(size: 11.5, weight: .regular, design: .rounded))
-                .foregroundStyle(.primary.opacity(0.85))
-                .lineLimit(1)
-                .truncationMode(.middle)
-
-            HStack(alignment: .center, spacing: 8) {
+        return VStack(alignment: .leading, spacing: 2) {
+            HStack(alignment: .center, spacing: 6) {
+                Text(verbatim: window.name)
+                    .font(.system(size: 10.5, weight: .regular, design: .rounded))
+                    .foregroundStyle(.primary.opacity(0.85))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .frame(width: MenuCardLayout.nameColumn, alignment: .leading)
                 bar(progress, colour: risk.colour)
                 Text(verbatim: window.percentText(remaining: showsRemaining))
-                    .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                    .font(.system(size: 11.5, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(spent ? Color.pulseExhausted : risk.colour == .pulseGood ? .primary : risk.colour)
                     .frame(width: MenuCardLayout.percentColumn, alignment: .trailing)
                 HStack(spacing: 3) {
                     if !reset.isEmpty {
                         Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 8.5, weight: .semibold))
+                            .font(.system(size: 8, weight: .semibold))
                     }
                     Text(verbatim: reset)
-                        .font(.system(size: 10.5, weight: .regular, design: .rounded))
+                        .font(.system(size: 9.5, weight: .regular, design: .rounded))
                         .monospacedDigit()
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -142,9 +171,10 @@ struct MenuUsageCard: View {
 
             if let warning = risk.warning {
                 Text(verbatim: warning)
-                    .font(.system(size: 10.5, weight: .medium, design: .rounded))
+                    .font(.system(size: 10, weight: .medium, design: .rounded))
                     .foregroundStyle(risk.colour)
                     .lineLimit(1)
+                    .padding(.leading, MenuCardLayout.nameColumn + 6)
             }
         }
         .accessibilityElement(children: .ignore)
