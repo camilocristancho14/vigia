@@ -116,13 +116,18 @@ struct RemoteActivityLedger: Sendable {
     func agentActivityText(for provider: Provider, now: Date) -> (text: String, since: Date?)? {
         guard let perAgent = agentEntries[provider], !perAgent.isEmpty else { return nil }
 
-        let working = perAgent
-            .filter { $0.value.working && now.timeIntervalSince($0.value.at) <= $0.value.grace }
-            .map { (name: $0.key, at: $0.value.at) }
-            .sorted { $0.at == $1.at ? $0.name < $1.name : $0.at < $1.at }
+        var working: [(name: String, at: Date)] = []
+        for (name, entry) in perAgent {
+            let isLive: Bool = entry.working && now.timeIntervalSince(entry.at) <= entry.grace
+            if isLive { working.append((name: name, at: entry.at)) }
+        }
+        working.sort { left, right in
+            left.at == right.at ? left.name < right.name : left.at < right.at
+        }
 
         if !working.isEmpty {
-            let names = working.map(\.name)
+            var names: [String] = []
+            for item in working { names.append(item.name) }
             let text: String
             switch names.count {
             case 1: text = String.localized("\(names[0]) working")
@@ -132,12 +137,18 @@ struct RemoteActivityLedger: Sendable {
             return (text, working.first?.at)
         }
 
-        guard let justFinished = perAgent
-            .filter({ !$0.value.working && now.timeIntervalSince($0.value.at) <= Self.justFinishedGrace })
-            .max(by: { $0.value.at < $1.value.at })
-        else { return nil }
-
-        return (String.localized("\(justFinished.key) finished"), justFinished.value.at)
+        var lastFinishedName: String?
+        var lastFinishedAt: Date?
+        for (name, entry) in perAgent {
+            let justStopped: Bool = !entry.working && now.timeIntervalSince(entry.at) <= Self.justFinishedGrace
+            guard justStopped else { continue }
+            if lastFinishedAt == nil || entry.at > lastFinishedAt! {
+                lastFinishedName = name
+                lastFinishedAt = entry.at
+            }
+        }
+        guard let finishedName = lastFinishedName, let finishedAt = lastFinishedAt else { return nil }
+        return (String.localized("\(finishedName) finished"), finishedAt)
     }
 
     /// `since` is when the shell command it is waiting on started, while the
