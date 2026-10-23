@@ -811,6 +811,10 @@
 "Testing…" = "Probando…";
 "Building…" = "Compilando…";
 "Waiting on command…" = "Esperando comando…";
+"%@ working" = "%@ trabajando";
+"%@ and %@ working" = "%@ y %@ trabajando";
+"%lld bots working" = "%lld bots trabajando";
+"%@ finished" = "%@ terminó";
 "Menu bar mascots" = "Mascotas en la barra de menú";
 "Show AI mascots" = "Mostrar mascotas de las IAs";
 "The same marks as the notch, in the same order, moving while each AI works." = "Las mismas marcas del notch, en el mismo orden, que se mueven mientras cada IA trabaja.";
