@@ -936,6 +936,10 @@
 "Testing…" = "Testing…";
 "Building…" = "Building…";
 "Waiting on command…" = "Waiting on command…";
+"%@ working" = "%@ working";
+"%@ and %@ working" = "%@ and %@ working";
+"%lld bots working" = "%lld bots working";
+"%@ finished" = "%@ finished";
 "Menu bar mascots" = "Menu bar mascots";
 "Show AI mascots" = "Show AI mascots";
 "The same marks as the notch, in the same order, moving while each AI works." = "The same marks as the notch, in the same order, moving while each AI works.";

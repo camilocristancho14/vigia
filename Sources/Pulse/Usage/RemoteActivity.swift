@@ -44,6 +44,18 @@ struct RemoteActivityLedger: Sendable {
     private var owners: [String: Provider] = [:]
     private(set) var lastEvent: Date?
 
+    /// Entries keyed by the `agent` name a hook names itself with (Dobby,
+    /// Alfred, ...), scoped by provider -- Grok Bot's box can run several of
+    /// these at once, which the plain `entries`/`owners` tables above (keyed
+    /// only by `source`) would otherwise collapse into one last-writer-wins
+    /// line. A hook that never sends `agent` never populates this, so every
+    /// other provider's behaviour is unchanged.
+    private var agentEntries: [Provider: [String: Entry]] = [:]
+
+    /// How long "Dobby finished" stays up after its last `Stop` before
+    /// falling back to the ordinary idle text.
+    private static let justFinishedGrace: TimeInterval = 5
+
     /// Which AI an event is about, from the name a remote machine gives it:
     /// a provider's identifier or its display name, in any case and with or
     /// without spaces and dashes ("claudeCode", "Grok Build", "grok-bot").
@@ -64,20 +76,25 @@ struct RemoteActivityLedger: Sendable {
     /// command (`"test"`, `"build"`); an older hook sends none, and a kind on
     /// any other tool is ignored.
     mutating func record(provider: Provider = .claudeCode, source: String, event: String, tool: String?,
-                         kind: String? = nil, at now: Date) {
+                         kind: String? = nil, agent: String? = nil, at now: Date) {
         let key = "\(provider.rawValue)/\(source.prefix(64))"
         owners[key] = provider
+        let entry: Entry
         switch event {
         case "UserPromptSubmit", "PostToolUse":
-            entries[key] = Entry(working: true, wait: .model, label: "Thinking…", at: now)
+            entry = Entry(working: true, wait: .model, label: "Thinking…", at: now)
         case "PreToolUse":
             let label = tool.map(AgentActivity.toolLabel) ?? "Using tool"
-            let kind = tool.map(CommandWait.isShell) == true ? CommandKind(named: kind) : nil
-            entries[key] = Entry(working: true, wait: .tool, label: label, at: now, tool: tool, kind: kind)
+            let kindValue = tool.map(CommandWait.isShell) == true ? CommandKind(named: kind) : nil
+            entry = Entry(working: true, wait: .tool, label: label, at: now, tool: tool, kind: kindValue)
         case "Stop", "SessionEnd":
-            entries[key] = Entry(working: false, wait: .model, label: nil, at: now)
+            entry = Entry(working: false, wait: .model, label: nil, at: now)
         default:
             return
+        }
+        entries[key] = entry
+        if let agent, !agent.isEmpty {
+            agentEntries[provider, default: [:]][agent] = entry
         }
         lastEvent = now
         // A handful of sources is the realistic case; bound the table anyway.
@@ -85,11 +102,50 @@ struct RemoteActivityLedger: Sendable {
             entries = entries.filter { now.timeIntervalSince($0.value.at) < CommandWait.longGrace }
             owners = owners.filter { entries[$0.key] != nil }
         }
+        if let perAgent = agentEntries[provider], perAgent.count > 32 {
+            agentEntries[provider] = perAgent.filter { now.timeIntervalSince($0.value.at) < CommandWait.longGrace }
+        }
+    }
+
+    /// Folds every named bot (Dobby, Alfred, ...) that has posted its own
+    /// `agent` field for this provider into one line: "Dobby working",
+    /// "Dobby and Alfred working", "3 bots working" -- or, for a few seconds
+    /// after the last of them stops, "Dobby finished". `nil` when no agent
+    /// has ever reported in for this provider, so `state(for:)` falls back
+    /// to its ordinary single-entry behaviour untouched.
+    func agentActivityText(for provider: Provider, now: Date) -> (text: String, since: Date?)? {
+        guard let perAgent = agentEntries[provider], !perAgent.isEmpty else { return nil }
+
+        let working = perAgent
+            .filter { $0.value.working && now.timeIntervalSince($0.value.at) <= $0.value.grace }
+            .map { (name: $0.key, at: $0.value.at) }
+            .sorted { $0.at == $1.at ? $0.name < $1.name : $0.at < $1.at }
+
+        if !working.isEmpty {
+            let names = working.map(\.name)
+            let text: String
+            switch names.count {
+            case 1: text = String.localized("\(names[0]) working")
+            case 2: text = String.localized("\(names[0]) and \(names[1]) working")
+            default: text = String.localized("\(names.count) bots working")
+            }
+            return (text, working.first?.at)
+        }
+
+        guard let justFinished = perAgent
+            .filter({ !$0.value.working && now.timeIntervalSince($0.value.at) <= Self.justFinishedGrace })
+            .max(by: { $0.value.at < $1.value.at })
+        else { return nil }
+
+        return (String.localized("\(justFinished.key) finished"), justFinished.value.at)
     }
 
     /// `since` is when the shell command it is waiting on started, while the
     /// label is one of `CommandWait`'s; nil otherwise.
     func state(for provider: Provider = .claudeCode, now: Date) -> (isWorking: Bool, label: String?, since: Date?)? {
+        if let agentText = agentActivityText(for: provider, now: now) {
+            return (true, agentText.text, agentText.since)
+        }
         let live = entries.filter { owners[$0.key] == provider }.map(\.value).filter {
             $0.working && now.timeIntervalSince($0.at) <= $0.grace
         }
@@ -239,8 +295,13 @@ final class RemoteActivityReceiver: @unchecked Sendable {
         // Optional, and only ever a category: newer hooks classify the
         // command where it runs and never send the command itself.
         let kind = json["kind"] as? String
+        // Optional: which named bot this is about (Dobby, Alfred, ...), for
+        // providers like Grok Bot that can run several at once under one
+        // source. A hook that never sends it keeps the old single-line
+        // behaviour.
+        let agent = json["agent"] as? String
         lock.lock()
-        ledger.record(provider: provider, source: source, event: event, tool: tool, kind: kind, at: Date())
+        ledger.record(provider: provider, source: source, event: event, tool: tool, kind: kind, agent: agent, at: Date())
         lock.unlock()
         return 204
     }
