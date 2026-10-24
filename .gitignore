@@ -16,7 +16,7 @@ build.noindex/
 # OpenCode triage local install
 .github/opencode/node_modules/
 
-# Created by check-localization.sh and test-grok-bot-watch.py on every run.
+# Created by check-localization.sh on every run.
 Scripts/__pycache__/
 scripts/__pycache__/
 

@@ -2,33 +2,20 @@
 # Notificador manual de Grok Bot -> Vigía. Nunca bloquea, siempre sale 0, nunca envía el comando.
 # Uso: vigia-grok UserPromptSubmit | PreToolUse <tool> [cmd...] | PostToolUse <tool> [cmd...] | Stop
 # VIGIA_URL_OVERRIDE: solo para pruebas (reemplaza la URL principal y omite las extra).
-# VIGIA_AGENT=<nombre>: agente que avisa (Alfred, Dobby...). Default Alfred.
+# VIGIA_AGENT=<nombre>: agente que avisa (Grok Bot, Dobby...). Default "Grok Bot".
 # VIGIA_GROK_SYNC=1: espera a los POST (pruebas).
 #
-# Cada llamada también se asegura (barato, sin bloquear) de que
-# vigia-grok-watch -- el detector de bots sin configuración de
-# scripts/grok-bot-watch -- esté corriendo, para no depender de que alguien lo
-# arranque a mano. Y si el watcher y un aviso manual coinciden, uno de los dos
-# se descarta (dedupe por agente+evento, stamp en $VIGIA_STATE_DIR/dedupe).
+# Dos llamadas del mismo agente+evento muy seguidas se descartan (dedupe,
+# stamp en $VIGIA_STATE_DIR/dedupe).
 {
   state_dir="${VIGIA_STATE_DIR:-$HOME/.cache/vigia}"
-  watch_bin="$HOME/bin/vigia-grok-watch"
   mkdir -p "$state_dir" 2>/dev/null
-  if [ -x "$watch_bin" ]; then
-    watch_pidfile="$state_dir/watch.pid"
-    running=0
-    if [ -f "$watch_pidfile" ]; then
-      wpid=$(cat "$watch_pidfile" 2>/dev/null)
-      [ -n "$wpid" ] && kill -0 "$wpid" 2>/dev/null && running=1
-    fi
-    [ "$running" -eq 0 ] && ( nohup "$watch_bin" >>/tmp/vigia-grok-watch.log 2>&1 & ) 2>/dev/null
-  fi
 
   . /home/box/.claude/vigia-notify.sh   # solo define el clasificador (vigia_command_kind)
   event=${1-}; tool=${2-}; shift 2 2>/dev/null; cmd="$*"
   case "$event" in UserPromptSubmit|Stop) tool= ;; PreToolUse|PostToolUse) [ -n "$tool" ] || exit 0 ;; *) exit 0 ;; esac
 
-  agent=${VIGIA_AGENT:-Alfred}
+  agent=${VIGIA_AGENT:-Grok Bot}
   safe_agent=$(printf '%s' "$agent" | tr -c 'A-Za-z0-9_-' '_')
   dedupe_dir="$state_dir/dedupe"
   mkdir -p "$dedupe_dir" 2>/dev/null

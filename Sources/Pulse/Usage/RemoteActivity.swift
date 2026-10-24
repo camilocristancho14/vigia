@@ -37,7 +37,11 @@ struct RemoteActivityLedger: Sendable {
         var tool: String?
         var kind: CommandKind?
 
-        var grace: TimeInterval { CommandWait.grace(ordinary: wait.grace, kind: kind) }
+        /// Hard cap at 10 minutes regardless of tool or kind: a remote side
+        /// that has gone silent (crashed, lost its network, box rebooted)
+        /// must not be shown as working indefinitely just because it was
+        /// last seen running a test or a build.
+        var grace: TimeInterval { min(CommandWait.grace(ordinary: wait.grace, kind: kind), 10 * 60) }
     }
 
     private var entries: [String: Entry] = [:]
@@ -45,7 +49,7 @@ struct RemoteActivityLedger: Sendable {
     private(set) var lastEvent: Date?
 
     /// Entries keyed by the `agent` name a hook names itself with (Dobby,
-    /// Alfred, ...), scoped by provider -- Grok Bot's box can run several of
+    /// Neo, ...), scoped by provider -- Grok Bot's box can run several of
     /// these at once, which the plain `entries`/`owners` tables above (keyed
     /// only by `source`) would otherwise collapse into one last-writer-wins
     /// line. A hook that never sends `agent` never populates this, so every
@@ -93,8 +97,21 @@ struct RemoteActivityLedger: Sendable {
             return
         }
         entries[key] = entry
+        // A Grok Bot hook that never names itself is still a Grok Bot: fold
+        // it into the agent-keyed table under the generic name so it shows
+        // as "Grok Bot working"/"Grok Bot finished" like a named one, rather
+        // than silently falling back to the single-line behaviour meant for
+        // providers that never send `agent` at all.
+        let resolvedAgent: String?
         if let agent, !agent.isEmpty {
-            agentEntries[provider, default: [:]][agent] = entry
+            resolvedAgent = agent
+        } else if provider == .grokBot {
+            resolvedAgent = "Grok Bot"
+        } else {
+            resolvedAgent = nil
+        }
+        if let resolvedAgent {
+            agentEntries[provider, default: [:]][resolvedAgent] = entry
         }
         lastEvent = now
         // A handful of sources is the realistic case; bound the table anyway.
@@ -107,9 +124,9 @@ struct RemoteActivityLedger: Sendable {
         }
     }
 
-    /// Folds every named bot (Dobby, Alfred, ...) that has posted its own
+    /// Folds every named bot (Dobby, Neo, ...) that has posted its own
     /// `agent` field for this provider into one line: "Dobby working",
-    /// "Dobby and Alfred working", "3 bots working" -- or, for a few seconds
+    /// "Dobby and Neo working", "3 bots working" -- or, for a few seconds
     /// after the last of them stops, "Dobby finished". `nil` when no agent
     /// has ever reported in for this provider, so `state(for:)` falls back
     /// to its ordinary single-entry behaviour untouched.
@@ -306,7 +323,7 @@ final class RemoteActivityReceiver: @unchecked Sendable {
         // Optional, and only ever a category: newer hooks classify the
         // command where it runs and never send the command itself.
         let kind = json["kind"] as? String
-        // Optional: which named bot this is about (Dobby, Alfred, ...), for
+        // Optional: which named bot this is about (Dobby, Neo, ...), for
         // providers like Grok Bot that can run several at once under one
         // source. A hook that never sends it keeps the old single-line
         // behaviour.

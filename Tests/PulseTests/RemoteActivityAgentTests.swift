@@ -22,15 +22,15 @@ struct RemoteActivityAgentTests {
         ledger.record(provider: .grokBot, source: "grok-bot", event: "UserPromptSubmit", tool: nil,
                       agent: "Dobby", at: t0)
         ledger.record(provider: .grokBot, source: "grok-bot", event: "UserPromptSubmit", tool: nil,
-                      agent: "Alfred", at: t0.addingTimeInterval(1))
+                      agent: "Neo", at: t0.addingTimeInterval(1))
         let label = ledger.state(for: .grokBot, now: t0.addingTimeInterval(5))?.label
-        #expect(label == String.localized("Dobby and Alfred working"))
+        #expect(label == String.localized("Dobby and Neo working"))
     }
 
     @Test("Three or more named agents working collapse to a count")
     func threeOrMoreAgents() {
         var ledger = RemoteActivityLedger()
-        for name in ["Dobby", "Alfred", "Marcus"] {
+        for name in ["Dobby", "Neo", "Marcus"] {
             ledger.record(provider: .grokBot, source: "grok-bot", event: "UserPromptSubmit", tool: nil,
                           agent: name, at: t0)
         }
@@ -59,12 +59,12 @@ struct RemoteActivityAgentTests {
         ledger.record(provider: .grokBot, source: "grok-bot", event: "UserPromptSubmit", tool: nil,
                       agent: "Dobby", at: t0)
         ledger.record(provider: .grokBot, source: "grok-bot", event: "UserPromptSubmit", tool: nil,
-                      agent: "Alfred", at: t0)
+                      agent: "Neo", at: t0)
         ledger.record(provider: .grokBot, source: "grok-bot", event: "Stop", tool: nil,
                       agent: "Dobby", at: t0.addingTimeInterval(5))
 
         let label = ledger.state(for: .grokBot, now: t0.addingTimeInterval(6))?.label
-        #expect(label == String.localized("Alfred working"))
+        #expect(label == String.localized("Neo working"))
     }
 
     @Test("A hook that never names an agent keeps the old single-line behaviour")
@@ -80,5 +80,35 @@ struct RemoteActivityAgentTests {
         ledger.record(provider: .grokBot, source: "grok-bot", event: "UserPromptSubmit", tool: nil,
                       agent: "Dobby", at: t0)
         #expect(ledger.state(for: .claudeCode, now: t0.addingTimeInterval(1)) == nil)
+    }
+
+    @Test("A Grok Bot hook with no agent name reads as 'Grok Bot working'")
+    func missingAgentDefaultsToGenericName() {
+        var ledger = RemoteActivityLedger()
+        ledger.record(provider: .grokBot, source: "grok-bot", event: "UserPromptSubmit", tool: nil, at: t0)
+        let state = ledger.state(for: .grokBot, now: t0.addingTimeInterval(5))
+        #expect(state?.isWorking == true)
+        #expect(state?.label == String.localized("Grok Bot working"))
+    }
+
+    @Test("A Grok Bot hook with no agent name goes idle after its Stop")
+    func missingAgentStopGoesIdle() {
+        var ledger = RemoteActivityLedger()
+        ledger.record(provider: .grokBot, source: "grok-bot", event: "UserPromptSubmit", tool: nil, at: t0)
+        ledger.record(provider: .grokBot, source: "grok-bot", event: "Stop", tool: nil, at: t0.addingTimeInterval(10))
+
+        let justAfter = ledger.state(for: .grokBot, now: t0.addingTimeInterval(11))
+        #expect(justAfter?.label == String.localized("Grok Bot finished"))
+
+        #expect(ledger.state(for: .grokBot, now: t0.addingTimeInterval(20)) == nil)
+    }
+
+    @Test("Working expires after 10 minutes without events, even mid test or build")
+    func workingHasATenMinuteHardCap() {
+        var ledger = RemoteActivityLedger()
+        ledger.record(provider: .claudeCode, source: "server", event: "PreToolUse", tool: "bash",
+                      kind: "test", at: t0)
+        #expect(ledger.state(for: .claudeCode, now: t0.addingTimeInterval(599))?.isWorking == true)
+        #expect(ledger.state(for: .claudeCode, now: t0.addingTimeInterval(601)) == nil)
     }
 }

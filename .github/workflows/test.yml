@@ -35,6 +35,3 @@ jobs:
 
       - name: Hook command rules (macOS's own bash 3.2)
         run: /bin/bash scripts/test-vigia-notify.sh
-
-      - name: Grok Bot watcher tests
-        run: python3 scripts/test-grok-bot-watch.py -v
