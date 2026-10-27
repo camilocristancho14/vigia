@@ -746,6 +746,7 @@ enum AgentActivity {
     private static func isActivityFile(_ url: URL, provider: Provider) -> Bool {
         if provider == .grok { return url.lastPathComponent == "updates.jsonl" }
         guard url.pathExtension == "jsonl" else { return false }
+        if provider == .claudeCode { return !isBackgroundSession(url) }
         guard provider == .kiro else { return true }
 
         // v1 CLI sessions are flat under `cli`; v2 Desktop and ACP sessions
@@ -753,6 +754,27 @@ enum AgentActivity {
         // schema and must not trigger the unknown-format freshness fallback.
         return url.lastPathComponent == "messages.jsonl"
             || url.deletingLastPathComponent().lastPathComponent == "cli"
+    }
+
+    /// Project folders Claude Code writes for sessions a plugin runs on its
+    /// own, with nobody at the keyboard.
+    static let backgroundSessionMarkers = ["claude-mem-observer"]
+
+    /// Whether a Claude Code transcript belongs to a plugin's background
+    /// session rather than to anything the user is doing.
+    ///
+    /// **Why these are skipped.** claude-mem keeps an "observer" session that
+    /// summarises the user's work in the background. When its context fills
+    /// it fails on every call ("Prompt is too long") — dozens of API errors an
+    /// hour — and each one was read as the user's turn failing: Clawd showed
+    /// the error pose, X-eyed, all day, at 39% of a limit. Its turns are not
+    /// the user's turns, so they say nothing about Claude Code's mark: not
+    /// working, not finished, not failed, not limited.
+    static func isBackgroundSession(_ url: URL) -> Bool {
+        // Any folder on the way, so a subagent's file under the session's own
+        // folder is caught too.
+        let folders = url.deletingLastPathComponent().pathComponents
+        return folders.contains { folder in backgroundSessionMarkers.contains { folder.contains($0) } }
     }
 
     /// Nil for an agent that leaves no transcripts, which is what keeps this
