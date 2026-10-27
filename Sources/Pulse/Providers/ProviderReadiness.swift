@@ -117,6 +117,12 @@ extension Provider {
             let readiness = provider.readiness(on: probe)
             if readiness != .notFound { found[provider] = readiness }
         }
+        // Cursor and Grok Bot are read on Grok's card, so finding either is
+        // finding something for that card to show.
+        if found[.grok] == nil,
+           GrokUnifiedUsage.absorbed.contains(where: { $0.readiness(on: probe) != .notFound }) {
+            found[.grok] = .ready
+        }
         return found
     }
 

@@ -36,7 +36,13 @@ struct ProviderSelection: Equatable {
         } else {
             stored = nil
         }
-        let enabled = Set(stored ?? offered ?? []).intersection(knownAccounts)
+        var chosen = Set(stored ?? offered ?? [])
+        // Grok Bot and Cursor are part of the Grok card now: whoever had
+        // either switched on keeps seeing those figures, on that card.
+        if !chosen.isDisjoint(with: GrokUnifiedUsage.absorbed.map(\.rawValue)) {
+            chosen.insert(Provider.grok.rawValue)
+        }
+        let enabled = chosen.intersection(knownAccounts)
         let knownProviders = Set(offered ?? Provider.builtIn.map(\.rawValue))
         let suggestions = Set(Provider.builtIn.filter {
             !enabled.isEmpty && !knownProviders.contains($0.rawValue)

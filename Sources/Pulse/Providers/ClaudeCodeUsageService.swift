@@ -74,7 +74,9 @@ struct ClaudeCodeUsageService: Sendable {
             guard let token = loadAccessToken() else {
                 return ProviderUsage.unavailable(.claudeCode, reason: .claudeSignInRequired).recording(.endpoint)
             }
-            return await endpointUsage(account: AccountKey(.claudeCode), token: token).recording(.endpoint)
+            let usage = await endpointUsage(account: AccountKey(.claudeCode), token: token)
+            if usage.state == .unavailable(.claudeLoginExpired) { forgetCachedCredentials() }
+            return usage.recording(.endpoint)
 
         case .automatic:
             // Read once. Both answers come out of the same blob: an expired
@@ -89,6 +91,7 @@ struct ClaudeCodeUsageService: Sendable {
                 case .success(let usage):
                     return usage.recording(.endpoint)
                 case .needsFreshCredentials:
+                    forgetCachedCredentials()
                     attempts.append(.init(route: .endpoint, state: .unavailable(.claudeLoginExpired)))
                     break // fall through to the desktop session, then the status line
                 case .failed(let reason):
@@ -224,6 +227,30 @@ struct ClaudeCodeUsageService: Sendable {
     /// short-lived and its failure is handled, so a refused prompt degrades to
     /// the status line route rather than hanging the panel.
     private func readKeychainCredentials() -> [String: Any]? {
+        // The CLI renews its token on its own schedule, so a remembered blob
+        // is only good while its token is: once it has expired, it is
+        // dropped and the item is read again — once, not every pass. See
+        // `KeychainReadCache` for why every read used to be a dialog.
+        let cacheKey = "claude-code:\(keychainService)"
+        if let cached = KeychainReadCache.cached(cacheKey),
+           let blob = try? JSONSerialization.jsonObject(with: cached) as? [String: Any] {
+            if Self.unexpiredAccessToken(blob) != nil { return blob }
+            KeychainReadCache.forget(cacheKey)
+        }
+        guard let data = readKeychainData(),
+              let blob = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        KeychainReadCache.store(data, for: cacheKey)
+        return blob
+    }
+
+    /// Dropped after a 401: the CLI renewed the login and the remembered
+    /// token is the old one.
+    private func forgetCachedCredentials() {
+        KeychainReadCache.forget("claude-code:\(keychainService)")
+    }
+
+    private func readKeychainData() -> Data? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
         process.arguments = ["find-generic-password", "-s", keychainService, "-w"]
@@ -237,8 +264,7 @@ struct ClaudeCodeUsageService: Sendable {
         let data = output.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         guard process.terminationStatus == 0 else { return nil }
-
-        return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        return data
     }
 
     private func readCredentialsFile() -> [String: Any]? {

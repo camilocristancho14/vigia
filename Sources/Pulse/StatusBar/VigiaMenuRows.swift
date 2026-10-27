@@ -30,8 +30,8 @@ enum VigiaMenuRows {
             // The card is drawn on solid black, as on the notch, and its text
             // is `.primary`: in a light menu that is black on black.
             .environment(\.colorScheme, .dark)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 3)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
 
             let host = NSHostingView(rootView: card)
             host.appearance = NSAppearance(named: .darkAqua)

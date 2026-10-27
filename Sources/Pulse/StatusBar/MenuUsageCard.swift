@@ -7,39 +7,47 @@ import SwiftUI
 
 enum MenuCardLayout {
     static let width: CGFloat = 292
-    static let padding: CGFloat = 10
-    static let nameColumn: CGFloat = 88
-    static let percentColumn: CGFloat = 34
-    static let resetColumn: CGFloat = 76
-    static let barHeight: CGFloat = 4
-    static let cornerRadius: CGFloat = 12
+    static let padding: CGFloat = 14
+    static let iconTile: CGFloat = 28
+    static let barHeight: CGFloat = 6
+    static let cornerRadius: CGFloat = 18
+    static let rowSpacing: CGFloat = 12
     /// A reading older than this is no longer called fresh.
     static let freshFor: TimeInterval = 15 * 60
 }
 
-/// A translucent, softly bordered card background: Liquid Glass where the
-/// system offers it, `.ultraThinMaterial` everywhere else. `#if
-/// compiler(>=6.2)` keeps `glassEffect` (macOS 26+ SDK only) from breaking a
-/// build on an older Xcode entirely — `if #available` alone only guards the
-/// runtime check, not whether the symbol exists to compile against.
+/// A translucent card in the manner of Control Center's modules: Liquid Glass
+/// where the system offers it, `.regularMaterial` everywhere else, with a
+/// specular edge lit from above rather than a flat grey border, and a shadow
+/// soft enough to lift the card without outlining it. `#if compiler(>=6.2)`
+/// keeps `glassEffect` (macOS 26+ SDK only) from breaking a build on an older
+/// Xcode — `if #available` alone only guards the runtime check, not whether
+/// the symbol exists to compile against.
 private extension View {
     @ViewBuilder
     func glassCard(cornerRadius: CGFloat) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        let edge = shape.strokeBorder(
+            LinearGradient(
+                colors: [Color.white.opacity(0.28), Color.white.opacity(0.06)],
+                startPoint: .top, endPoint: .bottom
+            ),
+            lineWidth: 0.6
+        )
         #if compiler(>=6.2)
         if #available(macOS 26, *) {
             self.glassEffect(in: shape)
-                .overlay(shape.strokeBorder(Color.white.opacity(0.14), lineWidth: 0.5))
-                .shadow(color: .black.opacity(0.22), radius: 12, y: 5)
+                .overlay(edge)
+                .shadow(color: .black.opacity(0.16), radius: 10, y: 4)
         } else {
-            self.background(.ultraThinMaterial, in: shape)
-                .overlay(shape.strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5))
-                .shadow(color: .black.opacity(0.22), radius: 10, y: 4)
+            self.background(.regularMaterial, in: shape)
+                .overlay(edge)
+                .shadow(color: .black.opacity(0.16), radius: 10, y: 4)
         }
         #else
-        self.background(.ultraThinMaterial, in: shape)
-            .overlay(shape.strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5))
-            .shadow(color: .black.opacity(0.22), radius: 10, y: 4)
+        self.background(.regularMaterial, in: shape)
+            .overlay(edge)
+            .shadow(color: .black.opacity(0.16), radius: 10, y: 4)
         #endif
     }
 }
@@ -55,11 +63,15 @@ struct MenuUsageCard: View {
     @Environment(\.usageWarningThreshold) private var warningThreshold
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: MenuCardLayout.rowSpacing) {
             header
 
-            ForEach(usage.windows) { window in
-                row(window)
+            if !usage.windows.isEmpty {
+                VStack(alignment: .leading, spacing: MenuCardLayout.rowSpacing) {
+                    ForEach(usage.windows) { window in
+                        row(window)
+                    }
+                }
             }
 
             if let resetCredits {
@@ -89,21 +101,32 @@ struct MenuUsageCard: View {
 
     // MARK: Header
 
+    /// The mark on a tile, as an app icon sits in a widget's corner, then the
+    /// name and, beneath it, how fresh the figures are and which plan.
     private var header: some View {
-        HStack(alignment: .top, spacing: 8) {
-            LobeIconView(provider: usage.provider, size: 16)
-                .foregroundStyle(.primary)
-                .padding(.top, 1)
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(alignment: .center, spacing: 10) {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.white.opacity(0.12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.10), lineWidth: 0.5)
+                )
+                .overlay(
+                    LobeIconView(provider: usage.provider, size: 16)
+                        .foregroundStyle(.primary)
+                )
+                .frame(width: MenuCardLayout.iconTile, height: MenuCardLayout.iconTile)
+
+            VStack(alignment: .leading, spacing: 1) {
                 Text(verbatim: title ?? usage.provider.displayName)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.system(size: 14, weight: .semibold))
                     .lineLimit(1)
                 // Under the name, never beside it: a long name and "Updated
                 // 3 min ago" do not share one line of a menu without one of
                 // them being cut.
-                HStack(spacing: 4) {
+                HStack(spacing: 5) {
                     if let freshness = Self.freshness(of: usage, now: now) {
-                        Circle().fill(freshness.colour).frame(width: 6, height: 6)
+                        Circle().fill(freshness.colour).frame(width: 5, height: 5)
                         Text(verbatim: freshness.text)
                             .foregroundStyle(freshness.isFresh ? Color.secondary : freshness.colour)
                             .help(freshness.isFresh ? "" : String.localized("Reading may be out of date"))
@@ -112,7 +135,7 @@ struct MenuUsageCard: View {
                         Text(verbatim: "· \(plan)").foregroundStyle(.secondary)
                     }
                 }
-                .font(.system(size: 10.5, weight: .regular, design: .rounded))
+                .font(.system(size: 11))
                 .lineLimit(1)
             }
             Spacer(minLength: 0)
@@ -133,48 +156,57 @@ struct MenuUsageCard: View {
 
     // MARK: Rows
 
-    /// One thin line per limit: label, bar, percent, reset -- all the notch
-    /// card's second screenful used to take two lines for.
+    /// One limit, the way a Battery widget lists a device: its name and the
+    /// figure on one line, a full-width bar under them, and when it comes
+    /// back — or the warning it earns — beneath. The name gets the whole
+    /// width, so "Monthly limit · Cursor Models" is never cut to an ellipsis.
     private func row(_ window: UsageWindow) -> some View {
         let spent = UsageTint.isSpent(window)
         let risk = Self.risk(of: window, warningAt: warningThreshold, forecast: showsForecast, now: now)
         let progress = showsRemaining ? window.remainingFraction : window.usedFraction
         let reset = Self.resetText(window, now: now)
-        return VStack(alignment: .leading, spacing: 2) {
-            HStack(alignment: .center, spacing: 6) {
+        return VStack(alignment: .leading, spacing: 5) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(verbatim: window.name)
-                    .font(.system(size: 10.5, weight: .regular, design: .rounded))
-                    .foregroundStyle(.primary.opacity(0.85))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.primary.opacity(0.9))
                     .lineLimit(1)
-                    .truncationMode(.middle)
-                    .frame(width: MenuCardLayout.nameColumn, alignment: .leading)
-                bar(progress, colour: risk.colour)
+                    .truncationMode(.tail)
+                    .layoutPriority(1)
+                Spacer(minLength: 4)
                 Text(verbatim: window.percentText(remaining: showsRemaining))
-                    .font(.system(size: 11.5, weight: .semibold, design: .rounded))
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(spent ? Color.pulseExhausted : risk.colour == .pulseGood ? .primary : risk.colour)
-                    .frame(width: MenuCardLayout.percentColumn, alignment: .trailing)
-                HStack(spacing: 3) {
-                    if !reset.isEmpty {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 8, weight: .semibold))
-                    }
-                    Text(verbatim: reset)
-                        .font(.system(size: 9.5, weight: .regular, design: .rounded))
-                        .monospacedDigit()
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-                .foregroundStyle(.secondary)
-                .frame(width: MenuCardLayout.resetColumn, alignment: .trailing)
             }
 
-            if let warning = risk.warning {
-                Text(verbatim: warning)
-                    .font(.system(size: 10, weight: .medium, design: .rounded))
-                    .foregroundStyle(risk.colour)
-                    .lineLimit(1)
-                    .padding(.leading, MenuCardLayout.nameColumn + 6)
+            bar(progress, colour: risk.colour)
+
+            if risk.warning != nil || !reset.isEmpty {
+                HStack(spacing: 4) {
+                    if let warning = risk.warning {
+                        HStack(spacing: 4) {
+                            Image(systemName: spent ? "xmark.circle.fill" : "exclamationmark.triangle.fill")
+                                .font(.system(size: 9, weight: .semibold))
+                            Text(verbatim: warning)
+                                .lineLimit(1)
+                        }
+                        .foregroundStyle(risk.colour)
+                    }
+                    Spacer(minLength: 4)
+                    if !reset.isEmpty {
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.clockwise")
+                                .font(.system(size: 8.5, weight: .semibold))
+                            Text(verbatim: reset).monospacedDigit()
+                        }
+                        // Plain grey, not a shade of the risk colour: the
+                        // reset is a fact, and only the warning is an alarm.
+                        .foregroundStyle(Color.secondary)
+                        .lineLimit(1)
+                    }
+                }
+                .font(.system(size: 10.5, weight: .medium))
             }
         }
         .accessibilityElement(children: .ignore)
@@ -189,8 +221,14 @@ struct MenuUsageCard: View {
     private func bar(_ fraction: Double, colour: Color) -> some View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
-                Capsule().fill(Color.primary.opacity(0.15))
-                Capsule().fill(colour)
+                Capsule().fill(Color.primary.opacity(0.12))
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [colour.opacity(0.85), colour],
+                            startPoint: .leading, endPoint: .trailing
+                        )
+                    )
                     // A sliver even at 0%, so an empty bar still says which
                     // colour it is in.
                     .frame(width: max(MenuCardLayout.barHeight, proxy.size.width * min(max(fraction, 0), 1)))
@@ -238,13 +276,13 @@ struct MenuUsageCard: View {
             Spacer(minLength: 8)
             Text(verbatim: value).monospacedDigit()
         }
-        .font(.system(size: 11.5, design: .rounded))
+        .font(.system(size: 12))
         .lineLimit(1)
     }
 
     private func note(_ text: String) -> some View {
         Text(verbatim: text)
-            .font(.system(size: 11.5, design: .rounded))
+            .font(.system(size: 12))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
     }

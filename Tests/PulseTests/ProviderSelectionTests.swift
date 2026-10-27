@@ -55,10 +55,10 @@ struct ProviderSelectionTests {
         withDefaults { defaults in
             defaults.set(["codex"], forKey: ProviderSelection.enabledKey)
             defaults.set(["codex", "claudeCode"], forKey: ProviderSelection.offeredKey)
-            let detected: Set<Provider> = [.claudeCode, .cursor, .grok]
+            let detected: Set<Provider> = [.claudeCode, .copilot, .grok]
             let first = ProviderSelection.restore(in: defaults, knownAccounts: primaryAccounts, detected: detected)
             #expect(first.enabledAccounts == ["codex"])
-            #expect(first.suggestedProviders == [.cursor, .grok])
+            #expect(first.suggestedProviders == [.copilot, .grok])
             // Dismissal, not just Done, must consume an upgrade offer.
             let second = ProviderSelection.restore(in: defaults, knownAccounts: primaryAccounts, detected: detected)
             #expect(second.enabledAccounts == ["codex"])
@@ -94,9 +94,9 @@ struct ProviderSelectionTests {
     func legacyAbsentSelection() {
         withDefaults { defaults in
             defaults.set(["codex", "claudeCode"], forKey: ProviderSelection.offeredKey)
-            let selection = ProviderSelection.restore(in: defaults, knownAccounts: primaryAccounts, detected: [.cursor])
+            let selection = ProviderSelection.restore(in: defaults, knownAccounts: primaryAccounts, detected: [.copilot])
             #expect(selection.enabledAccounts == ["codex", "claudeCode"])
-            #expect(selection.suggestedProviders == [.cursor])
+            #expect(selection.suggestedProviders == [.copilot])
             #expect(!selection.needsSelection)
         }
     }

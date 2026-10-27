@@ -664,8 +664,9 @@ final class UsageStore {
             async let copilotUsage = wanted.contains(.copilot)
                 ? await copilot.fetch()
                 : ProviderUsage.unavailable(.copilot, reason: .loading)
+            // One card for Grok Build, Grok Bot and Cursor; see `GrokUnifiedUsage`.
             async let grokUsage = wanted.contains(.grok)
-                ? await grok.fetch()
+                ? await Self.unifiedGrok(grok: grok, grokBot: grokBot)
                 : ProviderUsage.unavailable(.grok, reason: .loading)
             async let grokBotUsage = wanted.contains(.grokBot)
                 ? await grokBot.fetch()
@@ -938,7 +939,7 @@ final class UsageStore {
             case .copilot:
                 raw = await CopilotUsageService(token: key).fetch()
             case .grok:
-                raw = await grok.fetch()
+                raw = await Self.unifiedGrok(grok: grok, grokBot: grokBot)
             case .grokBot:
                 raw = await grokBot.fetch()
             case .volcengine:
@@ -1083,6 +1084,14 @@ final class UsageStore {
              .v2ex, .qoder, .stepFun, .pulseExtension:
             .unavailable(account, reason: .loading)
         }
+    }
+
+    /// Grok Build, Grok Bot and Cursor read side by side and shown as one
+    /// Grok card. See `GrokUnifiedUsage`.
+    private static func unifiedGrok(grok: GrokUsageService, grokBot: GrokBotUsageService) async -> ProviderUsage {
+        async let build = grok.fetch()
+        async let bot = grokBot.fetch()
+        return await GrokUnifiedUsage.merge(grok: build, grokBot: bot)
     }
 
     private func runQueued() {
