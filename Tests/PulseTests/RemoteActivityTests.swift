@@ -67,7 +67,7 @@ struct RemoteActivityTests {
         #expect(RemoteActivityLedger.provider(named: nil) == .claudeCode)
         #expect(RemoteActivityLedger.provider(named: "claude") == .claudeCode)
         #expect(RemoteActivityLedger.provider(named: "Grok Build") == .grok)
-        #expect(RemoteActivityLedger.provider(named: "grok-bot") == .grokBot)
+        #expect(RemoteActivityLedger.provider(named: "grok-bot") == .grok)
         #expect(RemoteActivityLedger.provider(named: "codex") == .codex)
         #expect(RemoteActivityLedger.provider(named: "no such ai") == nil)
 

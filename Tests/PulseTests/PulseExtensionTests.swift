@@ -441,7 +441,7 @@ struct ExtensionAccountTests {
     @Test("The extension type is never offered as a service of its own")
     func notABuiltInProvider() {
         #expect(!Provider.builtIn.contains(.pulseExtension))
-        #expect(Provider.builtIn.count == Provider.allCases.count - 1)
+        #expect(Provider.builtIn.count == Provider.allCases.count - 1 - GrokUnifiedUsage.absorbed.count)
         #expect(UsageRoute.soleRoute(for: found.account) == .extensionProgram)
     }
 

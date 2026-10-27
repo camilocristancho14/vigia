@@ -97,7 +97,10 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
 
     /// The providers Pulse ships, which is what the chooser, the defaults and
     /// every "each provider's first account" list are built from.
-    static let builtIn = allCases.filter { $0 != .pulseExtension }
+    /// Grok Bot and Cursor are left out too: they are read as part of the one
+    /// Grok card now (`GrokUnifiedUsage`), and offering them on their own
+    /// would put the same subscription on the rail three times.
+    static let builtIn = allCases.filter { $0 != .pulseExtension && !GrokUnifiedUsage.absorbed.contains($0) }
 
     /// The providers written case by case, and the extension type: everything
     /// `Provider` has that is not a `ProviderProfile`. Switches that need a
@@ -200,7 +203,7 @@ enum Provider: String, CaseIterable, Identifiable, Codable, Sendable {
         // The account's pool is spent across every Grok product, not just
         // Grok Build's CLI, so the ring is about the account and the name
         // says so. See `GrokUsageService`.
-        case .grok: "Grok Build"
+        case .grok: "Grok"
         // xAI's, sold through Cursor and billed against that account — a
         // different bill from the SuperGrok pool above, under a name people
         // already use for it. See `GrokBotUsageService`.

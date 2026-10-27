@@ -185,6 +185,17 @@ enum AgentActivity {
             }
             states[.cursor] = state
         }
+        // Cursor is part of the Grok card now (`GrokUnifiedUsage`), so work in
+        // Cursor moves Grok's mark too.
+        if providers.contains(.grok), !(states[.grok]?.isWorking ?? false),
+           VigiaActivity.cursorIsWorking(home: home, now: now) {
+            var state = states[.grok] ?? State(lastWrite: nil, isWorking: false)
+            state.isWorking = true
+            state.isWaiting = false
+            state.failedAt = nil
+            state.lastWrite = now
+            states[.grok] = state
+        }
         if providers.contains(.gemini) {
             var state = states[.gemini] ?? State(lastWrite: nil, isWorking: false)
             if let at = VigiaActivity.geminiLatestWrite(home: home),

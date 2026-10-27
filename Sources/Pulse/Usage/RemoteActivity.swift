@@ -71,7 +71,13 @@ struct RemoteActivityLedger: Sendable {
             text.lowercased().filter { $0.isLetter || $0.isNumber }
         }
         let wanted = squash(name)
-        let aliases: [String: Provider] = ["claude": .claudeCode]
+        // Grok Bot and Cursor are shown on the Grok card now
+        // (`GrokUnifiedUsage`), so their hooks move that card's mark. The old
+        // name of the card still reaches it too.
+        let aliases: [String: Provider] = [
+            "claude": .claudeCode,
+            "grokbuild": .grok, "grokbot": .grok, "cursor": .grok,
+        ]
         return aliases[wanted]
             ?? Provider.allCases.first { squash($0.rawValue) == wanted || squash($0.displayName) == wanted }
     }

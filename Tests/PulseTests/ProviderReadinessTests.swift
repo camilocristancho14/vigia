@@ -75,9 +75,10 @@ struct ProviderReadinessTests {
     @Test("Grok Bot needs its own app as well as Cursor's login")
     func grokBotNeedsItsApp() {
         let cursor = "Library/Application Support/Cursor/User/globalStorage/state.vscdb"
-        let only = Provider.readiness(on: probe(files: [cursor]))
-        #expect(only[.cursor] == .ready)
-        #expect(only[.grokBot] == nil)
+        // Neither is offered on its own any more: both are read on Grok's
+        // card. Their own readiness is still answered.
+        #expect(Provider.cursor.readiness(on: probe(files: [cursor])) == .ready)
+        #expect(Provider.grokBot.readiness(on: probe(files: [cursor])) == .notFound)
         #expect(Provider.grokBot.readiness(on: probe(files: [cursor, "/Applications/Grok Bot.app"])) == .ready)
     }
 

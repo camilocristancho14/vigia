@@ -275,6 +275,13 @@ enum BrowserCookies {
     /// display name found nothing, failed silently, and fell through to the
     /// next browser.
     static func safeStorageKey(service: String) -> Data? {
+        // A Safe Storage password never changes for the life of the app that
+        // made it, so one read is enough — see `KeychainReadCache` for why a
+        // second read is a second dialog.
+        KeychainReadCache.value(for: "safe-storage:\(service)") { readSafeStorageKey(service: service) }
+    }
+
+    private static func readSafeStorageKey(service: String) -> Data? {
         var request: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,

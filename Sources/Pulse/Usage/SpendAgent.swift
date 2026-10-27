@@ -184,7 +184,7 @@ enum SpendAgent: String, CaseIterable, Identifiable, Sendable {
         // A fork of OpenCode, down to the database schema — which is why one
         // reader serves both.
         case .kiloCLI: "Kilo CLI"
-        case .grok: "Grok Build"
+        case .grok: "Grok"
         case .kimiCLI: "Kimi CLI"
         // **"Devin", not "Devin CLI".** The store is `.../devin/cli/sessions.db`,
         // but that `cli` is Devin's own directory layout, not a product
