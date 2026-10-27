@@ -13,15 +13,14 @@ struct GrokUnifiedUsageTests {
                       state: .live, plan: plan, creditBalance: nil)
     }
 
-    @Test("Grok Build's weekly pool wins over Grok Bot's copy of it, and Cursor's pools follow")
+    @Test("Grok Build's weekly pool wins over Grok Bot's copy of it, and Cursor's pools are not shown")
     func merges() {
         let merged = GrokUnifiedUsage.merge(
             grok: live(.grok, [window("weekly", .weekly, 1)], plan: "SuperGrok"),
-            grokBot: live(.grokBot, [window("grokBot", .weekly, 1)], plan: "Grok Bot Plan"),
-            cursor: live(.cursor, [window("cursorModels", .monthly, 0), window("otherModels", .monthly, 0)])
+            grokBot: live(.grokBot, [window("grokBot", .weekly, 1)], plan: "Grok Bot Plan")
         )
         #expect(merged.account == AccountKey(.grok))
-        #expect(merged.windows.map(\.id) == ["weekly", "cursorModels", "otherModels"])
+        #expect(merged.windows.map(\.id) == ["weekly"])
         #expect(merged.plan == "SuperGrok")
     }
 
@@ -29,8 +28,7 @@ struct GrokUnifiedUsageTests {
     func fallsBack() {
         let merged = GrokUnifiedUsage.merge(
             grok: .unavailable(.grok, reason: .grokSignInRequired),
-            grokBot: live(.grokBot, [window("grokBot", .weekly, 0.4)]),
-            cursor: .unavailable(.cursor, reason: .cursorSignInRequired)
+            grokBot: live(.grokBot, [window("grokBot", .weekly, 0.4)])
         )
         #expect(merged.state == .live)
         #expect(merged.windows.map(\.id) == ["grokBot"])
@@ -40,8 +38,7 @@ struct GrokUnifiedUsageTests {
     func nothing() {
         let merged = GrokUnifiedUsage.merge(
             grok: .unavailable(.grok, reason: .grokSignInRequired),
-            grokBot: .unavailable(.grokBot, reason: .cursorSignInRequired),
-            cursor: .unavailable(.cursor, reason: .cursorSignInRequired)
+            grokBot: .unavailable(.grokBot, reason: .cursorSignInRequired)
         )
         #expect(merged.state == .unavailable(.grokSignInRequired))
     }

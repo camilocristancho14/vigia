@@ -666,7 +666,7 @@ final class UsageStore {
                 : ProviderUsage.unavailable(.copilot, reason: .loading)
             // One card for Grok Build, Grok Bot and Cursor; see `GrokUnifiedUsage`.
             async let grokUsage = wanted.contains(.grok)
-                ? await Self.unifiedGrok(grok: grok, grokBot: grokBot, cursor: cursor)
+                ? await Self.unifiedGrok(grok: grok, grokBot: grokBot)
                 : ProviderUsage.unavailable(.grok, reason: .loading)
             async let grokBotUsage = wanted.contains(.grokBot)
                 ? await grokBot.fetch()
@@ -939,7 +939,7 @@ final class UsageStore {
             case .copilot:
                 raw = await CopilotUsageService(token: key).fetch()
             case .grok:
-                raw = await Self.unifiedGrok(grok: grok, grokBot: grokBot, cursor: cursor)
+                raw = await Self.unifiedGrok(grok: grok, grokBot: grokBot)
             case .grokBot:
                 raw = await grokBot.fetch()
             case .volcengine:
@@ -1088,15 +1088,10 @@ final class UsageStore {
 
     /// Grok Build, Grok Bot and Cursor read side by side and shown as one
     /// Grok card. See `GrokUnifiedUsage`.
-    private static func unifiedGrok(
-        grok: GrokUsageService,
-        grokBot: GrokBotUsageService,
-        cursor: CursorUsageService
-    ) async -> ProviderUsage {
+    private static func unifiedGrok(grok: GrokUsageService, grokBot: GrokBotUsageService) async -> ProviderUsage {
         async let build = grok.fetch()
         async let bot = grokBot.fetch()
-        async let editor = cursor.fetch()
-        return await GrokUnifiedUsage.merge(grok: build, grokBot: bot, cursor: editor)
+        return await GrokUnifiedUsage.merge(grok: build, grokBot: bot)
     }
 
     private func runQueued() {

@@ -18,6 +18,13 @@ import Foundation
 enum KeychainReadCache {
     private static let purpose = "keychain-read-cache"
     private static let lock = NSLock()
+    /// Held for the whole of a keychain read. At launch three callers — the
+    /// launch-time ask, the first refresh pass and the chat-activity probe —
+    /// reached the same item at once, before any of them had filled the
+    /// cache, and macOS queued one dialog per caller: "Always Allow" had to be
+    /// pressed once for each. One read at a time means the second caller
+    /// wakes to a filled cache instead of a second dialog.
+    private static let readLock = NSLock()
     nonisolated(unsafe) private static var memory: [String: Data]?
 
     static var file: URL { PulseStorage.directory.appending(path: "keychain-cache.dat") }
@@ -25,6 +32,9 @@ enum KeychainReadCache {
     /// The remembered value for `key`, or the result of `read` — which is the
     /// call that can raise the prompt — remembered when it produced one.
     static func value(for key: String, read: () -> Data?) -> Data? {
+        if let cached = cached(key) { return cached }
+        readLock.lock()
+        defer { readLock.unlock() }
         if let cached = cached(key) { return cached }
         guard let fresh = read() else { return nil }
         store(fresh, for: key)
