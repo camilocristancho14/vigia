@@ -2,7 +2,7 @@
 
 Vigía es una app de barra de menú para macOS. Muestra, para cada agente de IA en este Mac, si está trabajando ahora y cuánto lleva usado de sus límites. No llama a ningún modelo: lee lo que esos programas ya guardaron en el equipo.
 
-Cubre Claude Code, Codex, Cursor, Gemini CLI y Grok Build (`~/.grok`), y el resto de proveedores que ya sabían leer los proyectos de los que sale esta app (más de setenta).
+Cubre Claude Code, Codex, Gemini CLI y Grok — Grok Build (`~/.grok`), Grok Bot y Cursor en una sola tarjeta, porque con la suscripción de X son el mismo plan, y el resto de proveedores que ya sabían leer los proyectos de los que sale esta app (más de setenta).
 
 ## Qué hace
 
