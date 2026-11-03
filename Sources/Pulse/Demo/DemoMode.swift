@@ -56,7 +56,7 @@ enum DemoMode {
             reading(.claudeCode, fraction: 0.58, plan: "Pro", now: now),
             reading(.grokBot, fraction: 1.0, plan: "SuperGrok", now: now),
             reading(.grok, fraction: 0.63, plan: "SuperGrok", now: now),
-            reading(.antigravity, fraction: 0.0, plan: "Pro", now: now),
+            antigravityReading(now: now),
         ]
     }
 
@@ -117,6 +117,34 @@ enum DemoMode {
             observedAt: now,
             state: .live,
             plan: plan,
+            creditBalance: nil
+        )
+    }
+
+    private static func antigravityReading(now: Date) -> ProviderUsage {
+        let definitions: [(String, UsageWindow.Kind, String, Double, TimeInterval)] = [
+            ("gemini-5h", .fiveHour, "Gemini", 0.24, 2 * 3_600),
+            ("gemini-weekly", .weekly, "Gemini", 0.41, 4 * 86_400),
+            ("3p-5h", .fiveHour, "Claude and GPT", 0.68, 3_600),
+            ("3p-weekly", .weekly, "Claude and GPT", 0.83, 3 * 86_400),
+            ("gemini-argon-wtu-weekly", .weekly, "Gemini 4 Argon", 0.12, 5 * 86_400),
+        ]
+        let windows = definitions.map { id, kind, scope, used, resetIn in
+            UsageWindow(
+                id: id,
+                kind: kind,
+                scope: scope,
+                usedFraction: used,
+                windowSeconds: kind == .fiveHour ? 5 * 3_600 : 7 * 86_400,
+                resetsAt: now.addingTimeInterval(resetIn)
+            )
+        }
+        return ProviderUsage(
+            account: AccountKey(.antigravity),
+            windows: windows,
+            observedAt: now,
+            state: .live,
+            plan: "Pro",
             creditBalance: nil
         )
     }

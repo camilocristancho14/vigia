@@ -161,6 +161,49 @@ struct AntigravityUsageService: Sendable {
         }
     }
 
+    /// The three quota families Antigravity reports, in the order the card
+    /// reads best. The IDs are the bucket names `agy` uses; a missing bucket
+    /// stays missing instead of becoming a fabricated zero-percent reading.
+    struct QuotaGroup: Identifiable, Equatable {
+        enum Family: String, CaseIterable {
+            case gemini, thirdParty, argon
+
+            var title: String {
+                switch self {
+                case .gemini: String.localized("Gemini")
+                case .thirdParty: String.localized("Claude and GPT (shared)")
+                case .argon: String.localized("Gemini 4 Argon")
+                }
+            }
+
+            var bucketIDs: [String] {
+                switch self {
+                case .gemini: ["gemini-5h", "gemini-weekly"]
+                case .thirdParty: ["3p-5h", "3p-weekly"]
+                case .argon: ["gemini-argon-wtu-weekly"]
+                }
+            }
+        }
+
+        let family: Family
+        let windows: [UsageWindow]
+        let fiveHourDoesNotApply: Bool
+        var id: String { family.rawValue }
+        var title: String { family.title }
+
+        static func make(from windows: [UsageWindow]) -> [QuotaGroup] {
+            Family.allCases.compactMap { family in
+                let members = family.bucketIDs.compactMap { id in windows.first { $0.id == id } }
+                let weeklyIsExhausted = members.contains { $0.id == "3p-weekly" && $0.isExhausted }
+                let showsNotApplicable = family == .thirdParty
+                    && weeklyIsExhausted
+                    && !members.contains { $0.id == "3p-5h" }
+                guard !members.isEmpty || showsNotApplicable else { return nil }
+                return QuotaGroup(family: family, windows: members, fiveHourDoesNotApply: showsNotApplicable)
+            }
+        }
+    }
+
     private static func window(from bucket: Reply.Bucket, scope: String?) -> UsageWindow? {
         guard
             let id = bucket.bucketId,

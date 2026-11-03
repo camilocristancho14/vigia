@@ -176,6 +176,10 @@
 /* Usage data */
 "5-hour limit" = "5시간 한도";
 "Weekly limit" = "주간 한도";
+"Claude and GPT (shared)" = "Claude와 GPT(공유)";
+"Gemini" = "Gemini";
+"Gemini 4 Argon" = "Gemini 4 Argon";
+"5-hour limit does not currently apply" = "5시간 한도는 현재 적용되지 않습니다";
 "Spend limit" = "지출 한도";
 "%@-day limit" = "%@일 한도";
 "%@-hour limit" = "%@시간 한도";

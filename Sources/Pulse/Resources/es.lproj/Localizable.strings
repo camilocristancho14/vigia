@@ -841,6 +841,10 @@
 "Draw Cloud Ghost instead of the Codex logo. Its eyes become a prompt while Codex is working." = "Dibuja a Cloud Ghost en lugar del logo de Codex. Sus ojos se vuelven un prompt mientras Codex trabaja.";
 "Used up until it resets" = "Agotado hasta el reinicio";
 "Claude and GPT" = "Claude y GPT";
+"Claude and GPT (shared)" = "Claude y GPT (compartido)";
+"Gemini" = "Gemini";
+"Gemini 4 Argon" = "Gemini 4 Argon";
+"5-hour limit does not currently apply" = "El límite de 5 horas no aplica por ahora";
 
 /* Updates and attention */
 "Couldn't download the update." = "No se pudo descargar la actualización.";

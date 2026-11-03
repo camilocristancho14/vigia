@@ -76,7 +76,12 @@ enum DetailCardLayout {
     /// One row more than the limits for Codex's reset-credit lines: the count
     /// and the soonest expiry are two text lines, which together are shorter
     /// than a limit's row and so fit inside the budget of one.
-    static var maximumHeight: CGFloat { height(forWindows: 6, footnote: true) }
+    static var maximumHeight: CGFloat {
+        height(forWindows: 6, footnote: true) + 3 * quotaGroupHeaderHeight + contentSpacing
+    }
+
+    /// Antigravity's windows are collected under three model families.
+    static var quotaGroupHeaderHeight: CGFloat { rowTextLineHeight + 2 * PanelMetrics.scale }
 
     static func height(forWindows count: Int, footnote: Bool = false) -> CGFloat {
         let detailed = PanelMetrics.showsDetailedCard
@@ -179,25 +184,54 @@ struct UsageDetailCard: View {
         VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing) {
             header
 
-            // However many limits the provider reports — one account-wide
-            // window for some plans, several once per-model limits apply.
-            ForEach(usage.windows) { window in
-                ProgressMetricRow(
-                    title: window.name,
-                    resetDescription: Self.resetText(window),
-                    progress: showsRemaining ? window.remainingFraction : window.usedFraction,
-                    accent: window.tint(warningAt: warningThreshold),
-                    percentageText: window.percentText(remaining: showsRemaining),
-                    isSpent: UsageTint.isSpent(window),
-                    showsRemaining: showsRemaining,
-                    // Every provider, not a chosen few: what this needs is a
-                    // percentage, a reset and a length the provider actually
-                    // stated, and `BurnRate` refuses the windows that lack one
-                    // rather than being told in advance which they are.
-                    burn: showsForecast ? BurnRate.reading(for: window) : nil,
-                    value: valueText(window)
-                )
-                .transition(Self.rowTransition)
+            if usage.account.provider == .antigravity {
+                ForEach(AntigravityUsageService.QuotaGroup.make(from: usage.windows)) { group in
+                    VStack(alignment: .leading, spacing: DetailCardLayout.contentSpacing / 2) {
+                        Text(group.title)
+                            .font(.system(size: DetailCardLayout.rowFontSize, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.primary.opacity(0.8))
+                            .lineLimit(1)
+
+                        ForEach(group.windows) { window in
+                            ProgressMetricRow(
+                                title: Self.antigravityWindowTitle(window),
+                                resetDescription: Self.resetText(window),
+                                progress: showsRemaining ? window.remainingFraction : window.usedFraction,
+                                accent: window.tint(warningAt: warningThreshold),
+                                percentageText: window.percentText(remaining: showsRemaining),
+                                isSpent: UsageTint.isSpent(window),
+                                showsRemaining: showsRemaining,
+                                burn: showsForecast ? BurnRate.reading(for: window) : nil,
+                                value: valueText(window)
+                            )
+                        }
+
+                        if group.fiveHourDoesNotApply {
+                            Text(String.localized("5-hour limit does not currently apply"))
+                                .font(.system(size: DetailCardLayout.footnoteFontSize, weight: .regular, design: .rounded))
+                                .foregroundStyle(.primary.opacity(0.5))
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    .transition(Self.rowTransition)
+                }
+            } else {
+                // However many limits the provider reports — one account-wide
+                // window for some plans, several once per-model limits apply.
+                ForEach(usage.windows) { window in
+                    ProgressMetricRow(
+                        title: window.name,
+                        resetDescription: Self.resetText(window),
+                        progress: showsRemaining ? window.remainingFraction : window.usedFraction,
+                        accent: window.tint(warningAt: warningThreshold),
+                        percentageText: window.percentText(remaining: showsRemaining),
+                        isSpent: UsageTint.isSpent(window),
+                        showsRemaining: showsRemaining,
+                        burn: showsForecast ? BurnRate.reading(for: window) : nil,
+                        value: valueText(window)
+                    )
+                    .transition(Self.rowTransition)
+                }
             }
 
             // **A card with only a title in it reads as a card that failed to
@@ -417,6 +451,14 @@ struct UsageDetailCard: View {
             Calendar.current.isDateInToday(resets) ? "jmm" : "MMMdjmm"
         )
         return String.localized("Resets \(formatter.string(from: resets))")
+    }
+
+    private static func antigravityWindowTitle(_ window: UsageWindow) -> String {
+        return switch window.kind {
+        case .fiveHour: String.localized("5-hour limit")
+        case .weekly: String.localized("Weekly limit")
+        case .other(_): window.name
+        }
     }
 
     /// "10月18日 86 积分到期". The date alone unless it is today — a pack

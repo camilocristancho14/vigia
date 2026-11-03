@@ -176,6 +176,10 @@
 /* Usage data */
 "5-hour limit" = "5 時間あたりの上限";
 "Weekly limit" = "週あたりの上限";
+"Claude and GPT (shared)" = "Claude と GPT（共有）";
+"Gemini" = "Gemini";
+"Gemini 4 Argon" = "Gemini 4 Argon";
+"5-hour limit does not currently apply" = "5 時間の上限は現在適用されません";
 "Spend limit" = "利用金額の上限";
 "%@-day limit" = "%@ 日あたりの上限";
 "%@-hour limit" = "%@ 時間あたりの上限";
