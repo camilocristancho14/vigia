@@ -340,9 +340,9 @@ struct AntigravityUsageService: Sendable {
     private static func modelGroup(_ name: String?) -> String? {
         guard let name = name?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return nil }
         switch name.lowercased() {
-        case "gemini models": "Gemini"
-        case "claude and gpt models": "Claude and GPT"
-        default: name
+        case "gemini models": return "Gemini"
+        case "claude and gpt models": return "Claude and GPT"
+        default: return name
         }
     }
 
