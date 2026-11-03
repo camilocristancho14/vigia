@@ -33,7 +33,7 @@ struct AntigravityParsingTests {
         #expect(windows.first?.resetsAt != nil)
         #expect(AntigravityUsageService.QuotaGroup.make(from: windows).map(\.title) == ["Gemini", "Claude and GPT (shared)"])
 
-        let future = try Self.decode(#"{"command":{"data":{"groups":[{"name":"A newly added pool","buckets":[{"id":"new-pool-monthly","window":"monthly","remaining_fraction":0.25}]}]}}"#)
+        let future = try Self.decode(#"{"command":{"data":{"groups":[{"name":"A newly added pool","buckets":[{"id":"new-pool-monthly","window":"monthly","remaining_fraction":0.25}]}]}}}"#)
         let extra = AntigravityUsageService.QuotaGroup.make(from: AntigravityUsageService.windows(from: future))
         #expect(extra.map(\.title) == ["A newly added pool"])
         #expect(extra.first?.windows.first?.percentText == "75%")
