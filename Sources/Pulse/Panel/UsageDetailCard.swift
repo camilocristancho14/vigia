@@ -457,7 +457,7 @@ struct UsageDetailCard: View {
         return switch window.kind {
         case .fiveHour: String.localized("5-hour limit")
         case .weekly: String.localized("Weekly limit")
-        case .other(_): window.name
+        default: window.name
         }
     }
 
