@@ -216,9 +216,12 @@ struct AntigravityUsageService: Sendable {
         enum CodingKeys: String, CodingKey { case response, groups, command }
         init(from decoder: Decoder) throws {
             let c = try decoder.container(keyedBy: CodingKeys.self)
-            response = try c.decodeIfPresent(Response.self, forKey: .response)
-            groups = try c.decodeIfPresent([Group].self, forKey: .groups)
-            command = try c.decodeIfPresent(Command.self, forKey: .command)
+            // `agy` uses `response` for prose; the HTTP API uses it for the
+            // object envelope. An unrelated field with the same name must not
+            // prevent us from reading the other supported envelope.
+            response = try? c.decode(Response.self, forKey: .response)
+            groups = try? c.decode([Group].self, forKey: .groups)
+            command = try? c.decode(Command.self, forKey: .command)
         }
     }
 
