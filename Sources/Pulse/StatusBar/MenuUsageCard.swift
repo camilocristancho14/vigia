@@ -81,9 +81,9 @@ struct MenuUsageCard: View {
                 }
             }
 
-            if usage.windows.isEmpty || usage.account.provider == .pulseExtension,
+            if usage.windows.isEmpty || usage.account.provider == .pulseExtension || usage.account.provider == .codex,
                let balance = usage.creditBalance {
-                fact(String.localized("Credit balance"), balance)
+                fact(String.localized(usage.account.provider == .codex ? "Credits available" : "Credit balance"), balance)
             }
 
             if case .unavailable(let reason) = usage.state {

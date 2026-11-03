@@ -194,7 +194,7 @@ struct CodexUsageService: Sendable {
             plan: (root["plan_type"] as? String).map(planName),
             creditBalance: (credits?["unlimited"] as? Bool == true)
                 ? nil
-                : credits?["balance"] as? String
+                : (credits?["balance"] as? String).map(creditCount)
         )
     }
 
@@ -259,7 +259,7 @@ struct CodexUsageService: Sendable {
 
     /// The shape `account/rateLimits/read` returns, which names its fields
     /// differently from the HTTP endpoint.
-    private static func parseAppServerResponse(_ result: [String: Any]) -> ProviderUsage {
+    static func parseAppServerResponse(_ result: [String: Any]) -> ProviderUsage {
         let groups = result["rateLimitsByLimitId"] as? [String: [String: Any]]
             ?? (result["rateLimits"] as? [String: Any]).map { ["codex": $0] }
             ?? [:]
@@ -324,14 +324,25 @@ struct CodexUsageService: Sendable {
             }
         }
 
+        let creditNode = ordered.compactMap { $0.value["credits"] as? [String: Any] }.first
+        let balance = credits.flatMap(Double.init)
+        let canUseCredits = result["ordinaryUsageAllowed"] as? Bool == false
+            && creditNode?["hasCredits"] as? Bool == true
+            && (balance ?? 0) > 0
+
         return ProviderUsage(
             account: AccountKey(.codex),
             windows: windows,
             observedAt: Date(),
             state: windows.isEmpty ? .unavailable(.noLimitsReported) : .live,
-            plan: plan.map(planName),
-            creditBalance: credits
+            plan: plan.map(planName).map { canUseCredits ? "\($0) · credits available" : $0 },
+            creditBalance: credits.map(creditCount)
         )
+    }
+
+    private static func creditCount(_ raw: String) -> String {
+        guard let value = Double(raw), value.isFinite else { return raw }
+        return value.formatted(.number.precision(.fractionLength(0...1)))
     }
 
     // MARK: - Shared
