@@ -33,5 +33,32 @@ jobs:
       - name: Build and test
         run: swift test
 
+      - name: Build packaged app
+        run: bash scripts/make-app.sh
+
+      - name: Capture demo previews
+        continue-on-error: true
+        run: bash scripts/capture-screenshots.sh
+
+      - name: Upload Mac app and installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vigia-macos-${{ github.sha }}
+          path: |
+            build.noindex/Vigia.app
+            build.noindex/Vigia.zip
+            build.noindex/Vigia.dmg
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload demo previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vigia-demo-previews-${{ github.sha }}
+          path: build.noindex/screenshots/expanded-light.png
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Hook command rules (macOS's own bash 3.2)
         run: /bin/bash scripts/test-vigia-notify.sh

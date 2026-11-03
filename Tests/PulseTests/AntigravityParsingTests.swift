@@ -12,14 +12,31 @@ import Testing
 @Suite("Antigravity quota parsing")
 struct AntigravityParsingTests {
     private static func decode(_ json: String) throws -> AntigravityUsageService.Reply {
-        try JSONDecoder().decode(AntigravityUsageService.Reply.self, from: Data(json.utf8))
+        try AntigravityUsageService.Reply.decoder().decode(AntigravityUsageService.Reply.self, from: Data(json.utf8))
     }
 
     private static func captured() throws -> AntigravityUsageService.Reply {
         let url = try #require(
             Bundle.module.url(forResource: "antigravity-quota", withExtension: "json", subdirectory: "Fixtures")
         )
-        return try JSONDecoder().decode(AntigravityUsageService.Reply.self, from: Data(contentsOf: url))
+        return try AntigravityUsageService.Reply.decoder().decode(AntigravityUsageService.Reply.self, from: Data(contentsOf: url))
+    }
+
+    @Test("agy's real JSON output keeps every pool, including generic groups")
+    func agyOutput() throws {
+        let url = try #require(Bundle.module.url(forResource: "agy-usage-real", withExtension: "json", subdirectory: "Fixtures"))
+        let reply = try AntigravityUsageService.Reply.decoder().decode(AntigravityUsageService.Reply.self, from: Data(contentsOf: url))
+        let windows = AntigravityUsageService.windows(from: reply)
+        #expect(windows.map(\.id) == ["gemini-5h", "gemini-weekly", "3p-5h", "3p-weekly"])
+        #expect(windows.map(\.scope) == ["Gemini", "Gemini", "Claude and GPT", "Claude and GPT"])
+        #expect(windows.first?.percentText == "1%")
+        #expect(windows.first?.resetsAt != nil)
+        #expect(AntigravityUsageService.QuotaGroup.make(from: windows).map(\.title) == ["Gemini", "Claude and GPT (shared)"])
+
+        let future = try Self.decode(#"{"command":{"data":{"groups":[{"name":"A newly added pool","buckets":[{"id":"new-pool-monthly","window":"monthly","remaining_fraction":0.25}]}]}}}"#)
+        let extra = AntigravityUsageService.QuotaGroup.make(from: AntigravityUsageService.windows(from: future))
+        #expect(extra.map(\.title) == ["A newly added pool"])
+        #expect(extra.first?.windows.first?.percentText == "75%")
     }
 
     @Test("The quota request sends no field Google's endpoint would refuse, as Antigravity")
@@ -35,6 +52,46 @@ struct AntigravityParsingTests {
 
         #expect(windows.map(\.id) == ["gemini-5h", "gemini-weekly", "3p-5h", "3p-weekly"])
         #expect(windows.map(\.kind) == [.fiveHour, .weekly, .fiveHour, .weekly])
+    }
+
+    @Test("All five agy quota pools are parsed and grouped under their model families")
+    func allQuotaPoolsAndFamilies() throws {
+        let reply = try Self.decode(#"""
+        {"groups":[
+          {"displayName":"Gemini Models","buckets":[
+            {"bucketId":"gemini-5h","window":"5h","remainingFraction":0.8,"resetTime":"2026-11-03T17:00:00Z"},
+            {"bucketId":"gemini-weekly","window":"weekly","remainingFraction":0.7,"resetTime":"2026-11-07T17:00:00Z"}]},
+          {"displayName":"Claude and GPT models","buckets":[
+            {"bucketId":"3p-5h","window":"5h","remainingFraction":0.6,"resetTime":"2026-11-03T17:00:00Z"},
+            {"bucketId":"3p-weekly","window":"weekly","remainingFraction":0.5,"resetTime":"2026-11-07T17:00:00Z"}]},
+          {"displayName":"Gemini 4 Argon","buckets":[
+            {"bucketId":"gemini-argon-wtu-weekly","window":"weekly","remainingFraction":0.4,"resetTime":"2026-11-07T17:00:00Z"}]}
+        ]}
+        """#)
+        let windows = AntigravityUsageService.windows(from: reply)
+        let groups = AntigravityUsageService.QuotaGroup.make(from: windows)
+
+        #expect(windows.map(\.id) == ["gemini-5h", "gemini-weekly", "3p-5h", "3p-weekly", "gemini-argon-wtu-weekly"])
+        #expect(groups.map(\.family) == [.gemini, .thirdParty, .argon])
+        #expect(groups.map { $0.windows.map(\.id) } == [
+            ["gemini-5h", "gemini-weekly"], ["3p-5h", "3p-weekly"], ["gemini-argon-wtu-weekly"]
+        ])
+        #expect(groups.allSatisfy { !$0.fiveHourDoesNotApply })
+    }
+
+    @Test("An exhausted shared weekly quota explains the absent 5-hour pool")
+    func sharedWeeklyExhaustion() throws {
+        let reply = try Self.decode(#"""
+        {"response":{"groups":[{"displayName":"Claude and GPT models","buckets":[
+          {"bucketId":"3p-weekly","window":"weekly","remainingFraction":0,"resetTime":"2026-11-07T17:00:00Z"}
+        ]}]}}
+        """#)
+        let windows = AntigravityUsageService.windows(from: reply)
+        let group = try #require(AntigravityUsageService.QuotaGroup.make(from: windows).first)
+
+        #expect(windows.map(\.id) == ["3p-weekly"])
+        #expect(group.fiveHourDoesNotApply)
+        #expect(group.windows.first?.isExhausted == true)
     }
 
     @Test("A group's name becomes the scope, with a trailing \"models\" trimmed")

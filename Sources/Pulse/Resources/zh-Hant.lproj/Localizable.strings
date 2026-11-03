@@ -176,6 +176,10 @@
 /* Usage data */
 "5-hour limit" = "5 小時額度";
 "Weekly limit" = "每週額度";
+"Claude and GPT (shared)" = "Claude 和 GPT（共用）";
+"Gemini" = "Gemini";
+"Gemini 4 Argon" = "Gemini 4 Argon";
+"5-hour limit does not currently apply" = "5 小時額度目前不適用";
 "Spend limit" = "消費額度";
 "%@-day limit" = "%@ 天額度";
 "%@-hour limit" = "%@ 小時額度";

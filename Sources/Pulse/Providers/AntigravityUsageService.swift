@@ -9,9 +9,9 @@ import Foundation
 ///
 /// - **The login** is `~/.gemini/jetski-standalone-oauth-token`, a Google
 ///   OAuth token (`access_token`, `refresh_token`, `expiry`) written by `agy`.
-/// - **The quota** is `cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`,
-///   the call `agy`'s embedded language server makes itself. It answers the
-///   same groups and buckets the local RPC did, without its `response` wrapper.
+/// - **The quota** comes first from `agy -p /usage --output-format json`, which
+///   reports every current model group. If that command is unavailable, it is
+///   read from `cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`.
 /// - **The plan** comes from `loadCodeAssist`, read the way Gemini CLI's is.
 ///
 /// **Renewal stays in memory.** The access token lasts an hour. When it has
@@ -34,7 +34,27 @@ struct AntigravityUsageService: Sendable {
 
     var home = URL(fileURLWithPath: NSHomeDirectory())
 
+    private actor UsageCache {
+        static let shared = UsageCache()
+        private var entry: (Date, ProviderUsage)?
+        private var lastAttempt: Date?
+        func begin() -> (ProviderUsage?, Bool) {
+            let now = Date()
+            if let entry, now.timeIntervalSince(entry.0) < 180 { return (entry.1, false) }
+            if let lastAttempt, now.timeIntervalSince(lastAttempt) < 180 { return (nil, false) }
+            lastAttempt = now
+            return (nil, true)
+        }
+        func store(_ usage: ProviderUsage) { entry = (Date(), usage) }
+    }
+
     func fetch() async -> ProviderUsage {
+        let (cached, shouldRunCLI) = await UsageCache.shared.begin()
+        if let cached { return cached }
+        if shouldRunCLI, let cli = await Self.fetchViaAgy(home: home), !cli.windows.isEmpty {
+            await UsageCache.shared.store(cli)
+            return cli
+        }
         let tokenFile = home.appending(path: ".gemini/jetski-standalone-oauth-token")
         guard let saved = AgyLogin.read(tokenFile) else {
             return .unavailable(.antigravity, reason: .localLoginMissing)
@@ -78,6 +98,20 @@ struct AntigravityUsageService: Sendable {
                 creditBalance: nil
             )
         }
+    }
+
+    private static func fetchViaAgy(home: URL) async -> ProviderUsage? {
+        let binary = AgyLogin.binaryCandidates(home: home).first { FileManager.default.isExecutableFile(atPath: $0.path) }
+        guard let binary else { return nil }
+        let environment = BoundedProcess.environment(leading: binary, over: BoundedProcess.inheritedEnvironment)
+        guard case .success(let data) = await BoundedProcess.run(
+            binary, ["-p", "/usage", "--output-format", "json"], environment: environment,
+            deadline: 15, outputCeiling: 1_000_000
+        ), let reply = try? Self.decoder().decode(Reply.self, from: data) else { return nil }
+        let windows = windows(from: reply)
+        guard !windows.isEmpty else { return nil }
+        return ProviderUsage(account: AccountKey(.antigravity), windows: windows, observedAt: Date(),
+                            state: .live, plan: nil, creditBalance: nil)
     }
 
     // MARK: - Asking Google
@@ -125,14 +159,34 @@ struct AntigravityUsageService: Sendable {
     struct Reply: Decodable {
         struct Bucket: Decodable {
             let bucketId: String?
+            let name: String?
             let window: String?
             let remainingFraction: Double?
             let resetTime: String?
+
+            enum CodingKeys: String, CodingKey { case bucketId, id, name, window, remainingFraction, resetTime }
+            init(from decoder: Decoder) throws {
+                let c = try decoder.container(keyedBy: CodingKeys.self)
+                bucketId = try c.decodeIfPresent(String.self, forKey: .bucketId) ?? c.decodeIfPresent(String.self, forKey: .id)
+                name = try c.decodeIfPresent(String.self, forKey: .name)
+                window = try c.decodeIfPresent(String.self, forKey: .window)
+                remainingFraction = try c.decodeIfPresent(Double.self, forKey: .remainingFraction)
+                resetTime = try c.decodeIfPresent(String.self, forKey: .resetTime)
+            }
         }
 
         struct Group: Decodable {
             let displayName: String?
+            let name: String?
             let buckets: [Bucket]?
+
+            enum CodingKeys: String, CodingKey { case displayName, name, buckets }
+            init(from decoder: Decoder) throws {
+                let c = try decoder.container(keyedBy: CodingKeys.self)
+                displayName = try c.decodeIfPresent(String.self, forKey: .displayName)
+                name = try c.decodeIfPresent(String.self, forKey: .name)
+                buckets = try c.decodeIfPresent([Bucket].self, forKey: .buckets)
+            }
         }
 
         struct Response: Decodable {
@@ -144,13 +198,38 @@ struct AntigravityUsageService: Sendable {
         /// `response`. Both are read so the captured fixture keeps working.
         let response: Response?
         let groups: [Group]?
+        let command: Command?
 
-        var allGroups: [Group] { response?.groups ?? groups ?? [] }
+        struct Command: Decodable {
+            struct DataNode: Decodable { let groups: [Group]? }
+            let data: DataNode?
+        }
+
+        var allGroups: [Group] { command?.data?.groups ?? response?.groups ?? groups ?? [] }
+
+        static func decoder() -> JSONDecoder {
+            let decoder = JSONDecoder()
+            decoder.keyDecodingStrategy = .convertFromSnakeCase
+            return decoder
+        }
+
+        enum CodingKeys: String, CodingKey { case response, groups, command }
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            // `agy` uses `response` for prose; the HTTP API uses it for the
+            // object envelope. An unrelated field with the same name must not
+            // prevent us from reading the other supported envelope.
+            response = try? c.decode(Response.self, forKey: .response)
+            groups = try? c.decode([Group].self, forKey: .groups)
+            command = try? c.decode(Command.self, forKey: .command)
+        }
     }
+
+    private static func decoder() -> JSONDecoder { Reply.decoder() }
 
     static func windows(from reply: Reply) -> [UsageWindow] {
         reply.allGroups.flatMap { group -> [UsageWindow] in
-            let scope = modelGroup(group.displayName)
+            let scope = modelGroup(group.displayName ?? group.name)
 
             return (group.buckets ?? [])
                 .compactMap { window(from: $0, scope: scope) }
@@ -161,9 +240,57 @@ struct AntigravityUsageService: Sendable {
         }
     }
 
+    /// The three quota families Antigravity reports, in the order the card
+    /// reads best. The IDs are the bucket names `agy` uses; a missing bucket
+    /// stays missing instead of becoming a fabricated zero-percent reading.
+    struct QuotaGroup: Identifiable, Equatable {
+        enum Family: String, CaseIterable {
+            case gemini, thirdParty, argon
+
+            var title: String {
+                switch self {
+                case .gemini: String.localized("Gemini")
+                case .thirdParty: String.localized("Claude and GPT (shared)")
+                case .argon: String.localized("Gemini 4 Argon")
+                }
+            }
+
+            var bucketIDs: [String] {
+                switch self {
+                case .gemini: ["gemini-5h", "gemini-weekly"]
+                case .thirdParty: ["3p-5h", "3p-weekly"]
+                case .argon: ["gemini-argon-wtu-weekly"]
+                }
+            }
+        }
+
+        let family: Family?
+        let customTitle: String?
+        let windows: [UsageWindow]
+        let fiveHourDoesNotApply: Bool
+        var id: String { family?.rawValue ?? (windows.first?.scope ?? customTitle ?? "unknown") }
+        var title: String { family?.title ?? customTitle ?? windows.first?.scope ?? "" }
+
+        static func make(from windows: [UsageWindow]) -> [QuotaGroup] {
+            let known = Family.allCases.compactMap { family -> QuotaGroup? in
+                let members = family.bucketIDs.compactMap { id in windows.first { $0.id == id } }
+                let weeklyIsExhausted = members.contains { $0.id == "3p-weekly" && $0.isExhausted }
+                let showsNotApplicable = family == .thirdParty
+                    && weeklyIsExhausted
+                    && !members.contains { $0.id == "3p-5h" }
+                guard !members.isEmpty || showsNotApplicable else { return nil }
+                return QuotaGroup(family: family, customTitle: nil, windows: members, fiveHourDoesNotApply: showsNotApplicable)
+            }
+            let knownIDs = Set(Family.allCases.flatMap(\.bucketIDs))
+            let extras = Dictionary(grouping: windows.filter { !knownIDs.contains($0.id) }, by: { $0.scope ?? "Antigravity" })
+                .map { title, members in QuotaGroup(family: nil, customTitle: title, windows: members, fiveHourDoesNotApply: false) }
+            return known + extras.sorted { $0.title < $1.title }
+        }
+    }
+
     private static func window(from bucket: Reply.Bucket, scope: String?) -> UsageWindow? {
         guard
-            let id = bucket.bucketId,
+            let id = bucket.bucketId ?? bucket.name,
             let remaining = bucket.remainingFraction,
             let (kind, seconds) = length(of: bucket.window)
         else { return nil }
@@ -211,15 +338,15 @@ struct AntigravityUsageService: Sendable {
         }
     }
 
-    /// "Gemini Models" → "Gemini". The group's name is what the limit is
-    /// scoped to, and it is shown after the window's own name — "5-hour limit ·
-    /// Gemini" — where the trailing "models" is a word the row can't spare.
+    /// Normalize the two known legacy group labels. New group names are kept
+    /// exactly as the provider supplied them so a new pool remains recognizable.
     private static func modelGroup(_ name: String?) -> String? {
         guard let name = name?.trimmingCharacters(in: .whitespaces), !name.isEmpty else { return nil }
-
-        let words = name.split(separator: " ")
-        guard words.count > 1, words.last?.lowercased() == "models" else { return name }
-        return words.dropLast().joined(separator: " ")
+        switch name.lowercased() {
+        case "gemini models": return "Gemini"
+        case "claude and gpt models": return "Claude and GPT"
+        default: return name
+        }
     }
 
     /// Built per call rather than kept as a shared instance: `ISO8601DateFormatter`
