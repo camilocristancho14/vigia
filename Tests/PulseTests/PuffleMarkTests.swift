@@ -107,7 +107,7 @@ struct PuffleMarkTests {
         for mood in [MarkMood.idle, .concerned, .tired, .exhausted, .resting, .asleep, .celebrating, .needsYou] {
             #expect(MascotChoreography.menu(for: mood, pose: .awake).allSatisfy { !$0.value.isWorking }, "\(mood)")
         }
-        #expect(MascotChoreography.menu(for: .working, pose: .run).allSatisfy(\.value.isWorking))
+        #expect(MascotChoreography.menu(for: .working, pose: .run).allSatisfy { $0.value.isWorking })
         #expect(MascotChoreography.menu(for: .working, pose: .type).first?.value == .type)
     }
 
