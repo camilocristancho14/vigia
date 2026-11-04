@@ -6,6 +6,12 @@ import SwiftUI
 
 @MainActor
 enum ClawdFrames {
+    /// The sprites' own proportions: a 17 × 12 grid at 3 px a cell.
+    static let aspect: CGFloat = 51.0 / 36.0
+
+    /// How wide he is drawn standing `height` tall.
+    static func width(forHeight height: CGFloat) -> CGFloat { (height * aspect).rounded(.up) }
+
     /// The walking GIF, in the colours it was drawn in.
     static let walkColour: [NSImage] = clawdCrabFramePNGs.compactMap { encoded in
         guard let data = Data(base64Encoded: encoded) else { return nil }
@@ -78,8 +84,11 @@ struct ClawdMarkView: View {
     /// Claude's own orange, rather than the ink of the surface behind it.
     var colour = false
     var size: CGFloat
-    /// Holds one frame with no timeline: a spent limit. See `MarkMood`.
+    /// Holds one frame with no timeline: Reduce Motion. See `MarkMood`.
     var still = false
+    /// How wide it is drawn; a `size` square unless given. The sprites are
+    /// 51 × 36, so a square leaves him well short of `size` tall.
+    var width: CGFloat?
 
     var body: some View {
         if still {
@@ -99,9 +108,9 @@ struct ClawdMarkView: View {
                     .resizable()
                     .interpolation(.none)
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: size, height: size)
+                    .frame(width: width ?? size, height: size)
             } else {
-                Color.clear.frame(width: size, height: size)
+                Color.clear.frame(width: width ?? size, height: size)
             }
         }
     }

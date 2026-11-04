@@ -20,7 +20,8 @@ struct PuffleMarkTests {
             for size in [false, true] {
                 let sheet = PuffleSheet.sheet(variant, large: size)
                 let frame = try #require(sheet.frame(variant.still), "\(variant.id) still")
-                #expect(frame.width == sheet.cell && frame.height == sheet.cell)
+                #expect(frame.width == sheet.cellWidth && frame.height == sheet.cellHeight)
+                #expect(sheet.cellWidth >= sheet.cellHeight, "\(variant.id) narrower than tall")
                 let last = variant.clips.values.map { $0.start + $0.count - 1 }.max() ?? 0
                 #expect(sheet.frame(last) != nil, "\(variant.id) atlas is short")
             }
@@ -81,9 +82,73 @@ struct PuffleMarkTests {
         #expect(MarkMood.resolve(pose: .run, usedFraction: 0.3, justReset: true) == .working)
     }
 
-    @Test("Only a spent limit holds still")
-    func onlySpentIsStill() {
-        #expect(MarkMood.allCases.filter(\.isStill) == [.spent])
+    @Test("In the menu bar a puffle stands the bar's full 22 points, as wide as it needs")
+    func fullHeight() {
+        for variant in PuffleCatalog.all {
+            #expect(variant.small == 44, "\(variant.id)")
+            #expect(variant.aspect >= 1 && variant.aspect <= 1.45, "\(variant.id) \(variant.aspect)")
+            #expect(PuffleMarkView.width(of: variant, height: 22) >= 22)
+        }
+        #expect(MascotCharacter.clawd.menuBarSize == 22)
+        #expect(ClawdFrames.width(forHeight: 22) > 22)
+    }
+
+    @Test("A spent puffle never stands still: asleep first, else something gentle")
+    func spentMoves() throws {
+        #expect(MarkMood.allCases.filter(\.isSpent) == [.spent])
+        for variant in PuffleCatalog.all {
+            let menu = PuffleChoreography.menu(for: .spent, variant: variant)
+            #expect(!menu.isEmpty)
+            let kinds = Set(menu.compactMap { variant.frames($0.value)?.kind })
+            if !variant.animations(of: .sleep).isEmpty {
+                #expect(kinds == [.sleep], "\(variant.id) \(kinds)")
+            }
+            // Every one of them a clip with more than one frame.
+            #expect(menu.allSatisfy { (variant.frames($0.value)?.count ?? 0) > 1 }, "\(variant.id)")
+        }
+        // The ghost floated still in 0.12: it has its own sleep now.
+        let ghost = try #require(PuffleCatalog.variant("purple-ghost"))
+        #expect(!ghost.animations(of: .sleep).isEmpty)
+        // The mascots too: their spent pose, and asleep.
+        #expect(MascotChoreography.menu(for: .spent, pose: .spent).count > 1)
+    }
+
+    @Test("Each animation plays where it means something")
+    func kindsByMood() throws {
+        let orange = try #require(PuffleCatalog.variant("orange"))
+        let kinds = { (mood: MarkMood) in Set(PuffleChoreography.menu(for: mood, variant: orange).compactMap { orange.frames($0.value)?.kind }) }
+        #expect(kinds(.working).isSubset(of: [.walk, .work, .power, .trick]))
+        #expect(kinds(.tired).isSubset(of: [.yawn, .doze, .hungry, .sad, .sick, .rest]))
+        #expect(kinds(.celebrating).isSubset(of: [.cheer, .trick, .dance, .laugh, .happy]))
+        #expect(kinds(.idle).contains(.play))
+        #expect(!kinds(.idle).contains(.work) && !kinds(.idle).contains(.sleep))
+        // The classic colours carry their toys and their care-screen moods.
+        for id in ["black", "blue", "orange", "pink", "white", "rainbow", "gold", "green", "purple", "yellow"] {
+            let variant = try #require(PuffleCatalog.variant(id))
+            #expect(variant.clips.count >= 15, "\(id) has \(variant.clips.count)")
+        }
+    }
+
+    @Test("A long menu goes round before anything comes back")
+    func variety() throws {
+        let variant = try #require(PuffleCatalog.variant("orange"))
+        let menu = PuffleChoreography.menu(for: .idle, variant: variant)
+        #expect(menu.count >= 10)
+        let director = MarkChoreographer<PuffleClip>(seed: 5)
+        var shown: [PuffleClip] = []
+        var lastStart = -1.0
+        var time: TimeInterval = 0
+        while time < 3600 {
+            let cue = director.cue(mood: .idle, menu: menu, at: time)
+            if cue.start != lastStart { shown.append(cue.value); lastStart = cue.start }
+            time += 0.5
+        }
+        let memory = MarkChoreographer<PuffleClip>.memory(for: menu.count)
+        for i in shown.indices.dropFirst(memory + 1) {
+            let window = shown[(i - memory - 1)..<i]
+            #expect(!window.contains(shown[i]), "\(shown[i]) came back too soon")
+        }
+        #expect(Set(shown).count >= menu.count * 3 / 4)
     }
 
     @Test("Every mood has something to play, for every puffle and every mascot pose")

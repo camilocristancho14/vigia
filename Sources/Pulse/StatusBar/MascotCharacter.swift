@@ -1,5 +1,10 @@
 import SwiftUI
 
+/// The menu bar's marks: as tall as the bar's status items are drawn.
+enum MenuBarMark {
+    static let height: CGFloat = 22
+}
+
 /// Which character an animated mark is.
 ///
 /// Clawd is Claude Code's and the bot is everyone's; the others are drawn for
@@ -36,10 +41,10 @@ enum MascotCharacter: String, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// What it measures in the menu bar. The vector marks, the bot and the
-    /// logos were enlarged for legibility in 0.5.1; Clawd was not, and is
-    /// exactly the size he was in 0.5.0 — a 20-point box.
-    var menuBarSize: CGFloat { self == .clawd ? 20 : 22 }
+    /// How tall it stands in the menu bar: the bar's full 22 points, Clawd
+    /// included since 0.13 (he was a 20-point box, his 51 × 36 sprite fitted
+    /// inside it, 14 points tall). He is now as wide as his sprite needs.
+    var menuBarSize: CGFloat { MenuBarMark.height }
 
     static func automatic(for provider: Provider) -> MascotCharacter {
         options(for: provider)[0]

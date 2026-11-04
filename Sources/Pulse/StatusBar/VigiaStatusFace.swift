@@ -227,9 +227,22 @@ private struct MenuBarMascotItem: View {
     /// Moves on every minute, so a pose that follows the clock is re-read.
     let now: Date
 
+    /// How tall the mark stands: the bar's full 22 points.
     private var markSize: CGFloat {
-        if settings.puffle(for: account) != nil { return 22 }
+        if settings.puffle(for: account) != nil { return MenuBarMark.height }
         return (settings.showsBotMark(for: account) ? settings.mascotCharacter(for: account) : .bot).menuBarSize
+    }
+
+    /// How wide: a puffle and Clawd are cut to their own outline, so they
+    /// are wider than tall; the others are drawn in a square.
+    private var markWidth: CGFloat {
+        if let puffle = settings.puffle(for: account) {
+            return PuffleMarkView.width(of: puffle, height: markSize)
+        }
+        if settings.showsBotMark(for: account), settings.mascotCharacter(for: account) == .clawd {
+            return ClawdFrames.width(forHeight: markSize)
+        }
+        return markSize
     }
     private let backdrop = MenuBarBackdrop.shared
 
@@ -247,7 +260,7 @@ private struct MenuBarMascotItem: View {
 
         HStack(spacing: 4) {
             mark(working: working, pose: pose, headline: headline)
-                .frame(width: markSize, height: markSize)
+                .frame(width: markWidth, height: markSize)
             if working, settings.menuBarActivityText || settings.menuBarTimer {
                 activity(for: provider)
             }
@@ -288,7 +301,8 @@ private struct MenuBarMascotItem: View {
             let legible = backdrop.legible(character.brand)
             let keepsColour = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(character.brand)
             if character == .clawd {
-                ClawdMarkView(pose: pose, colour: keepsColour, size: markSize, still: still)
+                ClawdMarkView(pose: pose, colour: keepsColour, size: markSize, still: still,
+                              width: markWidth)
             } else {
                 VectorMascotView(character: character, pose: pose, colour: keepsColour,
                                  size: markSize, phase: provider.mascotPhase, still: still)

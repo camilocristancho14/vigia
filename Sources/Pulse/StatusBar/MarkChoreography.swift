@@ -2,7 +2,7 @@
 // Club Penguin puffles alike. `UsageStore.mascotPose` says what the agent is
 // up to; this turns that, and how much of the limit is gone, into a mood, and
 // the mood into a running programme of animations — never the same one twice
-// in a row, never standing still unless the limit is spent.
+// in a row, and never standing still — not even with the limit spent.
 import Foundation
 
 /// How an animated mark feels, which decides what it rotates through.
@@ -18,7 +18,7 @@ enum MarkMood: String, CaseIterable, Sendable {
     case tired
     /// Nine tenths gone: dozing off where it stands.
     case exhausted
-    /// The limit is used up: lies still. The only mood that does not move.
+    /// The limit is used up: asleep, or failing that nodding off, faded.
     case spent
     /// A turn in flight and the model is spending tokens.
     case working
@@ -75,14 +75,15 @@ enum MarkMood: String, CaseIterable, Sendable {
         return .idle
     }
 
-    /// Whether the mark holds perfectly still. Only a spent limit does.
-    var isStill: Bool { self == .spent }
+    /// The limit is used up: the mark is drawn faded. It still moves —
+    /// asleep where it can, breathing slowly where it cannot.
+    var isSpent: Bool { self == .spent }
 
     /// How fast the mood plays its animations, against their own speed.
     var tempo: Double {
         switch self {
         case .tired: 0.8
-        case .exhausted, .asleep: 0.65
+        case .exhausted, .asleep, .spent: 0.65
         case .working, .celebrating: 1.1
         default: 1
         }
@@ -190,8 +191,18 @@ final class MarkChoreographer<Value: Hashable & Sendable> {
                        previous: previous, previousStart: previousStart)
     }
 
+    /// The last few beats dealt, newest last, so a long menu goes round
+    /// before anything comes back.
+    private var recent: [Value] = []
+
+    /// How many of the last beats a menu of `count` keeps out besides the
+    /// current one: none for a short menu, up to four for a long one.
+    static func memory(for count: Int) -> Int { max(0, min(4, count / 3)) }
+
     private func deal(_ menu: [MarkBeat<Value>], at time: TimeInterval, after boundary: TimeInterval?) {
-        let options = menu.count > 1 ? menu.filter { $0.value != current } : menu
+        let held = Set(recent.suffix(Self.memory(for: menu.count)) + (current.map { [$0] } ?? []))
+        let fresh = menu.filter { !held.contains($0.value) }
+        let options = fresh.isEmpty ? (menu.count > 1 ? menu.filter { $0.value != current } : menu) : fresh
         let beat = Self.pick(options, using: &rng)
         previous = current
         previousStart = start
@@ -202,7 +213,13 @@ final class MarkChoreographer<Value: Hashable & Sendable> {
         start = begin
         end = begin + Self.length(of: beat, using: &rng)
         current = beat.value
+        remember(beat.value)
         dealt += 1
+    }
+
+    private func remember(_ value: Value) {
+        recent.append(value)
+        if recent.count > 8 { recent.removeFirst(recent.count - 8) }
     }
 
     /// Cuts straight to one beat, for news that names it.
@@ -212,6 +229,7 @@ final class MarkChoreographer<Value: Hashable & Sendable> {
         start = time
         end = time + Self.length(of: beat, using: &rng)
         current = beat.value
+        remember(beat.value)
         dealt += 1
     }
 
@@ -257,7 +275,7 @@ enum MascotChoreography {
         case .exhausted:
             [MarkBeat(.tired, weight: 3, 8...14), MarkBeat(.sleep, weight: 1.5, 5...9)]
         case .spent:
-            [MarkBeat(.spent, 60...60)]
+            [MarkBeat(.spent, weight: 3, 10...20), MarkBeat(.sleep, weight: 2, 10...20)]
         case .working:
             [MarkBeat(pose, weight: 4, 8...16)] + [MascotPose.type, .run, .thinking]
                 .filter { $0 != pose }

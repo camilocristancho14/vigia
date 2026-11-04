@@ -332,7 +332,7 @@ struct UsageRingView: View {
                 PuffleMarkView(variant: puffle, pose: mascotPose,
                                usedFraction: isSpent ? 1 : usedFraction,
                                justReset: botEvent == .limitReset,
-                               size: centreDiameter * Self.botScale, seed: provider.rawValue)
+                               size: centreDiameter * Self.botScale, seed: provider.rawValue, square: true)
             } else {
                 ChoreographedMascot(pose: mascotPose, usedFraction: isSpent ? 1 : usedFraction,
                                     justReset: botEvent == .limitReset, seed: provider.rawValue) { pose, still in

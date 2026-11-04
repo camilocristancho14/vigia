@@ -7,51 +7,102 @@
 import AppKit
 import SwiftUI
 
-/// The animations a puffle can have. Which ones a variant has depends on
-/// which of its SWFs survived in the archive; `puffles.json` says.
-enum PuffleClip: String, CaseIterable, Sendable, Hashable {
-    /// Facing out, blinking.
-    case idle
+/// One of a puffle's animations, by the name `puffles.json` gives it.
+///
+/// Which ones a variant has depends on which of its SWFs survived in the
+/// archive: the classic colours carry their toys, baths and care-screen
+/// moods, the creatures mostly their walks and tricks. The ones every
+/// puffle may have are named here; the rest are only ever reached through
+/// their `PuffleKind`.
+struct PuffleClip: RawRepresentable, Hashable, Sendable, ExpressibleByStringLiteral, CustomStringConvertible {
+    let rawValue: String
+    init(rawValue: String) { self.rawValue = rawValue }
+    init(stringLiteral value: String) { rawValue = value }
+    var description: String { rawValue }
+
+    /// Facing out, blinking (the ghost: floating).
+    static let idle: PuffleClip = "idle"
     /// Turning its head to one side and back.
-    case look
+    static let look: PuffleClip = "look"
     /// The creature puffles' happy bob on the spot.
-    case bounce
-    /// Walking towards the viewer.
-    case walk
-    /// Walking past, in profile.
-    case walkSide
+    static let bounce: PuffleClip = "bounce"
+    static let walk: PuffleClip = "walk"
+    static let walkSide: PuffleClip = "walkSide"
     /// Eyes closing, nodding off.
-    case doze
+    static let doze: PuffleClip = "doze"
     /// Asleep under its Zs.
-    case sleep
+    static let sleep: PuffleClip = "sleep"
     /// Waking with a start.
-    case wake
-    case jump
+    static let wake: PuffleClip = "wake"
+    static let jump: PuffleClip = "jump"
     /// The jump with a spin, its best trick.
-    case spin
-    case nuzzle
-    case roll
-    /// Chattering away.
-    case speak
-    /// Standing on its head.
-    case headstand
-    case dig
-    case eat
-    case splash
-    /// The Puffle Hotel's weightlifting.
-    case lift
+    static let spin: PuffleClip = "spin"
+    static let nuzzle: PuffleClip = "nuzzle"
+    static let roll: PuffleClip = "roll"
+    static let speak: PuffleClip = "speak"
+    static let headstand: PuffleClip = "headstand"
+    static let dig: PuffleClip = "dig"
+    static let eat: PuffleClip = "eat"
+    static let splash: PuffleClip = "splash"
+    static let lift: PuffleClip = "lift"
     /// The classic puffles' moods, from the game's own care screens: a long
     /// yawn, a thought bubble of food, and a queasy green tongue.
-    case yawn
-    case hungry
-    case sick
+    static let yawn: PuffleClip = "yawn"
+    static let hungry: PuffleClip = "hungry"
+    static let sick: PuffleClip = "sick"
 }
 
-/// Where one clip sits in a variant's atlas.
+/// What an animation means, which decides the moods that play it. Every
+/// clip in `puffles.json` carries one; `docs/animaciones.md` has the table.
+enum PuffleKind: String, CaseIterable, Sendable, Decodable {
+    /// At rest: breathing, blinking.
+    case rest
+    /// Looking about.
+    case look
+    /// Pondering, a thought crossing its face.
+    case think
+    case walk
+    /// Busy at something: rolling, digging, weights, the easel, the camera,
+    /// the unicycle, the skipping rope.
+    case work
+    /// Bursting with energy: the black puffle's fire, the white one's ice.
+    case power
+    /// A toy: gum, a beach ball, a skateboard, a hoop, a balloon…
+    case play
+    /// Its tricks: jumps, the spin, the headstand, the creatures' bob.
+    case trick
+    /// The disco ball.
+    case dance
+    /// Content: a nuzzle, being petted.
+    case happy
+    /// Tickled, laughing.
+    case laugh
+    /// The big moments: full care, delight, a trampoline, the cannon.
+    case cheer
+    case eat
+    case bath
+    /// Being brushed.
+    case groom
+    case speak
+    /// A start: poked, the jack-in-the-box.
+    case surprise
+    /// Disappointed, upset.
+    case sad
+    case sick
+    case yawn
+    case hungry
+    case doze
+    /// Asleep: the Zs, the pillow, the dream.
+    case sleep
+    case wake
+}
+
+/// Where one clip sits in a variant's atlas, and what it is.
 struct PuffleClipFrames: Decodable, Hashable, Sendable {
     let start: Int
     let count: Int
     let fps: Double
+    let kind: PuffleKind
 
     var loop: TimeInterval { Double(count) / fps }
 }
@@ -69,8 +120,12 @@ struct PuffleVariant: Identifiable, Hashable, Sendable, Decodable {
     /// A creature puffle rather than the classic ball.
     let creature: Bool
     let columns: Int
+    /// Cell heights, in pixels: 44 is the menu bar's 22 points at 2×.
     let small: Int
     let large: Int
+    /// Cell widths: as wide as the variant's clips need, cut to the puffle.
+    let smallWidth: Int
+    let largeWidth: Int
     let clips: [String: PuffleClipFrames]
     /// The frame it lies still on once the limit is spent.
     let still: Int
@@ -82,7 +137,16 @@ struct PuffleVariant: Identifiable, Hashable, Sendable, Decodable {
 
     func frames(_ clip: PuffleClip) -> PuffleClipFrames? { clips[clip.rawValue] }
 
-    var available: [PuffleClip] { PuffleClip.allCases.filter { clips[$0.rawValue] != nil } }
+    /// Every clip it has, in a stable order.
+    var available: [PuffleClip] { clips.keys.sorted().map(PuffleClip.init(rawValue:)) }
+
+    /// Its clips of one kind, in a stable order.
+    func animations(of kind: PuffleKind) -> [PuffleClip] {
+        clips.filter { $0.value.kind == kind }.keys.sorted().map(PuffleClip.init(rawValue:))
+    }
+
+    /// Width over height of its cells: the puffle cut to its own size.
+    var aspect: CGFloat { CGFloat(smallWidth) / CGFloat(max(small, 1)) }
 }
 
 /// The puffles in the app, read once from `puffles.json`.
@@ -158,13 +222,15 @@ enum PuffleCatalog {
 
 /// A variant's frames at one size, cut from its atlas on first use and kept.
 ///
-/// Two atlases per variant: 44 px cells, which are the menu bar's 22 points
-/// at 2×, and 80 px cells for the rail's rings and the settings preview, so
-/// nothing on screen is drawn from frames smaller than it.
+/// Two atlases per variant: cells 44 px tall, which are the menu bar's 22
+/// points at 2×, and 80 px tall for the rail's rings and the settings
+/// preview, so nothing on screen is drawn from frames smaller than it. Each
+/// is as wide as the variant needs: the transparent margin is cut away.
 @MainActor
 final class PuffleSheet {
     let variant: PuffleVariant
-    let cell: Int
+    let cellWidth: Int
+    let cellHeight: Int
     private let atlas: CGImage?
     private var frames: [Int: CGImage] = [:]
 
@@ -180,7 +246,8 @@ final class PuffleSheet {
 
     private init(variant: PuffleVariant, large: Bool) {
         self.variant = variant
-        cell = large ? variant.large : variant.small
+        cellHeight = large ? variant.large : variant.small
+        cellWidth = large ? variant.largeWidth : variant.smallWidth
         let name = "puffle-\(variant.id)-\(large ? "large" : "small")"
         if let url = Bundle.pulseResources.url(forResource: name, withExtension: "png"),
            let source = CGImageSourceCreateWithURL(url as CFURL, nil) {
@@ -194,8 +261,8 @@ final class PuffleSheet {
     func frame(_ index: Int) -> CGImage? {
         if let frame = frames[index] { return frame }
         guard let atlas, index >= 0 else { return nil }
-        let rect = CGRect(x: (index % variant.columns) * cell, y: (index / variant.columns) * cell,
-                          width: cell, height: cell)
+        let rect = CGRect(x: (index % variant.columns) * cellWidth, y: (index / variant.columns) * cellHeight,
+                          width: cellWidth, height: cellHeight)
         let frame = atlas.cropping(to: rect)
         frames[index] = frame
         return frame
@@ -211,50 +278,76 @@ final class PuffleSheet {
 
 /// What a puffle rotates through in each mood, from what its SWFs gave it.
 ///
-/// A clip the variant does not have is left out; a mood left with nothing
-/// falls back to the idle blink, which every puffle has.
+/// **Each animation where it means something.** A mood asks for kinds —
+/// work while a turn is in flight, yawns and dozing as the limit runs low,
+/// the trampoline and the disco ball when a turn has finished, sleep when it
+/// is spent — and everything a puffle has of that kind is on its menu. The
+/// kinds no state claims (toys, baths, tricks) fill the idle rotation, which
+/// the choreographer deals without repeating itself.
+///
+/// A kind the variant does not have is left out; a mood left with nothing
+/// falls back on its own fallbacks and, last, the idle blink every puffle has.
 enum PuffleChoreography {
-    static func menu(for mood: MarkMood, variant: PuffleVariant) -> [MarkBeat<PuffleClip>] {
-        let wanted: [(PuffleClip, Double, ClosedRange<TimeInterval>)] = switch mood {
+    typealias Wish = (kind: PuffleKind, weight: Double, seconds: ClosedRange<TimeInterval>)
+
+    static func wishes(for mood: MarkMood) -> [[Wish]] {
+        switch mood {
         case .idle:
-            [(.idle, 3, 4...8), (.look, 3, 3...6), (.bounce, 2, 3...5), (.jump, 1.5, 3...4),
-             (.nuzzle, 1, 3...4), (.eat, 1, 3...5), (.dig, 1, 4...6), (.headstand, 1, 4...5),
-             (.speak, 1, 2...3), (.doze, 0.6, 3...5), (.splash, 0.6, 3...4)]
+            [[(.rest, 3, 4...8), (.look, 2, 3...6), (.play, 4, 4...10), (.trick, 2, 3...5),
+              (.happy, 1.5, 3...5), (.laugh, 1, 2...4), (.bath, 1, 4...8), (.groom, 1, 3...6),
+              (.eat, 1, 3...6), (.think, 1, 2...4), (.dance, 1, 4...8), (.speak, 0.5, 2...3),
+              (.doze, 0.3, 3...5)]]
         case .concerned:
-            [(.look, 4, 3...6), (.hungry, 2, 3...4), (.idle, 3, 3...6), (.speak, 1.5, 2...3),
-             (.walk, 1, 3...4), (.doze, 1, 3...4)]
+            [[(.look, 3, 3...6), (.think, 3, 3...5), (.hungry, 2, 3...4), (.rest, 2, 3...6),
+              (.speak, 1, 2...3), (.walk, 1, 3...4), (.doze, 1, 3...4), (.sad, 0.5, 2...4)]]
         case .tired:
-            [(.yawn, 4, 6...7), (.doze, 3, 5...8), (.idle, 2, 4...6), (.look, 1, 3...4)]
+            [[(.yawn, 4, 6...7), (.doze, 3, 5...8), (.hungry, 2, 3...4), (.sad, 1.5, 3...5),
+              (.sick, 1, 2...4), (.rest, 1, 4...6)]]
         case .exhausted:
-            [(.doze, 4, 5...8), (.yawn, 3, 6...7), (.sick, 2, 2...4), (.sleep, 2, 6...10)]
+            [[(.doze, 4, 5...8), (.yawn, 3, 6...7), (.sick, 2, 2...4), (.sad, 2, 3...5),
+              (.sleep, 2, 6...10)]]
         case .spent:
-            [(.sleep, 1, 60...60)]
+            // Asleep — under its Zs, on its pillow — first; failing that,
+            // nodding off or yawning; failing that, breathing slowly. Never
+            // a still picture.
+            [[(.sleep, 1, 20...40)], [(.doze, 1, 8...12), (.yawn, 1, 6...7)], [(.rest, 1, 8...12)]]
         case .working:
-            [(.walk, 3, 4...7), (.walkSide, 3, 4...7), (.roll, 2, 3...5), (.dig, 2, 4...6),
-             (.jump, 1.5, 3...4), (.lift, 2, 4...6), (.bounce, 1, 3...4), (.spin, 0.5, 2...3)]
+            [[(.walk, 3, 4...7), (.work, 4, 4...8), (.power, 1, 3...5), (.trick, 0.5, 2...3)]]
         case .commandWait:
-            [(.dig, 3, 5...8), (.look, 2, 3...5), (.idle, 1, 3...5), (.walk, 1, 3...5)]
+            [[(.work, 2, 5...8), (.look, 2, 3...5), (.think, 2, 3...5), (.rest, 1, 3...5),
+              (.walk, 1, 3...5)]]
         case .needsYou:
-            [(.speak, 4, 3...5), (.bounce, 2, 2...4), (.jump, 2, 2...3), (.look, 1, 2...3)]
+            [[(.speak, 4, 3...5), (.think, 2, 3...4), (.trick, 2, 2...4), (.look, 1, 2...3)]]
         case .waking:
-            [(.wake, 1, 2...3), (.bounce, 1, 2...3)]
+            [[(.wake, 2, 2...3), (.surprise, 1, 2...4), (.trick, 0.5, 2...3)]]
         case .celebrating:
-            [(.spin, 4, 3...5), (.headstand, 2, 3...5), (.jump, 2, 2...4), (.bounce, 2, 2...4),
-             (.roll, 1, 3...4), (.walk, 0.5, 2...3)]
+            [[(.cheer, 4, 3...6), (.trick, 3, 3...5), (.dance, 2, 4...6), (.laugh, 1.5, 2...4),
+              (.happy, 1, 2...3)]]
         case .resting:
-            [(.eat, 4, 4...7), (.nuzzle, 3, 3...5), (.idle, 2, 3...6), (.splash, 1, 3...5),
-             (.look, 1, 3...4)]
+            [[(.eat, 4, 4...7), (.bath, 3, 5...8), (.groom, 2, 4...6), (.happy, 2, 3...5),
+              (.laugh, 1, 2...4), (.rest, 1, 3...6), (.play, 1, 4...6)]]
         case .asleep:
-            [(.sleep, 6, 20...40), (.doze, 1, 4...6)]
+            [[(.sleep, 6, 20...40), (.doze, 1, 4...6)]]
         case .error:
-            [(.sick, 4, 3...5), (.look, 3, 3...5), (.speak, 2, 2...3), (.doze, 1, 3...4)]
+            [[(.sad, 4, 3...5), (.sick, 3, 3...5), (.look, 1, 3...5), (.think, 1, 2...3)],
+             [(.doze, 1, 3...4), (.look, 1, 3...4)]]
         case .revived:
-            [(.wake, 2, 2...3), (.spin, 2, 3...4), (.bounce, 1, 2...3), (.jump, 1, 2...3)]
+            [[(.wake, 2, 2...3), (.cheer, 2, 3...5), (.trick, 2, 3...4), (.surprise, 1, 2...3)]]
         }
-        let menu: [MarkBeat<PuffleClip>] = wanted.compactMap { entry in
-            variant.frames(entry.0).map { MarkBeat(entry.0, weight: entry.1, entry.2, loop: $0.loop / mood.tempo) }
+    }
+
+    static func menu(for mood: MarkMood, variant: PuffleVariant) -> [MarkBeat<PuffleClip>] {
+        for tier in wishes(for: mood) {
+            let menu: [MarkBeat<PuffleClip>] = tier.flatMap { wish -> [MarkBeat<PuffleClip>] in
+                let clips = variant.animations(of: wish.kind)
+                // A kind with many clips does not crowd out the others.
+                let share = wish.weight / Double(max(clips.count, 1)).squareRoot()
+                return clips.compactMap { clip in
+                    variant.frames(clip).map { MarkBeat(clip, weight: share, wish.seconds, loop: $0.loop / mood.tempo) }
+                }
+            }
+            if !menu.isEmpty { return menu }
         }
-        if !menu.isEmpty { return menu }
         let idle = variant.frames(.idle)
         return [MarkBeat(.idle, weight: 1, 4...8, loop: idle.map { $0.loop / mood.tempo })]
     }
@@ -265,8 +358,15 @@ enum PuffleChoreography {
 ///
 /// **Light on the battery.** A puffle is redrawn only as often as its clip
 /// has frames — twelve and a half a second, half that asleep, and half again
-/// in Low Power Mode — from frames cut once and kept. A spent puffle and
-/// Reduce Motion are a single still image with no timeline at all.
+/// in Low Power Mode — from frames cut once and kept. Reduce Motion is a
+/// single still image with no timeline at all.
+///
+/// **As tall as it is given.** `size` is the height: the cells are cut to
+/// the puffle, so in the menu bar it stands the bar's full 22 points and is
+/// as wide as it needs (`width`). Where it must fit a circle — the rail's
+/// rings, the settings preview — `square` fits it inside `size` × `size`.
+///
+/// **Never still when spent**: it sleeps, faded, so it reads as out.
 struct PuffleMarkView: View {
     let variant: PuffleVariant
     let pose: MascotPose
@@ -275,6 +375,15 @@ struct PuffleMarkView: View {
     let size: CGFloat
     /// Whatever tells this mark from its neighbours, so they never move in step.
     var seed = ""
+    /// Fitted inside a `size` square rather than `size` tall.
+    var square = false
+
+    /// How wide it is drawn for a height of `size`.
+    static func width(of variant: PuffleVariant, height: CGFloat) -> CGFloat {
+        (height * variant.aspect).rounded(.up)
+    }
+
+    private var width: CGFloat { square ? size : Self.width(of: variant, height: size) }
 
     @State private var director = MarkChoreographer<PuffleClip>()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -289,7 +398,7 @@ struct PuffleMarkView: View {
         let mood = MarkMood.resolve(pose: pose, usedFraction: usedFraction, justReset: justReset)
         let sheet = PuffleSheet.sheet(variant, large: large)
         Group {
-            if mood.isStill || reduceMotion {
+            if reduceMotion {
                 still(sheet, mood: mood)
             } else {
                 TimelineView(.animation(minimumInterval: Self.interval(for: mood))) { context in
@@ -297,21 +406,20 @@ struct PuffleMarkView: View {
                 }
             }
         }
-        .frame(width: size, height: size)
+        // Spent: asleep and a little faded, so it reads as out.
+        .opacity(mood.isSpent ? 0.6 : 1)
+        .frame(width: width, height: size)
         .accessibilityHidden(true)
     }
 
     static func interval(for mood: MarkMood) -> TimeInterval {
-        let base: TimeInterval = mood == .asleep || mood == .exhausted ? 1 / 6.25 : 1 / 12.5
+        let base: TimeInterval = mood == .asleep || mood == .exhausted || mood == .spent ? 1 / 6.25 : 1 / 12.5
         return ProcessInfo.processInfo.isLowPowerModeEnabled ? base * 2 : base
     }
 
     @ViewBuilder
     private func still(_ sheet: PuffleSheet, mood: MarkMood) -> some View {
-        let frame = mood.isStill ? sheet.frame(variant.still) : sheet.frame(.idle, at: 0)
-        image(frame)
-            // Spent: lying asleep and a little faded, so it reads as out.
-            .opacity(mood.isStill ? 0.6 : 1)
+        image(mood.isSpent ? sheet.frame(variant.still) : sheet.frame(.idle, at: 0))
     }
 
     @ViewBuilder
@@ -341,7 +449,7 @@ struct PuffleMarkView: View {
                 Color.clear
             }
         }
-        .frame(width: size, height: size)
+        .frame(width: width, height: size)
     }
 }
 
@@ -353,8 +461,8 @@ extension MarkChoreographer where Value == PuffleClip {
 }
 
 /// Puts an AI mascot through `MascotChoreography`: the pose it is shown in
-/// changes every few seconds within its mood, cross-fading, and a spent limit
-/// holds it still.
+/// changes every few seconds within its mood, cross-fading. A spent limit
+/// moves too — its spent pose, and asleep — only Reduce Motion holds still.
 struct ChoreographedMascot<Content: View>: View {
     let pose: MascotPose
     var usedFraction: Double?
@@ -367,8 +475,8 @@ struct ChoreographedMascot<Content: View>: View {
 
     var body: some View {
         let mood = MarkMood.resolve(pose: pose, usedFraction: usedFraction, justReset: justReset)
-        if mood.isStill || reduceMotion {
-            content(pose, mood.isStill)
+        if reduceMotion {
+            content(pose, true)
         } else {
             // A beat lasts seconds, so once a second is often enough to ask.
             TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -452,7 +560,7 @@ struct PufflePreview: View {
     var body: some View {
         HStack(spacing: 16) {
             PuffleMarkView(variant: variant, pose: sample.pose, usedFraction: sample.used,
-                           size: 64, seed: "preview")
+                           size: 64, seed: "preview", square: true)
                 .id(variant.id + sample.rawValue)
             PuffleMarkView(variant: variant, pose: sample.pose, usedFraction: sample.used,
                            size: 22, seed: "preview-bar")

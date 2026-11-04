@@ -4,17 +4,25 @@
 Input: the frames JPEXS ffdec exported from every puffle SWF in the Wayback
 Machine's copy of media1.clubpenguin.com (fetch_swfs.py, extract_frames.sh):
 
-    <frames>/<swf name>/DefineSprite_<n>/<frame>.png
+    <frames>/<swf name>/DefineSprite_<n>[_<class>]/<frame>.png
 
 Output, into Sources/Pulse/Resources:
 
-    puffle-<variant>-small.png   44 px cells: the menu bar's 22 pt at 2x
-    puffle-<variant>-large.png   80 px cells: the rail's rings and settings
-    puffles.json                 where every clip sits in the atlases
+    puffle-<variant>-small.png   cells 44 px tall: the menu bar's 22 pt at 2x
+    puffle-<variant>-large.png   cells 80 px tall: the rail's rings and settings
+    puffles.json                 where every clip sits in the atlases, and what
+                                 kind of animation it is
 
 **No pixel is drawn here.** Frames are picked, put in order, cropped,
-scaled down, centred in their cell and palettised for size. Every clip is
-one of the game's own symbols, or a run of consecutive frames from one.
+scaled, set in their cell and palettised for size. Every clip is one of the
+game's own symbols, or a run of consecutive frames from one.
+
+Cells are as tall as the menu bar and as wide as the variant needs: the
+transparent margin around the puffle is cut away, with one crop for the
+whole clip (so it does not shake) and one scale for the whole variant (so it
+is the same size from clip to clip), and the puffle at rest fills the cell's
+height. A clip that reaches higher or wider than that — a headstand, a
+skateboard — is scaled down as a whole until it fits; nothing is cut.
 
 Usage: build_puffles.py <frames dir> <resources dir> [--report report.json]
 """
@@ -29,11 +37,15 @@ from collections import defaultdict
 from PIL import Image
 
 SMALL, LARGE = 44, 80
-# The puffle's body fills this much of its cell; the rest is room to move.
-BODY = 0.74
+# Widest a cell may be, against its height: a puffle is a little wider than
+# tall; a skateboard or a walk in profile is scaled down to fit this.
+MAX_ASPECT = 1.4
 # Clips longer than this are sampled more sparsely, to keep the atlas small.
-MAX_FRAMES = 40
+MAX_FRAMES = 56
 SOURCE_FPS = 25.0
+# A clip whose puffle would end up smaller than this, against the cell's
+# height, is left out: at 22 points it would be a speck.
+MIN_BODY = 0.33
 
 COLORS = ["blue", "pink", "black", "green", "purple", "red", "yellow", "white",
           "orange", "brown", "gold", "rainbow"]
@@ -45,6 +57,9 @@ NAMES = {
 }
 # What each creature puffle is, from looking at its frames.
 CREATURES = json.load(open(os.path.join(os.path.dirname(__file__), "creatures.json")))
+# The rest of each puffle's own animations — its toys, its bath, its moods —
+# picked out by eye from the libraries' symbols (see extra_clips.json).
+EXTRAS = json.load(open(os.path.join(os.path.dirname(__file__), "extra_clips.json")))
 
 TRICKS = {"jumpForward": "jump", "jumpSpin": "spin", "nuzzle": "nuzzle", "roll": "roll",
           "speak": "speak", "standOnHead": "headstand"}
@@ -54,6 +69,17 @@ SINGLES = {  # file pattern -> clip
     "hotelcare__weightlifting__puffle_{id}_weightlifting": "lift",
     "eat__puffle_{id}_eat": "eat",
     "animation__splash__puffle_{id}_splash": "splash",
+}
+
+# What every clip is, which decides where the app plays it. The app's
+# choreography (PuffleMarks.swift) deals each mood its kinds.
+KINDS = {
+    "idle": "rest", "look": "look", "walk": "walk", "walkSide": "walk",
+    "doze": "doze", "sleep": "sleep", "wake": "wake",
+    "jump": "trick", "spin": "trick", "headstand": "trick", "bounce": "trick",
+    "nuzzle": "happy", "roll": "work", "dig": "work", "lift": "work",
+    "speak": "speak", "eat": "eat", "splash": "bath",
+    "yawn": "yawn", "hungry": "hungry", "sick": "sick",
 }
 
 
@@ -94,14 +120,22 @@ def clip(frames, step=None, fps=None):
     return {"frames": picked, "fps": fps or SOURCE_FPS / step}
 
 
-def library_roles(swf_dir, roles, body_hint=None):
+def library_roles(swf_dir, roles):
     """Idle, look, walks, sleep and the moods from a walk, igloo or base SWF."""
     sps = sprites(swf_dir)
     eights = [s for s in sps if len(s["frames"]) == 8 and not s["named"]]
     twelves = [s for s in sps if len(s["frames"]) == 12 and not s["named"]]
-    if len(eights) < 5:
+    # The ghost puffle floats instead of breathing: its five turns of the
+    # head are 60 frames each, not 8.
+    sixties = [s for s in sps if len(s["frames"]) == 60 and not s["named"]]
+    if len(eights) >= 5:
+        front, q, side = (eights[i]["frames"] for i in range(3))
+        twice = front + front
+    elif len(sixties) >= 5:
+        front, q, side = (sixties[i]["frames"][::2] for i in range(3))
+        twice = front
+    else:
         return
-    front = eights[0]["frames"]
     reference = body_size(front)
 
     def puffle_sized(s):
@@ -112,17 +146,18 @@ def library_roles(swf_dir, roles, body_hint=None):
         return 0.7 * reference <= side <= 1.5 * reference
 
     if "idle" not in roles:
-        # Facing out, breathing and blinking, twice through.
-        roles["idle"] = {"frames": front + front, "fps": 12.5}
+        # Facing out, breathing and blinking (or floating), twice through.
+        roles["idle"] = {"frames": twice, "fps": 12.5}
         # Head turned three-quarters, then to the side, and back: the
         # direction clips the game turned a puffle with, in a row.
-        q, side = eights[1]["frames"], eights[2]["frames"]
-        roles["look"] = {"frames": front[:4] + q[:4] + side + side + q[:4] + front[:4], "fps": 12.5}
+        n = max(4, len(q) // 2)
+        roles["look"] = {"frames": front[:4] + q[:n] + side + side + q[:n] + front[:4], "fps": 12.5}
     if len(twelves) >= 3:
         roles.setdefault("walk", clip(twelves[0]["frames"], step=1, fps=12.5))
         roles.setdefault("walkSide", clip(twelves[2]["frames"], step=1, fps=12.5))
 
     sized = [s for s in sps if not s["named"] and puffle_sized(s)]
+
     def stays(s):
         # Asleep where it lay all the way through: the gold puffle's long
         # clip vanishes in a shower of sparkles instead.
@@ -138,6 +173,7 @@ def library_roles(swf_dir, roles, body_hint=None):
         roles["sleep"] = clip(frames[doze_end:wake_start], step=4)
         roles["wake"] = clip(frames[wake_start:], step=1, fps=12.5)
         roles["_still"] = frames[doze_end + 2]
+        roles["_sleeper"] = sleepers[0]["number"]
     for count, role in ((64, "bounce"), (167, "yawn"), (85, "hungry"), (45, "sick")):
         if role in roles:
             continue
@@ -183,6 +219,20 @@ def discover(frames_dir):
     return ids
 
 
+def extra_symbol(frames_dir, lib, symbol):
+    """One symbol of a library by number, or by the class name it was
+    exported under (`BathAsset`)."""
+    path = os.path.join(frames_dir, lib)
+    if not os.path.isdir(path):
+        return None
+    for s in sprites(path):
+        if str(symbol).isdigit() and s["number"] == int(symbol):
+            return s
+        if not str(symbol).isdigit() and s["name"].endswith("." + symbol):
+            return s
+    return None
+
+
 def roles_for(frames_dir, pid):
     color = re.match(r"[a-z]+", pid).group()
     roles, sources = {}, defaultdict(list)
@@ -199,7 +249,7 @@ def roles_for(frames_dir, pid):
         if os.path.isdir(path):
             before = set(roles)
             library_roles(path, roles)
-            mark(set(roles) - before, lib)
+            mark(set(roles) - before - {"_still", "_sleeper"}, lib)
     for swf, role in TRICKS.items():
         path = os.path.join(frames_dir, f"tricks__puffle_{pid}_{swf}")
         if os.path.isdir(path):
@@ -220,6 +270,16 @@ def roles_for(frames_dir, pid):
             if frames:
                 roles[role] = dict(clip(frames), first=True)
                 mark([role], os.path.basename(path))
+    # The libraries' other symbols: toys, baths, the care screen's moods.
+    for entry in EXTRAS["clips"].get(pid, []):
+        lib, symbol, role, kind = entry[:4]
+        s = extra_symbol(frames_dir, lib, symbol)
+        if not s:
+            print(f"  {pid}: {lib} {symbol} not found", file=sys.stderr)
+            continue
+        frames = s["frames"]
+        roles[role] = dict(clip(frames), first=True, kind=kind)
+        mark([role], f"{lib}/{s['name']}")
     # No walk, igloo or base library survived for the brown puffle: it rests
     # on the opening frames of its own speak trick, before it starts talking.
     if "idle" not in roles and "speak" in roles:
@@ -229,74 +289,103 @@ def roles_for(frames_dir, pid):
     return roles, sources
 
 
-def place(frames, cell, scale):
-    """Each frame scaled by `scale` and set in a square cell, the clip's
-    motion kept wherever it fits."""
-    boxes = [bbox(f) or (0, 0, 1, 1) for f in frames]
-    union = (min(b[0] for b in boxes), min(b[1] for b in boxes),
-             max(b[2] for b in boxes), max(b[3] for b in boxes))
-    widest = max(b[2] - b[0] for b in boxes) * scale
-    tallest = max(b[3] - b[1] for b in boxes) * scale
-    # A frame bigger than the cell — a headstand, a leap — shrinks the clip.
-    shrink = min(1.0, cell * 0.98 / max(widest, tallest, 1))
-    s = scale * shrink
-    keep_x = (union[2] - union[0]) * s <= cell * 0.98
-    keep_y = (union[3] - union[1]) * s <= cell * 0.98
+def union_box(frames):
+    boxes = [bbox(f) for f in frames]
+    boxes = [b for b in boxes if b] or [(0, 0, 1, 1)]
+    return (min(b[0] for b in boxes), min(b[1] for b in boxes),
+            max(b[2] for b in boxes), max(b[3] for b in boxes))
+
+
+def place(frames, union, scale, width, height, track=False):
+    """Every frame of a clip cut to the clip's own box — one crop for all of
+    them, so nothing shakes — scaled by `scale`, centred across the cell and
+    standing on its floor.
+
+    `track`: for a clip that travels sideways (a roll, a walk past, a dig
+    throwing dirt about) the camera follows the puffle across instead, as
+    the game's own room did, smoothly; top and bottom stay the clip's own.
+    """
+    h = min(height, max(1, round((union[3] - union[1]) * scale)))
+    if track:
+        centres = []
+        for f in frames:
+            b = bbox(f) or union
+            centres.append((b[0] + b[2]) / 2)
+        # A running mean over five frames, so the camera glides.
+        smooth = [sum(centres[max(0, i - 2):i + 3]) / len(centres[max(0, i - 2):i + 3])
+                  for i in range(len(centres))]
+        span = width / scale
     out = []
-    for f, b in zip(frames, boxes):
+    for i, f in enumerate(frames):
         image = Image.open(f).convert("RGBA")
-        x0 = union[0] if keep_x else b[0]
-        x1 = union[2] if keep_x else b[2]
-        y0 = union[1] if keep_y else b[1]
-        y1 = union[3] if keep_y else b[3]
-        # Crop to the clip's span (or the frame's), scale, centre.
-        crop = image.crop((x0, y0, x1, y1))
-        w, h = max(1, round(crop.width * s)), max(1, round(crop.height * s))
-        crop = crop.resize((w, h), Image.LANCZOS)
-        canvas = Image.new("RGBA", (cell, cell), (0, 0, 0, 0))
-        ox = (cell - w) // 2
-        # Sitting on the cell's floor when the clip's span is kept: a puffle
-        # stands on the ground, it does not float in the middle of the icon.
-        oy = (cell - h) - max(1, round(cell * 0.04)) if keep_y else (cell - h) // 2
-        canvas.alpha_composite(crop, (max(ox, 0), max(oy, 0)))
+        canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        if track:
+            x0 = smooth[i] - span / 2
+            box = (round(x0), union[1], round(x0 + span), union[3])
+            crop = image.crop(box).resize((width, h), Image.LANCZOS)
+            canvas.alpha_composite(crop, (0, max(height - h, 0)))
+        else:
+            w = min(width, max(1, round((union[2] - union[0]) * scale)))
+            crop = image.crop(union).resize((w, h), Image.LANCZOS)
+            canvas.alpha_composite(crop, (max((width - w) // 2, 0), max(height - h, 0)))
         out.append(canvas)
     return out
 
 
-def placed_body(cells, quantile=0.1):
-    sides = sorted(max(b[2] - b[0], b[3] - b[1]) for b in
-                   (c.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox() for c in cells) if b)
-    return sides[int(len(sides) * quantile)] if sides else 0
-
-
-def place_window(frames, cell):
+def place_window(frames, scale, width, height):
     """A fixed camera on the puffle where it starts, for clips whose props —
-    a volcano, a spray of dirt — would otherwise shrink it to a speck. The
-    props run off the edge of the frame; nothing is redrawn."""
+    a spray of dirt, a bubble, a tub — would otherwise shrink it to a speck.
+    The props run off the edge of the frame; nothing is redrawn."""
     b = bbox(frames[0]) or (0, 0, 1, 1)
-    side = max(b[2] - b[0], b[3] - b[1]) / BODY
-    cx, cy = (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
-    # Its feet stay near the floor of the cell, the way it stands elsewhere.
-    floor = b[3] + side * 0.04
-    window = (cx - side / 2, floor - side, cx + side / 2, floor)
+    span_w, span_h = width / scale, height / scale
+    cx = (b[0] + b[2]) / 2
+    box = (round(cx - span_w / 2), round(b[3] - span_h), round(cx + span_w / 2), b[3])
     out = []
     for f in frames:
-        image = Image.open(f).convert("RGBA")
-        canvas = Image.new("RGBA", (int(side) + 2, int(side) + 2), (0, 0, 0, 0))
-        canvas.alpha_composite(image, (int(-window[0]), int(-window[1]))) if window[0] <= 0 and window[1] <= 0 \
-            else canvas.paste(image, (int(round(-window[0])), int(round(-window[1]))), image)
-        out.append(canvas.resize((cell, cell), Image.LANCZOS))
+        image = Image.open(f).convert("RGBA").crop(box)
+        out.append(image.resize((width, height), Image.LANCZOS))
     return out
 
 
+def coverage(cell):
+    return sum(1 for a in cell.getchannel("A").getdata() if a > 24)
+
+
+def cell_body(cells):
+    """How tall the puffle stands in its placed cells, from the smaller ones."""
+    sides = sorted(b[3] - b[1] for b in
+                   (c.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox() for c in cells) if b)
+    return sides[len(sides) // 4] if sides else 0
+
+
 ORDER = ["idle", "look", "bounce", "walk", "walkSide", "doze", "sleep", "wake", "jump", "spin",
-         "nuzzle", "roll", "speak", "headstand", "dig", "eat", "splash", "swing", "scratch",
-         "hydrant", "dive", "lift", "yawn", "hungry", "sick"]
+         "nuzzle", "roll", "speak", "headstand", "dig", "eat", "splash", "lift", "yawn", "hungry", "sick"]
+
+
+def layout(roles, ref):
+    """One scale for the variant and the size of its cell.
+
+    `unit` turns a clip's source pixels into cell pixels per unit of cell
+    height: the idle clip, cut to its own box, exactly fills the height.
+    """
+    measured = {}
+    for role, spec in roles.items():
+        frames = spec["frames"]
+        own = (body_size(frames[:1]) if spec.get("first") else body_size(frames)) or ref
+        u = union_box(frames)
+        # In units of the idle puffle's body.
+        measured[role] = (own, u, (u[2] - u[0]) / own, (u[3] - u[1]) / own)
+    _, _, idle_w, idle_h = measured["idle"]
+    # Width: what most clips need, never less than the idle puffle.
+    widths = sorted(w / idle_h for _, _, w, _ in measured.values())
+    aspect = min(MAX_ASPECT, max(idle_w / idle_h, widths[len(widths) * 3 // 4]))
+    return measured, idle_h, aspect
 
 
 def build(frames_dir, resources, report_path=None):
     variants, report = [], {}
     only = set(filter(None, os.environ.get("PUFFLES_ONLY", "").split(",")))
+    left_out = EXTRAS.get("leftOut", {})
     for pid in sorted(discover(frames_dir)):
         if only and pid not in only:
             continue
@@ -307,49 +396,72 @@ def build(frames_dir, resources, report_path=None):
         color = re.match(r"[a-z]+", pid).group()
         number = pid[len(color):]
         still = roles.pop("_still", None)
+        roles.pop("_sleeper", None)
+        for role in left_out.get(pid, []):
+            roles.pop(role, None)
         ref = body_size(roles["idle"]["frames"][:8])
-        clips, small_cells, large_cells = {}, [], []
-        for role in ORDER:
-            if role not in roles:
+        measured, idle_h, aspect = layout(roles, ref)
+        sizes = {}
+        for size in (SMALL, LARGE):
+            sizes[size] = (max(size, round(size * aspect)) & ~1, size)
+        order = [r for r in ORDER if r in roles] + [r for r in roles if r not in ORDER]
+        clips, cells = {}, {SMALL: [], LARGE: []}
+        for role in order:
+            spec = roles[role]
+            own, union, w_units, h_units = measured[role]
+            placed = {}
+            for size, (cw, ch) in sizes.items():
+                # The idle puffle's body is `ch / idle_h` pixels; the clip is
+                # scaled down as a whole if it reaches past the cell.
+                scale = ch / idle_h / own
+                # Too tall (a headstand, a leap): the whole clip shrinks.
+                s = scale * min(1.0, ch / (h_units * own * scale))
+                wide = cw / (w_units * own * s)
+                if wide >= 0.75:
+                    placed[size] = place(spec["frames"], union, s * min(1.0, wide), cw, ch)
+                else:
+                    # Too wide by far: follow the puffle across.
+                    placed[size] = place(spec["frames"], union, s, cw, ch, track=True)
+            body = cell_body(placed[LARGE]) / LARGE
+            if role != "idle" and body < MIN_BODY:
+                # Props or a leap made it a speck: the camera stays on the
+                # puffle instead, unless that leaves the frame empty.
+                window = {size: place_window(spec["frames"], ch / idle_h / own, cw, ch)
+                          for size, (cw, ch) in sizes.items()}
+                start = coverage(window[LARGE][0]) or 1
+                empty = sum(1 for c in window[LARGE] if coverage(c) < 0.3 * start)
+                if empty <= len(window[LARGE]) // 5:
+                    placed, body = window, cell_body(window[LARGE]) / LARGE
+                    print(f"  {pid}: {role} framed on the puffle", file=sys.stderr)
+            if role != "idle" and body < MIN_BODY:
+                print(f"  {pid}: {role} left out, too small to read ({body:.2f})", file=sys.stderr)
                 continue
-            frames = roles[role]["frames"]
-            # Dirt, food and water fly about in some: those are measured by
-            # the puffle at rest in their first frame.
-            own = (body_size(frames[:1]) if roles[role].get("first") else body_size(frames)) or ref
-            # Each clip scaled by its own body, so one drawn at a different
-            # size in its SWF is the same puffle on screen.
-            if role == "dig":
-                small, large = place_window(frames, SMALL), place_window(frames, LARGE)
-                empty = sum(1 for c in large if placed_body([c]) < 0.3 * LARGE)
-                if empty > len(large) // 4:
-                    print(f"  {pid}: dig left out, it leaves the frame", file=sys.stderr)
-                    continue
-            else:
-                small = place(frames, SMALL, SMALL * BODY / own)
-                large = place(frames, LARGE, LARGE * BODY / own)
-            if role not in ("idle", "dig") and placed_body(large) < 0.5 * LARGE * BODY:
-                # Sparkles or props made it a speck: better left out.
-                print(f"  {pid}: {role} left out, too small to read", file=sys.stderr)
-                continue
-            clips[role] = {"start": len(small_cells), "count": len(small), "fps": roles[role]["fps"]}
-            small_cells += small
-            large_cells += large
+            clips[role] = {"start": len(cells[SMALL]), "count": len(placed[SMALL]),
+                           "fps": round(spec["fps"], 4), "kind": spec.get("kind") or KINDS[role]}
+            for size in sizes:
+                cells[size] += placed[size]
         if still:
-            # The spent puffle: asleep, eyes shut, from the sleep clip's frames.
-            frames = roles.get("sleep", {"frames": [still]})["frames"]
-            own = body_size(frames)
-            small_cells += place([still], SMALL, SMALL * BODY / own)
-            large_cells += place([still], LARGE, LARGE * BODY / own)
-            still_index = len(small_cells) - 1
+            # Lying asleep, eyes shut, for Reduce Motion once the limit is spent.
+            spec = roles.get("sleep") or {"frames": [still]}
+            own = body_size(spec["frames"])
+            union = union_box(spec["frames"])
+            for size, (cw, ch) in sizes.items():
+                scale = ch / idle_h / own
+                h = (union[3] - union[1]) * scale
+                w = (union[2] - union[0]) * scale
+                fit = min(1.0, ch / h, cw / w)
+                cells[size] += place([still], union, scale * fit, cw, ch)
+            still_index = len(cells[SMALL]) - 1
         else:
             still_index = clips["idle"]["start"]
         vid = f"{color}-{CREATURES[pid]['slug']}" if number else color
-        columns = math.ceil(math.sqrt(len(small_cells)))
-        for cells, size, suffix in ((small_cells, SMALL, "small"), (large_cells, LARGE, "large")):
-            rows = math.ceil(len(cells) / columns)
-            atlas = Image.new("RGBA", (columns * size, rows * size), (0, 0, 0, 0))
-            for i, c in enumerate(cells):
-                atlas.alpha_composite(c, ((i % columns) * size, (i // columns) * size))
+        columns = math.ceil(math.sqrt(len(cells[SMALL]) * sizes[SMALL][1] / sizes[SMALL][0]))
+        for size, suffix in ((SMALL, "small"), (LARGE, "large")):
+            cw, ch = sizes[size]
+            rows = math.ceil(len(cells[size]) / columns)
+            atlas = Image.new("RGBA", (columns * cw, rows * ch), (0, 0, 0, 0))
+            for i, c in enumerate(cells[size]):
+                atlas.alpha_composite(c, ((i % columns) * cw, (i // columns) * ch))
             # Palettised: flat vector art loses nothing a reader can see.
             atlas.quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE) \
                 .save(os.path.join(resources, f"puffle-{vid}-{suffix}.png"), optimize=True)
@@ -358,10 +470,13 @@ def build(frames_dir, resources, report_path=None):
             creature = CREATURES[pid]
             en, es = f"{en} · {creature['en']}", f"{es} · {creature['es']}"
         variants.append({"id": vid, "color": color, "source": pid, "creature": bool(number),
-                         "name": {"en": en, "es": es}, "columns": columns, "small": SMALL,
-                         "large": LARGE, "clips": clips, "still": still_index})
+                         "name": {"en": en, "es": es}, "columns": columns,
+                         "small": sizes[SMALL][1], "smallWidth": sizes[SMALL][0],
+                         "large": sizes[LARGE][1], "largeWidth": sizes[LARGE][0],
+                         "clips": clips, "still": still_index})
         report[vid] = {"source": pid, "clips": {r: sources[r] for r in clips}}
-        print(f"{vid:28s} {len(small_cells):4d} frames  {', '.join(clips)}")
+        print(f"{vid:28s} {len(cells[SMALL]):4d} frames  {sizes[SMALL][0]}x{sizes[SMALL][1]}  "
+              f"{len(clips)} clips: {', '.join(clips)}")
     variants.sort(key=lambda v: (COLORS.index(v["color"]), v["creature"], v["source"]))
     with open(os.path.join(resources, "puffles.json"), "w") as f:
         json.dump({"variants": variants}, f, ensure_ascii=False, separators=(",", ":"))
