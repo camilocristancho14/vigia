@@ -297,6 +297,7 @@ struct PuffleMarkView: View {
                 }
             }
         }
+        .scaleEffect(large ? 1.0 : 1.22)
         .frame(width: size, height: size)
         .accessibilityHidden(true)
     }
