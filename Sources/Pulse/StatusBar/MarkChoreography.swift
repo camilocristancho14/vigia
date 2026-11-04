@@ -82,7 +82,7 @@ enum MarkMood: String, CaseIterable, Sendable {
     var tempo: Double {
         switch self {
         case .tired: 0.8
-        case .exhausted, .asleep: 0.65
+        case .exhausted, .asleep, .spent: 0.65
         case .working, .celebrating: 1.1
         default: 1
         }

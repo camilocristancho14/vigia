@@ -129,7 +129,7 @@ enum PuffleCatalog {
         case .claudeCode: "orange"
         case .codex: "white"
         case .antigravity, .gemini: "blue"
-        case .grok: "black"
+        case .grok: "red"
         case .cursor: "purple"
         default:
             colors[Int(StableHash.fnv1a(provider.rawValue) % UInt64(colors.count))]
@@ -289,7 +289,7 @@ struct PuffleMarkView: View {
         let mood = MarkMood.resolve(pose: pose, usedFraction: usedFraction, justReset: justReset)
         let sheet = PuffleSheet.sheet(variant, large: large)
         Group {
-            if mood.isStill || reduceMotion {
+            if reduceMotion {
                 still(sheet, mood: mood)
             } else {
                 TimelineView(.animation(minimumInterval: Self.interval(for: mood))) { context in
@@ -302,16 +302,14 @@ struct PuffleMarkView: View {
     }
 
     static func interval(for mood: MarkMood) -> TimeInterval {
-        let base: TimeInterval = mood == .asleep || mood == .exhausted ? 1 / 6.25 : 1 / 12.5
+        let base: TimeInterval = mood == .asleep || mood == .exhausted || mood == .spent ? 1 / 6.25 : 1 / 12.5
         return ProcessInfo.processInfo.isLowPowerModeEnabled ? base * 2 : base
     }
 
     @ViewBuilder
     private func still(_ sheet: PuffleSheet, mood: MarkMood) -> some View {
-        let frame = mood.isStill ? sheet.frame(variant.still) : sheet.frame(.idle, at: 0)
+        let frame = (mood.isStill || mood == .asleep || mood == .spent) ? sheet.frame(variant.still) : sheet.frame(.idle, at: 0)
         image(frame)
-            // Spent: lying asleep and a little faded, so it reads as out.
-            .opacity(mood.isStill ? 0.6 : 1)
     }
 
     @ViewBuilder
@@ -334,6 +332,7 @@ struct PuffleMarkView: View {
         Group {
             if let frame {
                 Image(decorative: frame, scale: 2)
+                    .renderingMode(.original)
                     .resizable()
                     .interpolation(.high)
                     .aspectRatio(contentMode: .fit)
