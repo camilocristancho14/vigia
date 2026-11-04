@@ -14,10 +14,9 @@ test -x "$BIN/Pulse"
 test -d "$BIN/Pulse_Pulse.bundle"
 
 ROOT="build.noindex"
-APP="$ROOT/Vigia.app"
-rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$ROOT"
-touch "$ROOT/.metadata_never_index"
+PKG_DIR="$(mktemp -d /tmp/vigia-pkg.XXXXXX)"
+APP="$PKG_DIR/Vigia.app"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" 
 
 cp "$BIN/Pulse" "$APP/Contents/MacOS/Vigia"
 chmod +x "$APP/Contents/MacOS/Vigia"
@@ -95,22 +94,32 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
+xattr -c "$APP" "$ROOT" 2>/dev/null || true
+xattr -cr "$APP" 2>/dev/null || true
 # Inside out. --deep on the outer bundle resigns nested code; verify must pass strict.
 codesign --force --sign - "$APP/Contents/Resources/Pulse_Pulse.bundle"
 codesign --force --sign - "$APP/Contents/MacOS/Vigia"
 codesign --force --deep --sign - "$APP"
 codesign --verify --deep --strict --verbose=2 "$APP"
 
-STAGE="$(mktemp -d)"
+STAGE="$(mktemp -d /tmp/vigia-stage.XXXXXX)"
 cp -R "$APP" "$STAGE/Vigia.app"
 ln -s /Applications "$STAGE/Applications"
-rm -f "$ROOT/Vigia.dmg"
-hdiutil create -volname "Vigía" -srcfolder "$STAGE" -ov -format UDZO "$ROOT/Vigia.dmg"
+rm -f "$PKG_DIR/Vigia.dmg"
+hdiutil create -volname "Vigía" -srcfolder "$STAGE" -ov -format UDZO "$PKG_DIR/Vigia.dmg"
 rm -rf "$STAGE"
 
-rm -f "$ROOT/Vigia.zip"
-ditto -c -k --keepParent "$APP" "$ROOT/Vigia.zip"
+rm -f "$PKG_DIR/Vigia.zip"
+ditto -c -k --keepParent "$APP" "$PKG_DIR/Vigia.zip"
 
-echo "→ $APP"
+mkdir -p "$ROOT"
+touch "$ROOT/.metadata_never_index"
+rm -rf "$ROOT/Vigia.app" "$ROOT/Vigia.dmg" "$ROOT/Vigia.zip"
+cp -R "$APP" "$ROOT/Vigia.app"
+cp "$PKG_DIR/Vigia.dmg" "$ROOT/Vigia.dmg"
+cp "$PKG_DIR/Vigia.zip" "$ROOT/Vigia.zip"
+rm -rf "$PKG_DIR"
+
+echo "→ $ROOT/Vigia.app"
 echo "→ $ROOT/Vigia.dmg"
 echo "→ $ROOT/Vigia.zip"
