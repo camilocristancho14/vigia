@@ -361,6 +361,7 @@ struct FloatingUsagePanelView: View {
             botPersona: settings.botPersona(for: account),
             botBody: settings.botBody(for: account),
             mascot: settings.mascotCharacter(for: account),
+            puffle: settings.puffle(for: account),
             // **A reset outranks a finished turn.** Both can be true in the
             // same few seconds — a turn that ends as the window rolls over —
             // and the reset is the rarer news.

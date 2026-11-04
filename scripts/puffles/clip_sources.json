@@ -1,0 +1,1673 @@
+{
+ "black": {
+  "source": "black",
+  "clips": {
+   "idle": [
+    "black"
+   ],
+   "look": [
+    "black"
+   ],
+   "walk": [
+    "black"
+   ],
+   "walkSide": [
+    "black"
+   ],
+   "doze": [
+    "black"
+   ],
+   "sleep": [
+    "black"
+   ],
+   "wake": [
+    "black"
+   ],
+   "jump": [
+    "tricks__puffle_black_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_black_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_black_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_black_roll"
+   ],
+   "speak": [
+    "tricks__puffle_black_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_black_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_black_dig"
+   ],
+   "yawn": [
+    "black"
+   ],
+   "hungry": [
+    "black"
+   ],
+   "sick": [
+    "black"
+   ]
+  }
+ },
+ "black-trex": {
+  "source": "black1000",
+  "clips": {
+   "idle": [
+    "walk__puffle_black1000_walk"
+   ],
+   "look": [
+    "walk__puffle_black1000_walk"
+   ],
+   "bounce": [
+    "walk__puffle_black1000_walk"
+   ],
+   "walk": [
+    "walk__puffle_black1000_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_black1000_walk"
+   ],
+   "doze": [
+    "walk__puffle_black1000_walk"
+   ],
+   "sleep": [
+    "walk__puffle_black1000_walk"
+   ],
+   "wake": [
+    "walk__puffle_black1000_walk"
+   ],
+   "jump": [
+    "tricks__puffle_black1000_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_black1000_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_black1000_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_black1000_roll"
+   ],
+   "speak": [
+    "tricks__puffle_black1000_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_black1000_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_black1000_dig"
+   ]
+  }
+ },
+ "black-deer": {
+  "source": "black1017",
+  "clips": {
+   "idle": [
+    "walk__puffle_black1017_walk"
+   ],
+   "look": [
+    "walk__puffle_black1017_walk"
+   ],
+   "bounce": [
+    "walk__puffle_black1017_walk"
+   ],
+   "walk": [
+    "walk__puffle_black1017_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_black1017_walk"
+   ],
+   "doze": [
+    "walk__puffle_black1017_walk"
+   ],
+   "sleep": [
+    "walk__puffle_black1017_walk"
+   ],
+   "wake": [
+    "walk__puffle_black1017_walk"
+   ],
+   "dig": [
+    "dig__puffle_black1017_dig"
+   ]
+  }
+ },
+ "blue": {
+  "source": "blue",
+  "clips": {
+   "idle": [
+    "walk__puffle_blue_walk"
+   ],
+   "look": [
+    "walk__puffle_blue_walk"
+   ],
+   "walk": [
+    "walk__puffle_blue_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_blue_walk"
+   ],
+   "doze": [
+    "walk__puffle_blue_walk"
+   ],
+   "sleep": [
+    "walk__puffle_blue_walk"
+   ],
+   "wake": [
+    "walk__puffle_blue_walk"
+   ],
+   "jump": [
+    "tricks__puffle_blue_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_blue_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_blue_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_blue_roll"
+   ],
+   "speak": [
+    "tricks__puffle_blue_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_blue_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_blue_dig"
+   ],
+   "yawn": [
+    "igloo__puffle_blue_igloo"
+   ],
+   "hungry": [
+    "igloo__puffle_blue_igloo"
+   ],
+   "sick": [
+    "igloo__puffle_blue_igloo"
+   ]
+  }
+ },
+ "blue-triceratops": {
+  "source": "blue1003",
+  "clips": {
+   "idle": [
+    "walk__puffle_blue1003_walk"
+   ],
+   "look": [
+    "walk__puffle_blue1003_walk"
+   ],
+   "bounce": [
+    "walk__puffle_blue1003_walk"
+   ],
+   "walk": [
+    "walk__puffle_blue1003_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_blue1003_walk"
+   ],
+   "doze": [
+    "walk__puffle_blue1003_walk"
+   ],
+   "sleep": [
+    "walk__puffle_blue1003_walk"
+   ],
+   "wake": [
+    "walk__puffle_blue1003_walk"
+   ],
+   "jump": [
+    "tricks__puffle_blue1003_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_blue1003_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_blue1003_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_blue1003_roll"
+   ],
+   "speak": [
+    "tricks__puffle_blue1003_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_blue1003_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_blue1003_dig"
+   ]
+  }
+ },
+ "blue-dog": {
+  "source": "blue1006",
+  "clips": {
+   "idle": [
+    "walk__puffle_blue1006_walk"
+   ],
+   "look": [
+    "walk__puffle_blue1006_walk"
+   ],
+   "bounce": [
+    "walk__puffle_blue1006_walk"
+   ],
+   "walk": [
+    "walk__puffle_blue1006_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_blue1006_walk"
+   ],
+   "doze": [
+    "walk__puffle_blue1006_walk"
+   ],
+   "sleep": [
+    "walk__puffle_blue1006_walk"
+   ],
+   "wake": [
+    "walk__puffle_blue1006_walk"
+   ],
+   "jump": [
+    "tricks__puffle_blue1006_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_blue1006_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_blue1006_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_blue1006_roll"
+   ],
+   "speak": [
+    "tricks__puffle_blue1006_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_blue1006_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_blue1006_dig"
+   ],
+   "yawn": [
+    "igloo__puffle_blue1006_igloo"
+   ],
+   "hungry": [
+    "igloo__puffle_blue1006_igloo"
+   ],
+   "sick": [
+    "igloo__puffle_blue1006_igloo"
+   ]
+  }
+ },
+ "blue-raccoon": {
+  "source": "blue1011",
+  "clips": {
+   "idle": [
+    "walk__puffle_blue1011_walk"
+   ],
+   "look": [
+    "walk__puffle_blue1011_walk"
+   ],
+   "bounce": [
+    "walk__puffle_blue1011_walk"
+   ],
+   "walk": [
+    "walk__puffle_blue1011_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_blue1011_walk"
+   ],
+   "doze": [
+    "walk__puffle_blue1011_walk"
+   ],
+   "sleep": [
+    "walk__puffle_blue1011_walk"
+   ],
+   "wake": [
+    "walk__puffle_blue1011_walk"
+   ],
+   "jump": [
+    "tricks__puffle_blue1011_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_blue1011_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_blue1011_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_blue1011_roll"
+   ],
+   "speak": [
+    "tricks__puffle_blue1011_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_blue1011_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_blue1011_dig"
+   ]
+  }
+ },
+ "blue-deer": {
+  "source": "blue1016",
+  "clips": {
+   "idle": [
+    "walk__puffle_blue1016_walk"
+   ],
+   "look": [
+    "walk__puffle_blue1016_walk"
+   ],
+   "bounce": [
+    "walk__puffle_blue1016_walk"
+   ],
+   "walk": [
+    "walk__puffle_blue1016_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_blue1016_walk"
+   ],
+   "doze": [
+    "walk__puffle_blue1016_walk"
+   ],
+   "sleep": [
+    "walk__puffle_blue1016_walk"
+   ],
+   "wake": [
+    "walk__puffle_blue1016_walk"
+   ],
+   "jump": [
+    "tricks__puffle_blue1016_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_blue1016_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_blue1016_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_blue1016_roll"
+   ],
+   "speak": [
+    "tricks__puffle_blue1016_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_blue1016_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_blue1016_dig"
+   ]
+  }
+ },
+ "brown": {
+  "source": "brown",
+  "clips": {
+   "idle": [
+    "tricks__puffle_brown_speak"
+   ],
+   "jump": [
+    "tricks__puffle_brown_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_brown_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_brown_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_brown_roll"
+   ],
+   "speak": [
+    "tricks__puffle_brown_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_brown_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_brown_dig"
+   ]
+  }
+ },
+ "gold": {
+  "source": "gold",
+  "clips": {
+   "idle": [
+    "walk__puffle_gold_walk"
+   ],
+   "look": [
+    "walk__puffle_gold_walk"
+   ],
+   "walk": [
+    "walk__puffle_gold_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_gold_walk"
+   ],
+   "doze": [
+    "walk__puffle_gold_walk"
+   ],
+   "wake": [
+    "walk__puffle_gold_walk"
+   ],
+   "jump": [
+    "tricks__puffle_gold_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_gold_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_gold_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_gold_roll"
+   ],
+   "speak": [
+    "tricks__puffle_gold_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_gold_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_gold_dig"
+   ]
+  }
+ },
+ "green": {
+  "source": "green",
+  "clips": {
+   "idle": [
+    "igloo__puffle_green_igloo"
+   ],
+   "look": [
+    "igloo__puffle_green_igloo"
+   ],
+   "walk": [
+    "igloo__puffle_green_igloo"
+   ],
+   "walkSide": [
+    "igloo__puffle_green_igloo"
+   ],
+   "doze": [
+    "igloo__puffle_green_igloo"
+   ],
+   "sleep": [
+    "igloo__puffle_green_igloo"
+   ],
+   "wake": [
+    "igloo__puffle_green_igloo"
+   ],
+   "jump": [
+    "tricks__puffle_green_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_green_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_green_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_green_roll"
+   ],
+   "speak": [
+    "tricks__puffle_green_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_green_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_green_dig"
+   ],
+   "yawn": [
+    "igloo__puffle_green_igloo"
+   ],
+   "hungry": [
+    "igloo__puffle_green_igloo"
+   ],
+   "sick": [
+    "igloo__puffle_green_igloo"
+   ]
+  }
+ },
+ "green-raccoon": {
+  "source": "green1008",
+  "clips": {
+   "idle": [
+    "walk__puffle_green1008_walk"
+   ],
+   "look": [
+    "walk__puffle_green1008_walk"
+   ],
+   "bounce": [
+    "walk__puffle_green1008_walk"
+   ],
+   "walk": [
+    "walk__puffle_green1008_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_green1008_walk"
+   ],
+   "doze": [
+    "walk__puffle_green1008_walk"
+   ],
+   "sleep": [
+    "walk__puffle_green1008_walk"
+   ],
+   "wake": [
+    "walk__puffle_green1008_walk"
+   ],
+   "dig": [
+    "dig__puffle_green1008_dig"
+   ]
+  }
+ },
+ "green-bunny": {
+  "source": "green1012",
+  "clips": {
+   "idle": [
+    "walk__puffle_green1012_walk"
+   ],
+   "look": [
+    "walk__puffle_green1012_walk"
+   ],
+   "bounce": [
+    "walk__puffle_green1012_walk"
+   ],
+   "walk": [
+    "walk__puffle_green1012_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_green1012_walk"
+   ],
+   "doze": [
+    "walk__puffle_green1012_walk"
+   ],
+   "sleep": [
+    "walk__puffle_green1012_walk"
+   ],
+   "wake": [
+    "walk__puffle_green1012_walk"
+   ],
+   "dig": [
+    "dig__puffle_green1012_dig"
+   ]
+  }
+ },
+ "green-alien": {
+  "source": "green1024",
+  "clips": {
+   "idle": [
+    "walk__puffle_green1024_walk"
+   ],
+   "look": [
+    "walk__puffle_green1024_walk"
+   ],
+   "walk": [
+    "walk__puffle_green1024_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_green1024_walk"
+   ],
+   "doze": [
+    "walk__puffle_green1024_walk"
+   ],
+   "sleep": [
+    "walk__puffle_green1024_walk"
+   ],
+   "wake": [
+    "walk__puffle_green1024_walk"
+   ]
+  }
+ },
+ "orange": {
+  "source": "orange",
+  "clips": {
+   "idle": [
+    "walk__puffle_orange_walk"
+   ],
+   "look": [
+    "walk__puffle_orange_walk"
+   ],
+   "walk": [
+    "walk__puffle_orange_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_orange_walk"
+   ],
+   "doze": [
+    "walk__puffle_orange_walk"
+   ],
+   "sleep": [
+    "walk__puffle_orange_walk"
+   ],
+   "wake": [
+    "walk__puffle_orange_walk"
+   ],
+   "jump": [
+    "tricks__puffle_orange_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_orange_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_orange_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_orange_roll"
+   ],
+   "speak": [
+    "tricks__puffle_orange_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_orange_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_orange_dig"
+   ],
+   "yawn": [
+    "orange"
+   ],
+   "hungry": [
+    "orange"
+   ],
+   "sick": [
+    "orange"
+   ]
+  }
+ },
+ "orange-cat": {
+  "source": "orange1007",
+  "clips": {
+   "idle": [
+    "walk__puffle_orange1007_walk"
+   ],
+   "look": [
+    "walk__puffle_orange1007_walk"
+   ],
+   "bounce": [
+    "walk__puffle_orange1007_walk"
+   ],
+   "walk": [
+    "walk__puffle_orange1007_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_orange1007_walk"
+   ],
+   "doze": [
+    "walk__puffle_orange1007_walk"
+   ],
+   "sleep": [
+    "walk__puffle_orange1007_walk"
+   ],
+   "wake": [
+    "walk__puffle_orange1007_walk"
+   ],
+   "jump": [
+    "tricks__puffle_orange1007_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_orange1007_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_orange1007_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_orange1007_roll"
+   ],
+   "speak": [
+    "tricks__puffle_orange1007_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_orange1007_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_orange1007_dig"
+   ]
+  }
+ },
+ "orange-raccoon": {
+  "source": "orange1009",
+  "clips": {
+   "idle": [
+    "walk__puffle_orange1009_walk"
+   ],
+   "look": [
+    "walk__puffle_orange1009_walk"
+   ],
+   "bounce": [
+    "walk__puffle_orange1009_walk"
+   ],
+   "walk": [
+    "walk__puffle_orange1009_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_orange1009_walk"
+   ],
+   "doze": [
+    "walk__puffle_orange1009_walk"
+   ],
+   "sleep": [
+    "walk__puffle_orange1009_walk"
+   ],
+   "wake": [
+    "walk__puffle_orange1009_walk"
+   ],
+   "jump": [
+    "tricks__puffle_orange1009_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_orange1009_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_orange1009_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_orange1009_roll"
+   ],
+   "speak": [
+    "tricks__puffle_orange1009_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_orange1009_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_orange1009_dig"
+   ],
+   "eat": [
+    "eat__puffle_orange1009_eat"
+   ],
+   "lift": [
+    "hotelcare__weightlifting__puffle_orange1009_weightlifting"
+   ]
+  }
+ },
+ "orange-alien": {
+  "source": "orange1025",
+  "clips": {
+   "idle": [
+    "walk__puffle_orange1025_walk"
+   ],
+   "look": [
+    "walk__puffle_orange1025_walk"
+   ],
+   "walk": [
+    "walk__puffle_orange1025_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_orange1025_walk"
+   ],
+   "doze": [
+    "walk__puffle_orange1025_walk"
+   ],
+   "sleep": [
+    "walk__puffle_orange1025_walk"
+   ],
+   "wake": [
+    "walk__puffle_orange1025_walk"
+   ]
+  }
+ },
+ "pink": {
+  "source": "pink",
+  "clips": {
+   "idle": [
+    "pink"
+   ],
+   "look": [
+    "pink"
+   ],
+   "walk": [
+    "pink"
+   ],
+   "walkSide": [
+    "pink"
+   ],
+   "doze": [
+    "pink"
+   ],
+   "sleep": [
+    "pink"
+   ],
+   "wake": [
+    "pink"
+   ],
+   "jump": [
+    "tricks__puffle_pink_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_pink_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_pink_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_pink_roll"
+   ],
+   "speak": [
+    "tricks__puffle_pink_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_pink_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_pink_dig"
+   ],
+   "yawn": [
+    "pink"
+   ],
+   "hungry": [
+    "pink"
+   ],
+   "sick": [
+    "pink"
+   ]
+  }
+ },
+ "pink-stegosaurus": {
+  "source": "pink1005",
+  "clips": {
+   "idle": [
+    "walk__puffle_pink1005_walk"
+   ],
+   "look": [
+    "walk__puffle_pink1005_walk"
+   ],
+   "bounce": [
+    "walk__puffle_pink1005_walk"
+   ],
+   "walk": [
+    "walk__puffle_pink1005_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_pink1005_walk"
+   ],
+   "doze": [
+    "walk__puffle_pink1005_walk"
+   ],
+   "sleep": [
+    "walk__puffle_pink1005_walk"
+   ],
+   "wake": [
+    "walk__puffle_pink1005_walk"
+   ],
+   "jump": [
+    "tricks__puffle_pink1005_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_pink1005_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_pink1005_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_pink1005_roll"
+   ],
+   "speak": [
+    "tricks__puffle_pink1005_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_pink1005_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_pink1005_dig"
+   ]
+  }
+ },
+ "pink-raccoon": {
+  "source": "pink1010",
+  "clips": {
+   "idle": [
+    "walk__puffle_pink1010_walk"
+   ],
+   "look": [
+    "walk__puffle_pink1010_walk"
+   ],
+   "bounce": [
+    "walk__puffle_pink1010_walk"
+   ],
+   "walk": [
+    "walk__puffle_pink1010_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_pink1010_walk"
+   ],
+   "doze": [
+    "walk__puffle_pink1010_walk"
+   ],
+   "sleep": [
+    "walk__puffle_pink1010_walk"
+   ],
+   "wake": [
+    "walk__puffle_pink1010_walk"
+   ],
+   "dig": [
+    "dig__puffle_pink1010_dig"
+   ]
+  }
+ },
+ "pink-bunny": {
+  "source": "pink1013",
+  "clips": {
+   "idle": [
+    "walk__puffle_pink1013_walk"
+   ],
+   "look": [
+    "walk__puffle_pink1013_walk"
+   ],
+   "bounce": [
+    "walk__puffle_pink1013_walk"
+   ],
+   "walk": [
+    "walk__puffle_pink1013_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_pink1013_walk"
+   ],
+   "doze": [
+    "walk__puffle_pink1013_walk"
+   ],
+   "sleep": [
+    "walk__puffle_pink1013_walk"
+   ],
+   "wake": [
+    "walk__puffle_pink1013_walk"
+   ],
+   "dig": [
+    "dig__puffle_pink1013_dig"
+   ]
+  }
+ },
+ "purple": {
+  "source": "purple",
+  "clips": {
+   "idle": [
+    "igloo__puffle_purple_igloo"
+   ],
+   "look": [
+    "igloo__puffle_purple_igloo"
+   ],
+   "walk": [
+    "igloo__puffle_purple_igloo"
+   ],
+   "walkSide": [
+    "igloo__puffle_purple_igloo"
+   ],
+   "doze": [
+    "igloo__puffle_purple_igloo"
+   ],
+   "sleep": [
+    "igloo__puffle_purple_igloo"
+   ],
+   "wake": [
+    "igloo__puffle_purple_igloo"
+   ],
+   "jump": [
+    "tricks__puffle_purple_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_purple_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_purple_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_purple_roll"
+   ],
+   "speak": [
+    "tricks__puffle_purple_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_purple_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_purple_dig"
+   ],
+   "yawn": [
+    "igloo__puffle_purple_igloo"
+   ],
+   "hungry": [
+    "igloo__puffle_purple_igloo"
+   ]
+  }
+ },
+ "purple-trex": {
+  "source": "purple1001",
+  "clips": {
+   "idle": [
+    "walk__puffle_purple1001_walk"
+   ],
+   "look": [
+    "walk__puffle_purple1001_walk"
+   ],
+   "bounce": [
+    "walk__puffle_purple1001_walk"
+   ],
+   "walk": [
+    "walk__puffle_purple1001_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_purple1001_walk"
+   ],
+   "doze": [
+    "walk__puffle_purple1001_walk"
+   ],
+   "sleep": [
+    "walk__puffle_purple1001_walk"
+   ],
+   "wake": [
+    "walk__puffle_purple1001_walk"
+   ],
+   "jump": [
+    "tricks__puffle_purple1001_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_purple1001_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_purple1001_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_purple1001_roll"
+   ],
+   "speak": [
+    "tricks__puffle_purple1001_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_purple1001_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_purple1001_dig"
+   ]
+  }
+ },
+ "purple-deer": {
+  "source": "purple1019",
+  "clips": {
+   "idle": [
+    "walk__puffle_purple1019_walk"
+   ],
+   "look": [
+    "walk__puffle_purple1019_walk"
+   ],
+   "bounce": [
+    "walk__puffle_purple1019_walk"
+   ],
+   "walk": [
+    "walk__puffle_purple1019_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_purple1019_walk"
+   ],
+   "doze": [
+    "walk__puffle_purple1019_walk"
+   ],
+   "sleep": [
+    "walk__puffle_purple1019_walk"
+   ],
+   "wake": [
+    "walk__puffle_purple1019_walk"
+   ],
+   "dig": [
+    "dig__puffle_purple1019_dig"
+   ]
+  }
+ },
+ "purple-ghost": {
+  "source": "purple1022",
+  "clips": {
+   "idle": [
+    "tricks__puffle_purple1022_speak"
+   ],
+   "jump": [
+    "tricks__puffle_purple1022_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_purple1022_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_purple1022_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_purple1022_roll"
+   ],
+   "speak": [
+    "tricks__puffle_purple1022_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_purple1022_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_purple1022_dig"
+   ],
+   "splash": [
+    "animation__splash__puffle_purple1022_splash"
+   ]
+  }
+ },
+ "purple-alien": {
+  "source": "purple1027",
+  "clips": {
+   "idle": [
+    "walk__puffle_purple1027_walk"
+   ],
+   "look": [
+    "walk__puffle_purple1027_walk"
+   ],
+   "walk": [
+    "walk__puffle_purple1027_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_purple1027_walk"
+   ],
+   "doze": [
+    "walk__puffle_purple1027_walk"
+   ],
+   "sleep": [
+    "walk__puffle_purple1027_walk"
+   ],
+   "wake": [
+    "walk__puffle_purple1027_walk"
+   ]
+  }
+ },
+ "rainbow": {
+  "source": "rainbow",
+  "clips": {
+   "idle": [
+    "rainbow"
+   ],
+   "look": [
+    "rainbow"
+   ],
+   "walk": [
+    "rainbow"
+   ],
+   "walkSide": [
+    "rainbow"
+   ],
+   "doze": [
+    "rainbow"
+   ],
+   "sleep": [
+    "rainbow"
+   ],
+   "wake": [
+    "rainbow"
+   ],
+   "jump": [
+    "tricks__puffle_rainbow_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_rainbow_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_rainbow_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_rainbow_roll"
+   ],
+   "speak": [
+    "tricks__puffle_rainbow_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_rainbow_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_rainbow_dig"
+   ],
+   "yawn": [
+    "rainbow"
+   ],
+   "hungry": [
+    "rainbow"
+   ]
+  }
+ },
+ "red": {
+  "source": "red",
+  "clips": {
+   "idle": [
+    "walk__puffle_red_walk"
+   ],
+   "look": [
+    "walk__puffle_red_walk"
+   ],
+   "walk": [
+    "walk__puffle_red_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_red_walk"
+   ],
+   "doze": [
+    "walk__puffle_red_walk"
+   ],
+   "sleep": [
+    "walk__puffle_red_walk"
+   ],
+   "wake": [
+    "walk__puffle_red_walk"
+   ],
+   "jump": [
+    "tricks__puffle_red_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_red_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_red_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_red_roll"
+   ],
+   "speak": [
+    "tricks__puffle_red_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_red_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_red_dig"
+   ],
+   "yawn": [
+    "igloo__puffle_red_igloo"
+   ],
+   "hungry": [
+    "igloo__puffle_red_igloo"
+   ],
+   "sick": [
+    "igloo__puffle_red_igloo"
+   ]
+  }
+ },
+ "red-triceratops": {
+  "source": "red1002",
+  "clips": {
+   "idle": [
+    "walk__puffle_red1002_walk"
+   ],
+   "look": [
+    "walk__puffle_red1002_walk"
+   ],
+   "bounce": [
+    "walk__puffle_red1002_walk"
+   ],
+   "walk": [
+    "walk__puffle_red1002_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_red1002_walk"
+   ],
+   "doze": [
+    "walk__puffle_red1002_walk"
+   ],
+   "sleep": [
+    "walk__puffle_red1002_walk"
+   ],
+   "wake": [
+    "walk__puffle_red1002_walk"
+   ],
+   "jump": [
+    "tricks__puffle_red1002_jumpForward"
+   ],
+   "nuzzle": [
+    "tricks__puffle_red1002_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_red1002_roll"
+   ],
+   "speak": [
+    "tricks__puffle_red1002_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_red1002_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_red1002_dig"
+   ]
+  }
+ },
+ "red-bunny": {
+  "source": "red1015",
+  "clips": {
+   "idle": [
+    "walk__puffle_red1015_walk"
+   ],
+   "look": [
+    "walk__puffle_red1015_walk"
+   ],
+   "bounce": [
+    "walk__puffle_red1015_walk"
+   ],
+   "walk": [
+    "walk__puffle_red1015_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_red1015_walk"
+   ],
+   "doze": [
+    "walk__puffle_red1015_walk"
+   ],
+   "sleep": [
+    "walk__puffle_red1015_walk"
+   ],
+   "wake": [
+    "walk__puffle_red1015_walk"
+   ],
+   "dig": [
+    "dig__puffle_red1015_dig"
+   ]
+  }
+ },
+ "red-reindeer": {
+  "source": "red1018",
+  "clips": {
+   "idle": [
+    "walk__puffle_red1018_walk"
+   ],
+   "look": [
+    "walk__puffle_red1018_walk"
+   ],
+   "bounce": [
+    "walk__puffle_red1018_walk"
+   ],
+   "walk": [
+    "walk__puffle_red1018_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_red1018_walk"
+   ],
+   "doze": [
+    "walk__puffle_red1018_walk"
+   ],
+   "sleep": [
+    "walk__puffle_red1018_walk"
+   ],
+   "wake": [
+    "walk__puffle_red1018_walk"
+   ],
+   "dig": [
+    "dig__puffle_red1018_dig"
+   ]
+  }
+ },
+ "white": {
+  "source": "white",
+  "clips": {
+   "idle": [
+    "white"
+   ],
+   "look": [
+    "white"
+   ],
+   "walk": [
+    "white"
+   ],
+   "walkSide": [
+    "white"
+   ],
+   "doze": [
+    "white"
+   ],
+   "sleep": [
+    "white"
+   ],
+   "wake": [
+    "white"
+   ],
+   "jump": [
+    "tricks__puffle_white_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_white_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_white_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_white_roll"
+   ],
+   "speak": [
+    "tricks__puffle_white_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_white_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_white_dig"
+   ],
+   "yawn": [
+    "white"
+   ],
+   "hungry": [
+    "white"
+   ],
+   "sick": [
+    "white"
+   ]
+  }
+ },
+ "white-bunny": {
+  "source": "white1014",
+  "clips": {
+   "idle": [
+    "walk__puffle_white1014_walk"
+   ],
+   "look": [
+    "walk__puffle_white1014_walk"
+   ],
+   "bounce": [
+    "walk__puffle_white1014_walk"
+   ],
+   "walk": [
+    "walk__puffle_white1014_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_white1014_walk"
+   ],
+   "doze": [
+    "walk__puffle_white1014_walk"
+   ],
+   "sleep": [
+    "walk__puffle_white1014_walk"
+   ],
+   "wake": [
+    "walk__puffle_white1014_walk"
+   ],
+   "dig": [
+    "dig__puffle_white1014_dig"
+   ]
+  }
+ },
+ "white-snowman": {
+  "source": "white1021",
+  "clips": {
+   "idle": [
+    "walk__puffle_white1021_walk"
+   ],
+   "look": [
+    "walk__puffle_white1021_walk"
+   ],
+   "walk": [
+    "walk__puffle_white1021_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_white1021_walk"
+   ],
+   "doze": [
+    "walk__puffle_white1021_walk"
+   ],
+   "sleep": [
+    "walk__puffle_white1021_walk"
+   ],
+   "wake": [
+    "walk__puffle_white1021_walk"
+   ]
+  }
+ },
+ "yellow": {
+  "source": "yellow",
+  "clips": {
+   "idle": [
+    "yellow"
+   ],
+   "look": [
+    "yellow"
+   ],
+   "walk": [
+    "yellow"
+   ],
+   "walkSide": [
+    "yellow"
+   ],
+   "doze": [
+    "yellow"
+   ],
+   "sleep": [
+    "yellow"
+   ],
+   "wake": [
+    "yellow"
+   ],
+   "jump": [
+    "tricks__puffle_yellow_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_yellow_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_yellow_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_yellow_roll"
+   ],
+   "speak": [
+    "tricks__puffle_yellow_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_yellow_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_yellow_dig"
+   ],
+   "yawn": [
+    "yellow"
+   ],
+   "hungry": [
+    "yellow"
+   ],
+   "sick": [
+    "yellow"
+   ]
+  }
+ },
+ "yellow-stegosaurus": {
+  "source": "yellow1004",
+  "clips": {
+   "idle": [
+    "walk__puffle_yellow1004_walk"
+   ],
+   "look": [
+    "walk__puffle_yellow1004_walk"
+   ],
+   "bounce": [
+    "walk__puffle_yellow1004_walk"
+   ],
+   "walk": [
+    "walk__puffle_yellow1004_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_yellow1004_walk"
+   ],
+   "doze": [
+    "walk__puffle_yellow1004_walk"
+   ],
+   "sleep": [
+    "walk__puffle_yellow1004_walk"
+   ],
+   "wake": [
+    "walk__puffle_yellow1004_walk"
+   ],
+   "jump": [
+    "tricks__puffle_yellow1004_jumpForward"
+   ],
+   "spin": [
+    "tricks__puffle_yellow1004_jumpSpin"
+   ],
+   "nuzzle": [
+    "tricks__puffle_yellow1004_nuzzle"
+   ],
+   "roll": [
+    "tricks__puffle_yellow1004_roll"
+   ],
+   "speak": [
+    "tricks__puffle_yellow1004_speak"
+   ],
+   "headstand": [
+    "tricks__puffle_yellow1004_standOnHead"
+   ],
+   "dig": [
+    "dig__puffle_yellow1004_dig"
+   ]
+  }
+ },
+ "yellow-unicorn": {
+  "source": "yellow1020",
+  "clips": {
+   "idle": [
+    "walk__puffle_yellow1020_walk"
+   ],
+   "look": [
+    "walk__puffle_yellow1020_walk"
+   ],
+   "bounce": [
+    "walk__puffle_yellow1020_walk"
+   ],
+   "walk": [
+    "walk__puffle_yellow1020_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_yellow1020_walk"
+   ],
+   "doze": [
+    "walk__puffle_yellow1020_walk"
+   ],
+   "sleep": [
+    "walk__puffle_yellow1020_walk"
+   ],
+   "wake": [
+    "walk__puffle_yellow1020_walk"
+   ],
+   "dig": [
+    "dig__puffle_yellow1020_dig"
+   ]
+  }
+ },
+ "yellow-alien": {
+  "source": "yellow1026",
+  "clips": {
+   "idle": [
+    "walk__puffle_yellow1026_walk"
+   ],
+   "look": [
+    "walk__puffle_yellow1026_walk"
+   ],
+   "walk": [
+    "walk__puffle_yellow1026_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_yellow1026_walk"
+   ],
+   "doze": [
+    "walk__puffle_yellow1026_walk"
+   ],
+   "sleep": [
+    "walk__puffle_yellow1026_walk"
+   ],
+   "wake": [
+    "walk__puffle_yellow1026_walk"
+   ]
+  }
+ }
+}

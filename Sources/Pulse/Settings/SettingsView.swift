@@ -1828,19 +1828,52 @@ struct SettingsView: View {
                 SettingsRowDivider()
 
                 SettingsRow(
-                    String.localized("Animated mark"),
-                    subtitle: Self.mascotSubtitle(for: account.provider)
+                    String.localized("Mark"),
+                    subtitle: Self.markSubtitle(settings.markStyle(for: account), provider: account.provider)
                 ) {
-                    Toggle("", isOn: Binding(
-                        get: { settings.showsBotMark(for: account) },
-                        set: { settings.setShowsBotMark($0, for: account) }
-                    ))
+                    Picker("", selection: Binding(
+                        get: { settings.markStyle(for: account) },
+                        set: { settings.setMarkStyle($0, for: account) }
+                    )) {
+                        ForEach(MarkStyle.allCases) { style in
+                            Text(verbatim: style.title).tag(style)
+                        }
+                    }
                     .labelsHidden()
-                    .toggleStyle(.switch)
+                    .pickerStyle(.segmented)
+                    .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                }
+
+                if let puffle = settings.puffle(for: account) {
+                    SettingsRowDivider()
+
+                    SettingsRow(
+                        String.localized("Puffle"),
+                        subtitle: String.localized("Original Club Penguin sprites. Colours with more than one look list each.")
+                    ) {
+                        Picker("", selection: Binding(
+                            get: { puffle },
+                            set: { settings.setPuffle($0, for: account) }
+                        )) {
+                            ForEach(PuffleCatalog.byColor) { group in
+                                Section(PuffleCatalog.colorTitle(group.color)) {
+                                    ForEach(group.variants) { variant in
+                                        Text(verbatim: variant.title).tag(variant)
+                                    }
+                                }
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: SettingsLayout.controlWidth, alignment: .trailing)
+                    }
+
+                    SettingsRowDivider()
+
+                    PufflePreview(variant: puffle)
                 }
 
                 // A choice of character only where there is one to make.
-                if settings.showsBotMark(for: account), MascotCharacter.options(for: account.provider).count > 1 {
+                if settings.markStyle(for: account) == .mascot, MascotCharacter.options(for: account.provider).count > 1 {
                     SettingsRowDivider()
 
                     SettingsRow(
@@ -1862,7 +1895,7 @@ struct SettingsView: View {
 
                 // Only when there is a bot to give a character to. Shown
                 // otherwise it is a control over something invisible.
-                if settings.showsBotMark(for: account), settings.mascotCharacter(for: account) == .bot {
+                if settings.markStyle(for: account) == .mascot, settings.mascotCharacter(for: account) == .bot {
                     SettingsRowDivider()
 
                     SettingsRow(
@@ -2260,6 +2293,14 @@ struct SettingsView: View {
         modelSpend = selectedModel.map { name in
             ModelSpendSummary.of(scoped, named: name, overLast: span, now: now, calendar: calendar)
         } ?? ModelSpendSummary()
+    }
+
+    static func markSubtitle(_ style: MarkStyle, provider: Provider) -> String {
+        switch style {
+        case .logo: .localized("The AI company's logo, which still shows what the agent is doing.")
+        case .mascot: mascotSubtitle(for: provider)
+        case .puffle: .localized("A Club Penguin puffle that plays, works, celebrates and tires with this account.")
+        }
     }
 
     static func mascotSubtitle(for provider: Provider) -> String {

@@ -876,3 +876,28 @@
 "Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "Mantiene legible el uso de Claude Code cuando su sesión caduca. Esto edita ~/.claude/settings.json; puedes desconectarla en Ajustes.";
 "Add more services…" = "Agregar más servicios…";
 "Copied — run %@ in your terminal to sign in." = "Copiado: ejecuta %@ en tu terminal para iniciar sesión.";
+
+/* Puffles and mark styles */
+"Mark" = "Marca";
+"Puffle" = "Puffle";
+"Logo" = "Logo";
+"Original Club Penguin sprites. Colours with more than one look list each." = "Sprites originales de Club Penguin. Los colores con más de una versión aparecen por separado.";
+"The AI company's logo, which still shows what the agent is doing." = "El logo de la empresa de IA, que igual muestra lo que hace el agente.";
+"A Club Penguin puffle that plays, works, celebrates and tires with this account." = "Un puffle de Club Penguin que juega, trabaja, celebra y se cansa con esta cuenta.";
+"Blue" = "Azul";
+"Pink" = "Rosado";
+"Black" = "Negro";
+"Green" = "Verde";
+"Purple" = "Morado";
+"Red" = "Rojo";
+"Yellow" = "Amarillo";
+"White" = "Blanco";
+"Orange" = "Naranja";
+"Brown" = "Café";
+"Gold" = "Dorado";
+"Rainbow" = "Arcoíris";
+"Idle" = "En espera";
+"Working" = "Trabajando";
+"Celebrating" = "Celebrando";
+"Tired" = "Cansado";
+"Spent" = "Agotado";

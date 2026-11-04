@@ -797,6 +797,16 @@ final class AppSettings {
         }
     }
 
+    /// The Club Penguin puffle an account's mark is, keyed by account, for
+    /// the accounts whose mark is a puffle at all. A missing entry is a logo
+    /// or a mascot, as `botMarks` says. See `MarkStyle`.
+    var puffleMarks: [String: String] = [:] {
+        didSet {
+            guard puffleMarks != oldValue else { return }
+            UserDefaults.standard.set(puffleMarks, forKey: Key.puffleMarks)
+        }
+    }
+
     /// Which browser an account's session cookie is read from, keyed by
     /// account. A missing entry means "whichever, starting with the default
     /// one" — the same shape as `sources`, and for the same reason: naming one
@@ -1578,6 +1588,44 @@ final class AppSettings {
             .flatMap { options.contains($0) ? $0 : nil } ?? options[0]
     }
 
+    /// What draws an account's mark: its AI's logo, its own mascot, or a puffle.
+    func markStyle(for account: AccountKey) -> MarkStyle {
+        if puffle(for: account) != nil { return .puffle }
+        return showsBotMark(for: account) ? .mascot : .logo
+    }
+
+    func setMarkStyle(_ style: MarkStyle, for account: AccountKey) {
+        switch style {
+        case .logo:
+            puffleMarks[account.id] = nil
+            setShowsBotMark(false, for: account)
+        case .mascot:
+            puffleMarks[account.id] = nil
+            setShowsBotMark(true, for: account)
+        case .puffle:
+            setShowsBotMark(false, for: account)
+            if puffle(for: account) == nil {
+                puffleMarks[account.id] = PuffleCatalog.automatic(for: account.provider)?.id
+            }
+        }
+    }
+
+    /// The puffle an account's mark is, or nil when its mark is not one. A
+    /// stored puffle the app no longer has reads as not a puffle.
+    func puffle(for account: AccountKey) -> PuffleVariant? {
+        PuffleCatalog.variant(puffleMarks[account.id])
+    }
+
+    func setPuffle(_ variant: PuffleVariant, for account: AccountKey) {
+        setShowsBotMark(false, for: account)
+        puffleMarks[account.id] = variant.id
+    }
+
+    /// Whether the account's mark moves: a mascot or a puffle, not a logo.
+    func showsAnimatedMark(for account: AccountKey) -> Bool {
+        showsBotMark(for: account) || puffle(for: account) != nil
+    }
+
     func setMascotCharacter(_ character: MascotCharacter, for account: AccountKey) {
         var updated = mascotCharacters
         // The provider's own is the default, so it is stored as an absence.
@@ -1812,6 +1860,7 @@ final class AppSettings {
         settings.showsCodexResetCredits = defaults.bool(forKey: Key.showsCodexResetCredits)
         settings.showsUsageInMenuBar = defaults.bool(forKey: Key.showsUsageInMenuBar)
         settings.menuBarMascots = defaults.object(forKey: Key.menuBarMascots) as? Bool ?? true
+        settings.puffleMarks = defaults.dictionary(forKey: Key.puffleMarks) as? [String: String] ?? [:]
         settings.menuBarActivityText = defaults.object(forKey: Key.menuBarActivityText) as? Bool ?? true
         settings.menuBarTimer = defaults.object(forKey: Key.menuBarTimer) as? Bool ?? true
         settings.remoteActivityEnabled = defaults.bool(forKey: Key.remoteActivityEnabled)
@@ -1913,6 +1962,7 @@ final class AppSettings {
         botColours[account.id] = nil
         botShapes[account.id] = nil
         mascotCharacters[account.id] = nil
+        puffleMarks[account.id] = nil
         detailedCards.remove(account.id)
         splitAccounts.remove(account.id)
         if menuBarAccount == account.id { menuBarAccount = nil }
@@ -1984,6 +2034,7 @@ final class AppSettings {
         static let botPersonas = "settings.botPersonas"
         static let botShapes = "settings.botShapes"
         static let mascotCharacters = "settings.mascotCharacters"
+        static let puffleMarks = "settings.puffleMarks"
         static let botColours = "settings.botColours"
         static let showsRemaining = "settings.showsRemaining"
         static let warningThreshold = "settings.warningThreshold"

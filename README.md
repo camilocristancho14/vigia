@@ -12,7 +12,7 @@ Cubre Claude Code, Codex, Gemini CLI y Grok — Grok Build (`~/.grok`), Grok Bot
 - **Ajustes de la barra de menú.** Activar o quitar las mascotas, el texto de lo que hace cada IA, el tiempo transcurrido y el porcentaje de uso; mostrar solo las IAs que están trabajando; y elegir cuáles aparecen.
 - **Español o inglés.** La interfaz está completa en los dos idiomas y nunca se mezclan. «Sistema» usa español si tu Mac está en español y, en cualquier otro caso, inglés.
 
-La apariencia clara y oscura sigue al sistema. Cada agente tiene un interruptor en Ajustes para usar el logo oficial o la mascota animada.
+La apariencia clara y oscura sigue al sistema. Cada agente tiene en Ajustes un selector de **Marca** con tres modos: el logo de la empresa de IA, su mascota animada o un **puffle** de Club Penguin (ver «Puffles»).
 
 ## Animaciones
 
@@ -33,6 +33,14 @@ Cada mascota muestra qué está haciendo la IA. Claude Code tiene a Clawd, y cua
 Esperar un comando cuenta como turno en curso (no se duerme ni celebra), pero no es «trabajar»: Clawd deja la laptop. Trabajar manda sobre todo, y el descanso de después del turno también; el cansancio y el agotamiento se ven cuando no está trabajando ni de descanso.
 
 Las IAs que no se pueden observar (Grok Bot, por ejemplo) no «trabajan»: muestran primero el cansancio y el agotamiento según su límite y, si no, van cambiando de escena a lo largo del día: duermen de noche (23:00 a 06:00), toman café por la mañana y después, cada cuarto de hora, parpadean, descansan, teclean en la laptop o salen a correr. Los logos solo descansan y toman café. Con «Reducir movimiento» activado en macOS los logos se quedan quietos. En Ajustes, Clawd puede conservar el naranja de Claude en la barra de menú.
+
+## Puffles
+
+Cualquier IA puede llevar un puffle de Club Penguin en lugar del logo o de su mascota: Ajustes › la IA › Marca › **Puffle**, y en el desplegable el color o la variante, con vista previa en grande y a tamaño de barra. Vienen los 12 colores (azul, rosado, negro, verde, morado, rojo, amarillo, blanco, naranja, café, dorado y arcoíris) y 27 criaturas como opciones aparte: el naranja, por ejemplo, está como bola clásica, como gato con orejas y cola, como mapache y como alienígena.
+
+Son los sprites originales del juego, extraídos de los SWF de `media1.clubpenguin.com` archivados en la Wayback Machine con JPEXS ffdec; nada está redibujado. El proceso y las fuentes están en `scripts/puffles/` y [`docs/animaciones.md`](docs/animaciones.md).
+
+Puffles y mascotas comparten un motor de animación: catorce estados (en espera, preocupado al 50 %, cansado al 75 %, exhausto al 90 %, agotado al 100 %, trabajando, esperando un comando, te necesita, despertando, celebrando, descanso, dormido, error y renace), cada uno con su set de animaciones que rota al azar con pesos y sin repetir, con fundidos entre una y otra. Solo un límite agotado los deja quietos. La tabla completa está en [`docs/animaciones.md`](docs/animaciones.md).
 
 ## Esperando un comando
 
@@ -125,5 +133,7 @@ Vigía reutiliza el código y el diseño visual de tres proyectos:
 - [Pulse](https://github.com/qunqin24/Pulse) de qunqin24 — Apache-2.0. El panel del notch, los anillos y los lectores de uso. Licencia en `LICENSES/Pulse-Apache-2.0.txt`.
 - [codenotch](https://github.com/vinzdg/codenotch) de Vinz — MIT. La actividad local de Grok Build, Cursor y Gemini CLI. Licencia en `LICENSES/codenotch-MIT.txt`.
 - [claude-status-bar](https://github.com/m1ckc3s/claude-status-bar) de Mick Cesanek — MIT. El ítem de la barra de menú y Clawd. Licencia en `LICENSES/claude-status-bar-MIT.txt`.
+
+Los puffles son arte original de Club Penguin, propiedad de Disney, recuperado de la Wayback Machine (ver `docs/animaciones.md`).
 
 Los avisos completos están en `THIRD_PARTY_NOTICES.md`. Las marcas de los proveedores vienen de [Lobe Icons](https://github.com/lobehub/lobe-icons). La bola animada de los anillos parte de [grokbot-animation](https://github.com/iduu/grokbot-animation).

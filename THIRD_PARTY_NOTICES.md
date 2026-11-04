@@ -83,3 +83,7 @@ SOFTWARE.
 The round animated mark on provider rings is a port of [grokbot-animation](https://github.com/iduu/grokbot-animation), a study of the bot on x.ai. In Vigía that mark is the Grok mascot: a round ball with eyes.
 
 The Claude, OpenAI, Antigravity, Cursor, OpenCode, Kimi, Ollama, Z.ai, Zhipu, MiniMax, GitHub, Grok and xAI, Volcengine, and Devin names and marks remain the property of their respective owners. Their inclusion identifies compatible services and does not imply endorsement.
+
+## Club Penguin puffles
+
+The puffle marks (`Sources/Pulse/Resources/puffle-*.png`, `puffles.json`) are frames of the original Club Penguin sprites, © Disney. They were taken from the game's SWF files on media1.clubpenguin.com as archived by the Internet Archive's Wayback Machine (snapshot list in `scripts/puffles/sources.tsv`) and rasterised with JPEXS Free Flash Decompiler; they are cropped, scaled and palettised, never redrawn. Club Penguin and puffles are trademarks of Disney, which does not endorse Vigía.

@@ -13,12 +13,14 @@ struct VectorMascotView: View {
     let size: CGFloat
     /// Seconds the clock is set ahead, so two marks do not move in lockstep.
     var phase: Double = 0
+    /// Holds one frame with no timeline: a spent limit. See `MarkMood`.
+    var still = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Group {
-            if reduceMotion {
+            if reduceMotion || still {
                 Canvas { context, canvasSize in
                     VectorMascots.draw(character, pose: pose, time: 0, colour: colour,
                                        in: &context, size: canvasSize)
