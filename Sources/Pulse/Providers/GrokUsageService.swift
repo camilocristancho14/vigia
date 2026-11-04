@@ -176,8 +176,14 @@ struct GrokUsageService: Sendable {
             let currentPeriod: Period?
             /// How much of the pool is **gone**, 0...100. Omitted when zero.
             let creditUsagePercent: Double?
+            let productUsage: [ProductUsage]?
             let billingPeriodStart: String?
             let billingPeriodEnd: String?
+        }
+
+        struct ProductUsage: Decodable {
+            let product: String?
+            let usagePercent: Double?
         }
 
         let config: Config?
@@ -218,14 +224,24 @@ struct GrokUsageService: Sendable {
         // one that followed it, and reading that as 0% would report an empty
         // pool as a full one.
         let now = Date()
-        guard let percent = config.creditUsagePercent ?? ((start...end).contains(now) ? 0 : nil) else {
+        // Some current billing replies omit the account percentage while
+        // still returning the product breakdown. Keep the shared account
+        // percentage authoritative when present; otherwise use Grok Build's
+        // reported percentage instead of drawing a false 0% ring.
+        let buildPercent = config.productUsage?.first(where: { product in
+            guard let product = product.product?.lowercased() else { return false }
+            return ["grokbuild", "grok build", "product_grok_build", "grok_build"].contains(product)
+        })?.usagePercent
+        let percent = config.creditUsagePercent ?? buildPercent
+        let isProductReading = config.creditUsagePercent == nil && buildPercent != nil
+        guard let percent = percent ?? ((start...end).contains(now) ? 0 : nil) else {
             return nil
         }
 
         return UsageWindow(
             id: "grok-pool",
             kind: kind(seconds: seconds),
-            scope: nil,
+            scope: isProductReading ? "Grok Build" : nil,
             usedFraction: min(max(percent / 100, 0), 1),
             windowSeconds: seconds,
             resetsAt: end,

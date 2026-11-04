@@ -126,6 +126,28 @@ struct GrokParsingTests {
         #expect(window.usedFraction == 0)
     }
 
+    @Test("Missing account percentage falls back to Grok Build product usage")
+    func missingAccountPercentageUsesBuildBreakdown() throws {
+        let json = #"{"config":{"currentPeriod":{"start":"2026-11-01T00:00:00Z","end":"2026-11-08T00:00:00Z"},"productUsage":[{"product":"PRODUCT_GROK_BUILD","usagePercent":61.2},{"product":"PRODUCT_GROK_CHAT","usagePercent":12.0}]}}"#
+        let billing = try JSONDecoder().decode(GrokUsageService.Billing.self, from: Data(json.utf8))
+        let config = try #require(billing.config)
+        let window = try #require(GrokUsageService.window(from: config))
+
+        #expect(abs(window.usedFraction - 0.612) < 0.000_001)
+        #expect(window.scope == "Grok Build")
+    }
+
+    @Test("Account percentage takes precedence over product breakdown")
+    func accountPercentageTakesPrecedence() throws {
+        let json = #"{"config":{"currentPeriod":{"start":"2026-11-01T00:00:00Z","end":"2026-11-08T00:00:00Z"},"creditUsagePercent":42.5,"productUsage":[{"product":"GrokBuild","usagePercent":61.2}]}}"#
+        let billing = try JSONDecoder().decode(GrokUsageService.Billing.self, from: Data(json.utf8))
+        let config = try #require(billing.config)
+        let window = try #require(GrokUsageService.window(from: config))
+
+        #expect(abs(window.usedFraction - 0.425) < 0.000_001)
+        #expect(window.scope == nil)
+    }
+
     /// A reply describing a period that has already ended says nothing about
     /// the one that followed it. Reading that as 0% would report an empty
     /// pool as a full one.
