@@ -8,6 +8,15 @@ cd "$(dirname "$0")/.."
 APP="build.noindex/Vigia.app"
 test -d "$APP"
 OUT="build.noindex/screenshots"
+# VIGIA_DEMO_PUFFLES=1: the same scenes with puffles for marks, plus a burst
+# of the menu bar and notch for an animated capture.
+PUFFLES="${VIGIA_DEMO_PUFFLES:-0}"
+if [ "$PUFFLES" = "1" ]; then
+    OUT="build.noindex/screenshots-puffles"
+    touch /tmp/vigia-demo-puffles
+else
+    rm -f /tmp/vigia-demo-puffles
+fi
 rm -rf "$OUT"
 mkdir -p "$OUT"
 
@@ -57,6 +66,12 @@ launch_scene() {
                 cat /tmp/vigia-menu-debug 2>/dev/null || true
             fi
             screencapture -x "$OUT/${scene}-${mode}.png"
+            if [ "$PUFFLES" = "1" ] && [ "$scene" != "settings" ]; then
+                local frame
+                for frame in $(seq -w 1 24); do
+                    screencapture -x -R0,0,1600,170 "$OUT/burst-${scene}-${mode}-${frame}.png" || true
+                done
+            fi
             return 0
         fi
         if ! pgrep -x Vigia >/dev/null; then
@@ -117,7 +132,7 @@ for mode in light dark; do
 done
 
 kill_app
-rm -f /tmp/vigia-demo /tmp/vigia-appearance /tmp/vigia-ready
+rm -f /tmp/vigia-demo /tmp/vigia-appearance /tmp/vigia-ready /tmp/vigia-demo-puffles
 defaults delete -g AppleInterfaceStyle 2>/dev/null || true
 osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to false' || true
 
