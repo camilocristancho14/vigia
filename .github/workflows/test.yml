@@ -40,6 +40,19 @@ jobs:
         continue-on-error: true
         run: bash scripts/capture-screenshots.sh
 
+      - name: Capture puffle previews
+        continue-on-error: true
+        run: VIGIA_DEMO_PUFFLES=1 bash scripts/capture-screenshots.sh
+
+      - name: Upload puffle previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vigia-puffle-previews-${{ github.sha }}
+          path: build.noindex/screenshots-puffles/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Upload Mac app and installers
         uses: actions/upload-artifact@v4
         with:

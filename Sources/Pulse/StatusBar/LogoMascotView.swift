@@ -13,6 +13,8 @@ struct LogoMascotView: View {
     let provider: Provider
     let pose: MascotPose
     let size: CGFloat
+    /// Holds still with no timeline: a spent limit. See `MarkMood`.
+    var still = false
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -26,8 +28,9 @@ struct LogoMascotView: View {
     }
 
     var body: some View {
-        if reduceMotion {
+        if reduceMotion || still {
             LobeIconView(provider: provider, size: size * 0.9)
+                .opacity(still ? 0.5 : 1)
                 .frame(width: size, height: size)
         } else {
             animated

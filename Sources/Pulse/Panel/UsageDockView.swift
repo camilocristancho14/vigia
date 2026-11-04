@@ -329,6 +329,8 @@ struct RailEntry: Identifiable, Equatable {
     /// Which character the mark is: Clawd, one of the vector characters, or
     /// the bot that wears the persona, colour and body above.
     var mascot: MascotCharacter = .bot
+    /// The puffle this ring's mark is, when it is one.
+    var puffle: PuffleVariant?
     /// Something that just happened to this account and is worth a one-shot.
     var botEvent: BotMarkEvent?
     /// A colour chosen for this ring's mark, or nil for its brand colour.
@@ -647,6 +649,7 @@ private struct UsageDockItem: View {
             animatesActivity: animatesActivity,
             showsBotMark: entry.showsBotMark,
             mascot: entry.mascot,
+            puffle: entry.puffle,
             botTint: botTint,
             botPersona: botPersona,
             botBody: botBody,

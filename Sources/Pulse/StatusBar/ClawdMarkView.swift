@@ -78,12 +78,23 @@ struct ClawdMarkView: View {
     /// Claude's own orange, rather than the ink of the surface behind it.
     var colour = false
     var size: CGFloat
+    /// Holds one frame with no timeline: a spent limit. See `MarkMood`.
+    var still = false
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: ClawdFrames.interval(for: pose))) { context in
-            if let frame = ClawdFrames.frame(
-                for: pose, at: context.date.timeIntervalSinceReferenceDate, colour: colour
-            ) {
+        if still {
+            frame(at: 0)
+        } else {
+            TimelineView(.animation(minimumInterval: ClawdFrames.interval(for: pose))) { context in
+                frame(at: context.date.timeIntervalSinceReferenceDate)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func frame(at seconds: TimeInterval) -> some View {
+        Group {
+            if let frame = ClawdFrames.frame(for: pose, at: seconds, colour: colour) {
                 Image(nsImage: frame)
                     .resizable()
                     .interpolation(.none)

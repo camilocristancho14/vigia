@@ -24,6 +24,13 @@ enum DemoMode {
         return Scene(rawValue: raw) ?? .expanded
     }
 
+    /// Whether the demo shows puffles instead of the mascots, for the puffle
+    /// captures: `VIGIA_DEMO_PUFFLES=1` or a `/tmp/vigia-demo-puffles` file.
+    static var showsPuffles: Bool {
+        if ProcessInfo.processInfo.environment["VIGIA_DEMO_PUFFLES"] == "1" { return true }
+        return FileManager.default.fileExists(atPath: "/tmp/vigia-demo-puffles")
+    }
+
     /// Writes the defaults `AppSettings.restored()` and `PanelPlacement.restored()`
     /// read, before either of them runs.
     static func prepareDefaults() {
@@ -35,10 +42,18 @@ enum DemoMode {
         defaults.set(scene != .expanded, forKey: "settings.autoCollapse")
         defaults.set(true, forKey: "settings.topRailShowsPercentages")
         defaults.set(AppLanguage.spanish.rawValue, forKey: "settings.language")
-        defaults.set(
-            ["claudeCode": true, "grokBot": true],
-            forKey: "settings.botMarks"
-        )
+        if showsPuffles {
+            // The puffle captures: every mark a different puffle, the cat among them.
+            defaults.set(
+                ["claudeCode": "orange-cat", "grokBot": "pink", "grok": "black-trex", "antigravity": "blue"],
+                forKey: "settings.puffleMarks"
+            )
+        } else {
+            defaults.set(
+                ["claudeCode": true, "grokBot": true],
+                forKey: "settings.botMarks"
+            )
+        }
         defaults.set(
             ["claudeCode", "grokBot", "grok", "antigravity"],
             forKey: ProviderSelection.enabledKey

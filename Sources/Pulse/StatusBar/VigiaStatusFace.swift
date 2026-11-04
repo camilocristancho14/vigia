@@ -228,7 +228,8 @@ private struct MenuBarMascotItem: View {
     let now: Date
 
     private var markSize: CGFloat {
-        (settings.showsBotMark(for: account) ? settings.mascotCharacter(for: account) : .bot).menuBarSize
+        if settings.puffle(for: account) != nil { return 22 }
+        return (settings.showsBotMark(for: account) ? settings.mascotCharacter(for: account) : .bot).menuBarSize
     }
     private let backdrop = MenuBarBackdrop.shared
 
@@ -258,12 +259,26 @@ private struct MenuBarMascotItem: View {
             }
         }
         // Idle ones stay on screen, quieter, so the whole rail is always there.
-        .opacity(working || settings.showsBotMark(for: account) ? 1 : 0.6)
+        .opacity(working || settings.showsAnimatedMark(for: account) ? 1 : 0.6)
         .animation(.easeOut(duration: 0.2), value: working)
     }
 
     @ViewBuilder
     private func mark(working: Bool, pose: MascotPose, headline: UsageWindow?) -> some View {
+        let used = UsageTint.isSpent(headline) ? 1 : headline?.usedFraction
+        let reset = store.justReset(account)
+        if let puffle = settings.puffle(for: account) {
+            PuffleMarkView(variant: puffle, pose: pose, usedFraction: used, justReset: reset,
+                           size: markSize, seed: account.id)
+        } else {
+            ChoreographedMascot(pose: pose, usedFraction: used, justReset: reset, seed: account.id) { shown, still in
+                mascot(working: working, pose: shown, still: still, headline: headline)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func mascot(working: Bool, pose: MascotPose, still: Bool, headline: UsageWindow?) -> some View {
         let provider = account.provider
         let character = settings.mascotCharacter(for: account)
         if settings.showsBotMark(for: account), character == .clawd || character.isVector {
@@ -273,10 +288,10 @@ private struct MenuBarMascotItem: View {
             let legible = backdrop.legible(character.brand)
             let keepsColour = settings.menuBarColorMascots && MenuBarColour(legible) == MenuBarColour(character.brand)
             if character == .clawd {
-                ClawdMarkView(pose: pose, colour: keepsColour, size: markSize)
+                ClawdMarkView(pose: pose, colour: keepsColour, size: markSize, still: still)
             } else {
                 VectorMascotView(character: character, pose: pose, colour: keepsColour,
-                                 size: markSize, phase: provider.mascotPhase)
+                                 size: markSize, phase: provider.mascotPhase, still: still)
             }
         } else if settings.showsBotMark(for: account) {
             let wanted = tint == .clear ? BotMarkTint.body(for: provider) : tint
@@ -298,7 +313,7 @@ private struct MenuBarMascotItem: View {
                 size: markSize
             )
         } else {
-            LogoMascotView(provider: provider, pose: pose, size: markSize)
+            LogoMascotView(provider: provider, pose: pose, size: markSize, still: still)
         }
     }
 

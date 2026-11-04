@@ -61,6 +61,8 @@ struct UsageRingView: View {
     var showsBotMark: Bool = false
     /// Which character the mark is, when it is drawn.
     var mascot: MascotCharacter = .bot
+    /// The Club Penguin puffle drawn instead, when the account's mark is one.
+    var puffle: PuffleVariant?
     /// The mark's body colour, dealt across the rail so no two rings next to
     /// each other look alike. Nil falls back to this provider's own colour,
     /// for the places that draw one ring on its own.
@@ -114,6 +116,53 @@ struct UsageRingView: View {
     /// Where red begins, as the panel has been set. See `WarningThreshold`.
     @Environment(\.usageWarningThreshold) private var warningThreshold
 
+
+    /// The logo, Clawd, a vector character or the bot, in the pose the
+    /// choreography is showing.
+    @ViewBuilder
+    private func centreMark(pose: MascotPose, still: Bool) -> some View {
+        if showsBotMark, mascot == .clawd {
+            // Clawd, Claude Code's pixel crab, in place of the blob.
+            // Modified for Vigía from Pulse (Apache-2.0).
+            ClawdMarkView(pose: pose, size: centreDiameter * Self.botScale, still: still)
+        } else if showsBotMark, mascot.isVector {
+            VectorMascotView(character: mascot, pose: pose,
+                             size: centreDiameter * Self.botScale, phase: provider.mascotPhase,
+                             still: still)
+        } else if showsBotMark {
+            // The mark has its own unavailable expression; keep it legible
+            // instead of dimming the face into the dark disc.
+            let body = botTint ?? BotMarkTint.body(for: provider)
+            BotMarkView(
+                mood: BotMarkMood.resolve(isBusy: isBusy, isRefreshing: isRefreshing,
+                                          isSpent: isSpent || (usedFraction ?? 0) >= 1,
+                                          hasReading: hasReading),
+                persona: botPersona ?? .calm,
+                bodyShape: botBody,
+                gaze: botGaze,
+                event: botEvent,
+                pointer: botPointer,
+                isPointedAt: highlight,
+                isQuiet: botQuiet,
+                pose: pose,
+                activityLabel: activityLabel,
+                lively: !provider.supportsLocalActivity,
+                tint: body,
+                eyeTint: BotMarkTint.eyes(on: body),
+                size: centreDiameter * Self.botScale
+            )
+        } else {
+            LogoMascotView(
+                provider: provider,
+                pose: pose,
+                size: centreDiameter * Self.iconScale,
+                still: still
+            )
+            // Dimmed while there is no reading, so the rail shows at a
+            // glance which providers it actually has data for.
+            .foregroundStyle(.primary.opacity(hasReading ? 1 : 0.35))
+        }
+    }
 
     /// Gap between the progress ring and the dark disc it encircles.
     private static let centreGap: CGFloat = 4
@@ -279,44 +328,16 @@ struct UsageRingView: View {
 
             if isRefreshing && animatesActivity { refreshMark }
 
-            if showsBotMark, mascot == .clawd {
-                // Clawd, Claude Code's pixel crab, in place of the blob.
-                // Modified for Vigía from Pulse (Apache-2.0).
-                ClawdMarkView(pose: mascotPose, size: centreDiameter * Self.botScale)
-            } else if showsBotMark, mascot.isVector {
-                VectorMascotView(character: mascot, pose: mascotPose,
-                                 size: centreDiameter * Self.botScale, phase: provider.mascotPhase)
-            } else if showsBotMark {
-                // The mark has its own unavailable expression; keep it legible
-                // instead of dimming the face into the dark disc.
-                let body = botTint ?? BotMarkTint.body(for: provider)
-                BotMarkView(
-                    mood: BotMarkMood.resolve(isBusy: isBusy, isRefreshing: isRefreshing,
-                                              isSpent: isSpent || (usedFraction ?? 0) >= 1,
-                                              hasReading: hasReading),
-                    persona: botPersona ?? .calm,
-                    bodyShape: botBody,
-                    gaze: botGaze,
-                    event: botEvent,
-                    pointer: botPointer,
-                    isPointedAt: highlight,
-                    isQuiet: botQuiet,
-                    pose: mascotPose,
-                    activityLabel: activityLabel,
-                    lively: !provider.supportsLocalActivity,
-                    tint: body,
-                    eyeTint: BotMarkTint.eyes(on: body),
-                    size: centreDiameter * Self.botScale
-                )
+            if let puffle {
+                PuffleMarkView(variant: puffle, pose: mascotPose,
+                               usedFraction: isSpent ? 1 : usedFraction,
+                               justReset: botEvent == .limitReset,
+                               size: centreDiameter * Self.botScale, seed: provider.rawValue)
             } else {
-                LogoMascotView(
-                    provider: provider,
-                    pose: mascotPose,
-                    size: centreDiameter * Self.iconScale
-                )
-                // Dimmed while there is no reading, so the rail shows at a
-                // glance which providers it actually has data for.
-                .foregroundStyle(.primary.opacity(hasReading ? 1 : 0.35))
+                ChoreographedMascot(pose: mascotPose, usedFraction: isSpent ? 1 : usedFraction,
+                                    justReset: botEvent == .limitReset, seed: provider.rawValue) { pose, still in
+                    centreMark(pose: pose, still: still)
+                }
             }
 
             if let secondFraction {
@@ -327,7 +348,7 @@ struct UsageRingView: View {
             // bot's working state are one fact drawn twice, and the white arc
             // is the half that says nothing about which provider it belongs
             // to. The mark keeps it; the arc goes.
-            if isBusy && !showsBotMark && animatesActivity {
+            if isBusy && !showsBotMark && puffle == nil && animatesActivity {
                 Circle()
                     .trim(from: 0, to: Self.busySweep)
                     .stroke(

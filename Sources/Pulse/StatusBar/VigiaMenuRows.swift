@@ -63,7 +63,7 @@ enum VigiaMenuRows {
             } else {
                 usage.plan ?? ""
             }
-            let marked = settings.showsBotMark(for: account)
+            let marked = settings.showsAnimatedMark(for: account)
             row.configure(
                 icon: icon(
                     for: account, slot: index, working: working, marked: marked, headline: headline,
@@ -91,6 +91,11 @@ enum VigiaMenuRows {
         for account: AccountKey, slot: Int, working: Bool, marked: Bool, headline: UsageWindow?,
         tint: Color, persona: BotMarkPersona, settings: AppSettings, store: UsageStore
     ) -> NSImage? {
+        if let puffle = settings.puffle(for: account) {
+            return PuffleSheet.sheet(puffle, large: false).frame(.idle, at: 0).map { frame in
+                NSImage(cgImage: frame, size: NSSize(width: 18, height: 18))
+            }
+        }
         guard marked else { return MenuBarReading.markImage(for: account.provider, size: 16) }
         let character = settings.mascotCharacter(for: account)
         let pose = store.mascotPose(account.provider,

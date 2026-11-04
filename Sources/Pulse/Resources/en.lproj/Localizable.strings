@@ -1001,3 +1001,28 @@
 "Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings." = "Keeps Claude Code's usage readable after its login expires. This edits ~/.claude/settings.json; you can disconnect it in Settings.";
 "Add more services…" = "Add more services…";
 "Copied — run %@ in your terminal to sign in." = "Copied — run %@ in your terminal to sign in.";
+
+/* Puffles and mark styles */
+"Mark" = "Mark";
+"Puffle" = "Puffle";
+"Logo" = "Logo";
+"Original Club Penguin sprites. Colours with more than one look list each." = "Original Club Penguin sprites. Colours with more than one look list each.";
+"The AI company's logo, which still shows what the agent is doing." = "The AI company's logo, which still shows what the agent is doing.";
+"A Club Penguin puffle that plays, works, celebrates and tires with this account." = "A Club Penguin puffle that plays, works, celebrates and tires with this account.";
+"Blue" = "Blue";
+"Pink" = "Pink";
+"Black" = "Black";
+"Green" = "Green";
+"Purple" = "Purple";
+"Red" = "Red";
+"Yellow" = "Yellow";
+"White" = "White";
+"Orange" = "Orange";
+"Brown" = "Brown";
+"Gold" = "Gold";
+"Rainbow" = "Rainbow";
+"Idle" = "Idle";
+"Working" = "Working";
+"Celebrating" = "Celebrating";
+"Tired" = "Tired";
+"Spent" = "Spent";
