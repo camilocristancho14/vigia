@@ -47,13 +47,56 @@ enum PuffleClip: String, CaseIterable, Sendable, Hashable {
     case sick
 }
 
-/// Where one clip sits in a variant's atlas.
+extension PuffleClip {
+    /// The clips with the puffle asleep or nodding off in them — `wake`
+    /// opens asleep under its Zs, and a yawn is the start of a doze. Only a
+    /// tired or spent limit plays them: a puffle at work, or waiting with
+    /// plenty of its limit left, never looks asleep.
+    static let sleepy: Set<PuffleClip> = [.doze, .sleep, .wake, .yawn]
+
+    var isSleepy: Bool { Self.sleepy.contains(self) }
+}
+
+/// How big the puffle is in one clip of the large atlas, measured by
+/// `scripts/puffles/measure_bodies.py` from the atlas itself. All in large
+/// atlas pixels; boxes are `[x0, y0, x1, y1]` from the cell's top left.
+struct PuffleBodyMetrics: Decodable, Hashable, Sendable {
+    /// The puffle's height: the median over the clip's frames.
+    let body: Double
+    /// The idle puffle's body over this one's.
+    let bodyScale: Double
+    /// Everything in every frame: Zs, bubbles and props too.
+    let box: [Double]
+    /// The puffle alone, over every frame: what must never be cut.
+    let bodyBox: [Double]
+}
+
+/// Where one clip sits in a variant's atlas, and how big the puffle is in it.
 struct PuffleClipFrames: Decodable, Hashable, Sendable {
     let start: Int
     let count: Int
     let fps: Double
+    let body: Double?
+    let bodyScale: Double?
+    let box: [Double]?
+    let bodyBox: [Double]?
+
+    init(start: Int, count: Int, fps: Double, metrics: PuffleBodyMetrics? = nil) {
+        self.start = start
+        self.count = count
+        self.fps = fps
+        body = metrics?.body
+        bodyScale = metrics?.bodyScale
+        box = metrics?.box
+        bodyBox = metrics?.bodyBox
+    }
 
     var loop: TimeInterval { Double(count) / fps }
+
+    var metrics: PuffleBodyMetrics? {
+        guard let body, let bodyScale, let box, box.count == 4, let bodyBox, bodyBox.count == 4 else { return nil }
+        return PuffleBodyMetrics(body: body, bodyScale: bodyScale, box: box, bodyBox: bodyBox)
+    }
 }
 
 /// One puffle a mark can be: a colour, and for the colours that have more
@@ -74,6 +117,8 @@ struct PuffleVariant: Identifiable, Hashable, Sendable, Decodable {
     let clips: [String: PuffleClipFrames]
     /// The frame it lies still on once the limit is spent.
     let still: Int
+    /// How big the puffle is in that frame.
+    var stillMetrics: PuffleBodyMetrics?
 
     var title: String {
         let language = LocalizationSource.locale.language.languageCode?.identifier ?? "en"
@@ -158,9 +203,10 @@ enum PuffleCatalog {
 
 /// A variant's frames at one size, cut from its atlas on first use and kept.
 ///
-/// Two atlases per variant: 44 px cells, which are the menu bar's 22 points
-/// at 2×, and 80 px cells for the rail's rings and the settings preview, so
-/// nothing on screen is drawn from frames smaller than it.
+/// Two atlases per variant: 44 px cells for the menu's small rows, and 80 px
+/// cells that every animated mark — the menu bar's included — is drawn down
+/// from, so a clip whose puffle is small in its cell is still drawn from
+/// more pixels than it covers.
 @MainActor
 final class PuffleSheet {
     let variant: PuffleVariant
@@ -203,60 +249,221 @@ final class PuffleSheet {
 
     /// The frame `elapsed` seconds into a clip, looping.
     func frame(_ clip: PuffleClip, at elapsed: TimeInterval, tempo: Double = 1) -> CGImage? {
-        guard let frames = variant.frames(clip), frames.count > 0 else { return frame(variant.still) }
+        frame(index(clip, at: elapsed, tempo: tempo))
+    }
+
+    /// Which of the atlas's frames is `elapsed` seconds into a clip, looping.
+    func index(_ clip: PuffleClip, at elapsed: TimeInterval, tempo: Double = 1) -> Int {
+        guard let frames = variant.frames(clip), frames.count > 0 else { return variant.still }
         let step = Int((max(elapsed, 0) * frames.fps * tempo).rounded(.down))
-        return frame(frames.start + step % frames.count)
+        return frames.start + step % frames.count
+    }
+
+    private var resampled: [Int64: CGImage] = [:]
+
+    /// The `index`th frame resampled once, with high-quality filtering, to
+    /// exactly `pixels` device pixels a side, so the screen draws it 1:1 and
+    /// nothing is ever stretched by the compositor.
+    func frame(_ index: Int, pixels: Int) -> CGImage? {
+        guard pixels > 0 else { return nil }
+        if pixels == cell { return frame(index) }
+        let key = Int64(index) << 16 | Int64(pixels)
+        if let image = resampled[key] { return image }
+        guard let source = frame(index),
+              let context = CGContext(data: nil, width: pixels, height: pixels, bitsPerComponent: 8,
+                                      bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return nil }
+        context.interpolationQuality = .high
+        context.draw(source, in: CGRect(x: 0, y: 0, width: pixels, height: pixels))
+        let image = context.makeImage()
+        resampled[key] = image
+        return image
+    }
+}
+
+/// Where a puffle goes in the box it is drawn in, so the puffle is the same
+/// size in every clip — asleep, mid-spin or eating — and as big as the box
+/// allows.
+///
+/// The atlases scale each clip by its own body, but a sleeping puffle under
+/// its Zs, one with a thought bubble or one whose motion fills the cell came
+/// out much smaller in its cell than the idle one. `measure_bodies.py`
+/// measured them; here every clip is scaled so its puffle is `bodyFill` of
+/// the box's height, unless that would cut the puffle off somewhere in the
+/// clip's motion — then as close to it as fits.
+struct PuffleLayout: Equatable, Sendable {
+    /// Points per large-atlas pixel.
+    let scale: CGFloat
+    /// Where the cell's top-left corner goes, from the box's top left.
+    let origin: CGPoint
+    /// How tall the puffle comes out, in points.
+    let bodyHeight: CGFloat
+
+    /// The puffle's height in its resting pose, against the box's height.
+    /// The menu bar's 22 points give it 15.8: a spin, the tallest motion
+    /// most puffles have, then fits the bar at 14.4 — within `tolerance`.
+    static let bodyFill: CGFloat = 15.8 / 22.0
+    /// The box a puffle has in the menu bar: wider than tall, so a puffle
+    /// on its side or under its Zs keeps its size.
+    static let menuBar = CGSize(width: 26, height: 22)
+    /// How far below the resting size a clip may come out before it is left
+    /// out of the menu bar's rotation.
+    static let tolerance: CGFloat = 0.1
+    /// How much a frame may be enlarged on screen, against the atlas's own
+    /// pixels at 2x. Above it a clip would be soft, so it is drawn smaller.
+    static let maxUpscale: CGFloat = 1.15
+
+    static func layout(_ metrics: PuffleBodyMetrics?, idle: PuffleBodyMetrics?, cell: Int,
+                       in canvas: CGSize, displayScale: CGFloat = 2) -> PuffleLayout {
+        let side = CGFloat(cell)
+        guard let metrics, metrics.body > 0 else {
+            // Unmeasured: the whole cell fitted to the box, as it always was.
+            let s = min(canvas.width, canvas.height) / side
+            return PuffleLayout(scale: s, origin: CGPoint(x: (canvas.width - side * s) / 2,
+                                                          y: (canvas.height - side * s) / 2),
+                                bodyHeight: side * 0.74 * s)
+        }
+        let idle = idle ?? metrics
+        let restScale = scale(for: idle, cell: side, canvas: canvas, displayScale: displayScale, cap: nil)
+        let s = scale(for: metrics, cell: side, canvas: canvas, displayScale: displayScale, cap: restScale)
+        // The floor where the idle puffle, centred in the box, stands; a
+        // clip whose motion needs more room above stands lower.
+        let rest = CGFloat(idle.bodyBox[3] - idle.bodyBox[1]) * restScale
+        let ground = canvas.height - (canvas.height - rest) / 2
+        let tall = CGFloat(metrics.bodyBox[3] - metrics.bodyBox[1]) * s
+        let floor = min(canvas.height, max(ground, tall))
+        let x = canvas.width / 2 - side / 2 * s
+        let y = floor - CGFloat(metrics.bodyBox[3]) * s
+        return PuffleLayout(scale: s, origin: CGPoint(x: x, y: y), bodyHeight: CGFloat(metrics.body) * s)
+    }
+
+    private static func scale(for m: PuffleBodyMetrics, cell side: CGFloat, canvas: CGSize,
+                              displayScale: CGFloat, cap rest: CGFloat?) -> CGFloat {
+        var s = canvas.height * bodyFill / CGFloat(m.body)
+        // The puffle, wherever it goes in the clip, inside the box's height…
+        s = min(s, canvas.height / CGFloat(max(m.bodyBox[3] - m.bodyBox[1], 1)))
+        // …and all of it, props and Zs too, inside its width, centred.
+        let half = CGFloat(max(side / 2 - m.box[0], m.box[2] - side / 2, 1))
+        s = min(s, canvas.width / 2 / half)
+        // Never enlarged past what stays sharp — or, where even the resting
+        // puffle is enlarged, past what it is.
+        if let rest { s = min(s, max(maxUpscale / displayScale, rest)) }
+        return s
+    }
+
+    /// The layout of a clip of a variant's, or of its still frame.
+    static func layout(_ clip: PuffleClip?, of variant: PuffleVariant, in canvas: CGSize,
+                       displayScale: CGFloat = 2) -> PuffleLayout {
+        let metrics = clip.map { variant.frames($0)?.metrics } ?? variant.stillMetrics
+        return layout(metrics, idle: variant.frames(.idle)?.metrics, cell: variant.large,
+                      in: canvas, displayScale: displayScale)
+    }
+
+    /// Whether a clip comes out at the resting size in the menu bar, give or
+    /// take `tolerance`. One that cannot — a bubble or a prop that dwarfs
+    /// the puffle — is left out of the bar's rotation.
+    static func fitsMenuBar(_ clip: PuffleClip, of variant: PuffleVariant) -> Bool {
+        guard variant.frames(clip)?.metrics != nil else { return true }
+        let rest = menuBar.height * bodyFill
+        return layout(clip, of: variant, in: menuBar).bodyHeight >= rest * (1 - tolerance) - 0.01
     }
 }
 
 /// What a puffle rotates through in each mood, from what its SWFs gave it.
 ///
-/// A clip the variant does not have is left out; a mood left with nothing
-/// falls back to the idle blink, which every puffle has.
+/// Three programmes, and the limit decides which:
+///
+/// - **Waiting** — idle, between turns, waiting on a person: a calm, varied
+///   round of everything the puffle can do on the spot or on a stroll.
+/// - **Working** — a turn in flight: its tricks, one after another.
+/// - **Tired** — 75 % of the limit gone: mostly dozing, sleeping and yawning,
+///   now and then a calm clip; and at 100 %, asleep.
+///
+/// **Asleep means the limit.** The sleepy clips (`PuffleClip.sleepy`) are
+/// only ever dealt from 75 % of the limit up, and to a working puffle only
+/// once it is spent: an agent that is thinking never shows a sleeping mark.
+///
+/// A clip the variant does not have is left out, and so is one that cannot
+/// be drawn at the puffle's size in the menu bar (`PuffleLayout`); a mood
+/// left with nothing falls back to the idle blink, which every puffle has.
 enum PuffleChoreography {
-    static func menu(for mood: MarkMood, variant: PuffleVariant) -> [MarkBeat<PuffleClip>] {
-        let wanted: [(PuffleClip, Double, ClosedRange<TimeInterval>)] = switch mood {
-        case .idle:
-            [(.idle, 3, 4...8), (.look, 3, 3...6), (.bounce, 2, 3...5), (.jump, 1.5, 3...4),
-             (.nuzzle, 1, 3...4), (.eat, 1, 3...5), (.dig, 1, 4...6), (.headstand, 1, 4...5),
-             (.speak, 1, 2...3), (.doze, 0.6, 3...5), (.splash, 0.6, 3...4)]
-        case .concerned:
-            [(.look, 4, 3...6), (.hungry, 2, 3...4), (.idle, 3, 3...6), (.speak, 1.5, 2...3),
-             (.walk, 1, 3...4), (.doze, 1, 3...4)]
-        case .tired:
-            [(.yawn, 4, 6...7), (.doze, 3, 5...8), (.idle, 2, 4...6), (.look, 1, 3...4)]
-        case .exhausted:
-            [(.doze, 4, 5...8), (.yawn, 3, 6...7), (.sick, 2, 2...4), (.sleep, 2, 6...10)]
+    typealias Wanted = [(PuffleClip, Double, ClosedRange<TimeInterval>)]
+
+    /// Between turns: never asleep, never the same twice running.
+    static let waiting: Wanted = [
+        (.idle, 2.5, 4...7), (.look, 2.5, 3...6), (.bounce, 2, 3...5), (.walk, 2, 3...5),
+        (.walkSide, 2, 3...5), (.nuzzle, 2, 3...5), (.speak, 1.5, 2...4), (.roll, 1.5, 3...5),
+        (.eat, 1.5, 3...5), (.jump, 1.2, 3...4), (.headstand, 0.8, 3...5), (.splash, 0.8, 3...4),
+        (.dig, 0.6, 4...6)
+    ]
+
+    /// A turn in flight: the energetic tricks.
+    static let working: Wanted = [
+        (.spin, 2, 2...4), (.jump, 2, 3...4), (.dig, 2, 4...6), (.lift, 2, 4...6),
+        (.splash, 1.5, 3...4), (.roll, 2, 3...5), (.walk, 1.5, 3...5), (.walkSide, 1.5, 3...5),
+        (.headstand, 1.5, 3...5), (.speak, 1.2, 2...4), (.bounce, 1.2, 3...4)
+    ]
+
+    /// Three quarters of the limit gone: nodding off, with the odd calm clip.
+    static let tired: Wanted = [
+        (.doze, 4, 5...8), (.yawn, 3, 5...7), (.sleep, 3, 8...14), (.look, 0.8, 3...4),
+        (.idle, 0.8, 3...5), (.nuzzle, 0.6, 3...4), (.eat, 0.6, 3...5)
+    ]
+
+    /// Usage at or past which the sleepy clips may be dealt.
+    static let sleepyAt = MarkMood.tiredAt
+
+    static func menu(for mood: MarkMood, variant: PuffleVariant,
+                     usedFraction: Double? = nil) -> [MarkBeat<PuffleClip>] {
+        let used = usedFraction ?? 0
+        let spent = used >= 1 || mood == .spent
+        let wanted: Wanted = switch mood {
+        case .idle, .concerned, .resting, .revived:
+            used >= sleepyAt ? tired : waiting
+        case .needsYou:
+            [(.speak, 4, 3...5), (.look, 2, 3...4)] + waiting
+        case .tired, .exhausted:
+            tired
+        case .asleep:
+            spent ? [(.sleep, 6, 20...40), (.doze, 1, 4...6)] : used >= sleepyAt ? tired : waiting
         case .spent:
             [(.sleep, 1, 60...60)]
-        case .working:
-            [(.walk, 3, 4...7), (.walkSide, 3, 4...7), (.roll, 2, 3...5), (.dig, 2, 4...6),
-             (.jump, 1.5, 3...4), (.lift, 2, 4...6), (.bounce, 1, 3...4), (.spin, 0.5, 2...3)]
-        case .commandWait:
-            [(.dig, 3, 5...8), (.look, 2, 3...5), (.idle, 1, 3...5), (.walk, 1, 3...5)]
-        case .needsYou:
-            [(.speak, 4, 3...5), (.bounce, 2, 2...4), (.jump, 2, 2...3), (.look, 1, 2...3)]
+        case .working, .commandWait:
+            spent ? [(.sleep, 1, 20...40)] : working
         case .waking:
-            [(.wake, 1, 2...3), (.bounce, 1, 2...3)]
+            // Getting up for a turn: straight into it, never out of bed.
+            [(.bounce, 3, 2...3), (.jump, 2, 2...3)] + working
         case .celebrating:
             [(.spin, 4, 3...5), (.headstand, 2, 3...5), (.jump, 2, 2...4), (.bounce, 2, 2...4),
              (.roll, 1, 3...4), (.walk, 0.5, 2...3)]
-        case .resting:
-            [(.eat, 4, 4...7), (.nuzzle, 3, 3...5), (.idle, 2, 3...6), (.splash, 1, 3...5),
-             (.look, 1, 3...4)]
-        case .asleep:
-            [(.sleep, 6, 20...40), (.doze, 1, 4...6)]
         case .error:
-            [(.sick, 4, 3...5), (.look, 3, 3...5), (.speak, 2, 2...3), (.doze, 1, 3...4)]
-        case .revived:
-            [(.wake, 2, 2...3), (.spin, 2, 3...4), (.bounce, 1, 2...3), (.jump, 1, 2...3)]
+            [(.sick, 4, 3...5), (.look, 3, 3...5), (.speak, 2, 2...3), (.idle, 1, 3...4)]
         }
+        let sleepy = spent || used >= sleepyAt || mood == .tired || mood == .exhausted
+        var seen = Set<PuffleClip>()
         let menu: [MarkBeat<PuffleClip>] = wanted.compactMap { entry in
-            variant.frames(entry.0).map { MarkBeat(entry.0, weight: entry.1, entry.2, loop: $0.loop / mood.tempo) }
+            guard seen.insert(entry.0).inserted,
+                  sleepy || !entry.0.isSleepy,
+                  !(mood.isWorking && !spent && entry.0.isSleepy),
+                  // Asleep is asleep, whatever size its frames allow.
+                  (spent && entry.0 == .sleep) || PuffleLayout.fitsMenuBar(entry.0, of: variant),
+                  let frames = variant.frames(entry.0) else { return nil }
+            return MarkBeat(entry.0, weight: entry.1, entry.2, loop: frames.loop / mood.tempo)
         }
         if !menu.isEmpty { return menu }
         let idle = variant.frames(.idle)
         return [MarkBeat(.idle, weight: 1, 4...8, loop: idle.map { $0.loop / mood.tempo })]
+    }
+}
+
+extension MarkMood {
+    /// A turn is in flight.
+    var isWorking: Bool {
+        switch self {
+        case .working, .commandWait, .waking, .celebrating: true
+        default: false
+        }
     }
 }
 
@@ -272,22 +479,28 @@ struct PuffleMarkView: View {
     let pose: MascotPose
     var usedFraction: Double?
     var justReset = false
+    /// The height of the box it is drawn in, in points.
     let size: CGFloat
+    /// The box's width, when it is not square: the menu bar gives a puffle
+    /// a little more room across than up.
+    var width: CGFloat?
     /// Whatever tells this mark from its neighbours, so they never move in step.
     var seed = ""
 
     @State private var director = MarkChoreographer<PuffleClip>()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.displayScale) private var displayScale
 
     /// How long two clips are faded across.
     static let fade: TimeInterval = 0.3
 
-    /// Anything bigger than the menu bar's 22 points draws from the large atlas.
-    private var large: Bool { size > 22.5 }
+    private var canvas: CGSize { CGSize(width: width ?? size, height: size) }
 
     var body: some View {
         let mood = MarkMood.resolve(pose: pose, usedFraction: usedFraction, justReset: justReset)
-        let sheet = PuffleSheet.sheet(variant, large: large)
+        // Always the large atlas, drawn down to size: the small one would
+        // have to be enlarged for every clip whose puffle is small in it.
+        let sheet = PuffleSheet.sheet(variant, large: true)
         Group {
             if reduceMotion {
                 still(sheet, mood: mood)
@@ -297,8 +510,7 @@ struct PuffleMarkView: View {
                 }
             }
         }
-        .scaleEffect(large ? 1.0 : 1.22)
-        .frame(width: size, height: size)
+        .frame(width: canvas.width, height: canvas.height)
         .accessibilityHidden(true)
     }
 
@@ -309,46 +521,60 @@ struct PuffleMarkView: View {
 
     @ViewBuilder
     private func still(_ sheet: PuffleSheet, mood: MarkMood) -> some View {
-        let frame = (mood.isStill || mood == .asleep || mood == .spent) ? sheet.frame(variant.still) : sheet.frame(.idle, at: 0)
-        image(frame)
+        if mood.isStill || (usedFraction ?? 0) >= 1 {
+            image(sheet, index: variant.still, clip: nil)
+        } else {
+            image(sheet, index: sheet.index(.idle, at: 0), clip: .idle)
+        }
     }
 
     @ViewBuilder
     private func animated(_ sheet: PuffleSheet, mood: MarkMood, at time: TimeInterval) -> some View {
-        let cue = director.cueing(mood: mood, variant: variant, seed: seed, at: time)
+        let cue = director.cueing(mood: mood, variant: variant, usedFraction: usedFraction, seed: seed, at: time)
         let into = time - cue.start
         let fading = cue.previous != nil && into < Self.fade
-        ZStack {
+        ZStack(alignment: .topLeading) {
             if fading, let previous = cue.previous {
                 // The old clip held on the frame it was cut at.
-                image(sheet.frame(previous, at: cue.start - cue.previousStart, tempo: mood.tempo))
+                image(sheet, index: sheet.index(previous, at: cue.start - cue.previousStart, tempo: mood.tempo),
+                      clip: previous)
                     .opacity(1 - into / Self.fade)
             }
-            image(sheet.frame(cue.value, at: into, tempo: mood.tempo))
+            image(sheet, index: sheet.index(cue.value, at: into, tempo: mood.tempo), clip: cue.value)
                 .opacity(fading ? into / Self.fade : 1)
         }
     }
 
-    private func image(_ frame: CGImage?) -> some View {
-        Group {
-            if let frame {
-                Image(decorative: frame, scale: 2)
+    /// One frame, resampled to the exact pixels it covers and set where
+    /// `PuffleLayout` puts it, on whole pixels, so it is as sharp as the
+    /// atlas allows. An unknown clip is the still frame's.
+    private func image(_ sheet: PuffleSheet, index: Int, clip: PuffleClip?) -> some View {
+        let scale = max(displayScale, 1)
+        let known = clip.flatMap { variant.frames($0) } != nil ? clip : nil
+        let layout = PuffleLayout.layout(known, of: variant, in: canvas, displayScale: scale)
+        let pixels = Int((CGFloat(sheet.cell) * layout.scale * scale).rounded())
+        let side = CGFloat(pixels) / scale
+        let x = (layout.origin.x * scale).rounded() / scale
+        let y = (layout.origin.y * scale).rounded() / scale
+        return ZStack(alignment: .topLeading) {
+            if let frame = sheet.frame(index, pixels: pixels) {
+                Image(decorative: frame, scale: scale)
                     .renderingMode(.original)
-                    .resizable()
                     .interpolation(.high)
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                Color.clear
+                    .frame(width: side, height: side)
+                    .offset(x: x, y: y)
             }
         }
-        .frame(width: size, height: size)
+        .frame(width: canvas.width, height: canvas.height, alignment: .topLeading)
     }
 }
 
 extension MarkChoreographer where Value == PuffleClip {
-    func cueing(mood: MarkMood, variant: PuffleVariant, seed: String, at time: TimeInterval) -> MarkCue<PuffleClip> {
+    func cueing(mood: MarkMood, variant: PuffleVariant, usedFraction: Double? = nil, seed: String,
+                at time: TimeInterval) -> MarkCue<PuffleClip> {
         seedIfNeeded(variant.id + "|" + seed)
-        return cue(mood: mood, menu: PuffleChoreography.menu(for: mood, variant: variant), at: time)
+        return cue(mood: mood, menu: PuffleChoreography.menu(for: mood, variant: variant, usedFraction: usedFraction),
+                   at: time)
     }
 }
 
@@ -455,7 +681,8 @@ struct PufflePreview: View {
                            size: 64, seed: "preview")
                 .id(variant.id + sample.rawValue)
             PuffleMarkView(variant: variant, pose: sample.pose, usedFraction: sample.used,
-                           size: 22, seed: "preview-bar")
+                           size: PuffleLayout.menuBar.height, width: PuffleLayout.menuBar.width,
+                           seed: "preview-bar")
                 .id(variant.id + sample.rawValue + "bar")
                 .padding(6)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))

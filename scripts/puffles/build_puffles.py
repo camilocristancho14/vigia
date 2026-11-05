@@ -10,7 +10,8 @@ Output, into Sources/Pulse/Resources:
 
     puffle-<variant>-small.png   44 px cells: the menu bar's 22 pt at 2x
     puffle-<variant>-large.png   80 px cells: the rail's rings and settings
-    puffles.json                 where every clip sits in the atlases
+    puffles.json                 where every clip sits in the atlases, and
+                                 (measure_bodies.py) how big the puffle is in it
 
 **No pixel is drawn here.** Frames are picked, put in order, cropped,
 scaled down, centred in their cell and palettised for size. Every clip is
@@ -368,6 +369,10 @@ def build(frames_dir, resources, report_path=None):
     if report_path:
         with open(report_path, "w") as f:
             json.dump(report, f, ensure_ascii=False, indent=1)
+    # Every clip's puffle measured in the atlases just written, so the app
+    # can draw it the same size in all of them.
+    import measure_bodies
+    measure_bodies.main(resources)
 
 
 if __name__ == "__main__":

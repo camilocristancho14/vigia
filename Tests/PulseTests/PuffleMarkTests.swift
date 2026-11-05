@@ -190,6 +190,162 @@ struct PuffleMarkTests {
         }
     }
 
+    // MARK: - One size in every clip
+
+    @Test("Every clip and the still frame were measured from the atlas")
+    func everyClipMeasured() throws {
+        for variant in PuffleCatalog.all {
+            for clip in variant.available {
+                let m = try #require(variant.frames(clip)?.metrics, "\(variant.id) \(clip)")
+                #expect(m.body > 10 && m.body <= Double(variant.large), "\(variant.id) \(clip)")
+            }
+            #expect(variant.stillMetrics != nil, "\(variant.id) still")
+            #expect(variant.frames(.idle)?.bodyScale == 1)
+        }
+    }
+
+    @Test("In the menu bar the puffle is the same size in every clip it plays, and never cut off")
+    func sameSizeInTheMenuBar() throws {
+        let bar = PuffleLayout.menuBar
+        let rest = bar.height * PuffleLayout.bodyFill
+        for variant in PuffleCatalog.all {
+            var heights: [PuffleClip: CGFloat] = [:]
+            for clip in variant.available where PuffleLayout.fitsMenuBar(clip, of: variant) {
+                let m = try #require(variant.frames(clip)?.metrics)
+                let layout = PuffleLayout.layout(clip, of: variant, in: bar)
+                heights[clip] = layout.bodyHeight
+                // The puffle, through all of its motion, inside the bar's height…
+                #expect(layout.origin.y + m.bodyBox[1] * layout.scale >= -0.01, "\(variant.id) \(clip) top")
+                #expect(layout.origin.y + m.bodyBox[3] * layout.scale <= bar.height + 0.01,
+                        "\(variant.id) \(clip) bottom")
+                // …and everything in the clip inside its width.
+                #expect(layout.origin.x + m.box[0] * layout.scale >= -0.01, "\(variant.id) \(clip) left")
+                #expect(layout.origin.x + m.box[2] * layout.scale <= bar.width + 0.01, "\(variant.id) \(clip) right")
+                // Drawn down from the large atlas, or enlarged no more than stays sharp.
+                #expect(layout.scale * 2 <= PuffleLayout.maxUpscale + 1e-6, "\(variant.id) \(clip) upscaled")
+            }
+            let low = try #require(heights.values.min()), high = try #require(heights.values.max())
+            #expect(high <= rest + 0.01, "\(variant.id)")
+            #expect(low >= rest * (1 - PuffleLayout.tolerance) - 0.01, "\(variant.id): \(heights)")
+        }
+    }
+
+    @Test("Asleep is as big as awake: the sleepy clips and the still frame match the idle puffle")
+    func sleepingIsNotTiny() throws {
+        let bar = PuffleLayout.menuBar
+        for id in ["purple", "white", "orange", "blue"] {
+            let variant = try #require(PuffleCatalog.variant(id))
+            let idle = PuffleLayout.layout(.idle, of: variant, in: bar).bodyHeight
+            for clip in [PuffleClip.doze, .sleep] {
+                let height = PuffleLayout.layout(clip, of: variant, in: bar).bodyHeight
+                #expect(abs(height / idle - 1) <= 0.1, "\(id) \(clip): \(height) against \(idle)")
+            }
+            let still = PuffleLayout.layout(nil, of: variant, in: bar).bodyHeight
+            #expect(abs(still / idle - 1) <= 0.1, "\(id) still: \(still) against \(idle)")
+        }
+    }
+
+    // MARK: - What a puffle plays
+
+    private static func deal(
+        _ variant: PuffleVariant, mood: MarkMood, used: Double?, seed: UInt64 = 5, hours: Double = 2
+    ) -> [PuffleClip: Int] {
+        let director = MarkChoreographer<PuffleClip>(seed: seed)
+        let menu = PuffleChoreography.menu(for: mood, variant: variant, usedFraction: used)
+        var counts: [PuffleClip: Int] = [:]
+        var last: PuffleClip?
+        var lastStart = -1.0
+        var time: TimeInterval = 0
+        while time < hours * 3600 {
+            let cue = director.cue(mood: mood, menu: menu, at: time)
+            if cue.start != lastStart {
+                #expect(cue.value != last, "\(variant.id) \(mood) repeated \(cue.value)")
+                counts[cue.value, default: 0] += 1
+                last = cue.value
+                lastStart = cue.start
+            }
+            time += 0.5
+        }
+        return counts
+    }
+
+    @Test("Waiting and working are each a varied rotation, different from each other, never asleep")
+    func variety() throws {
+        for id in ["purple", "white", "orange", "blue", "orange-raccoon"] {
+            let variant = try #require(PuffleCatalog.variant(id))
+            for used in [nil, 0.2, 0.6] as [Double?] {
+                let waiting = Self.deal(variant, mood: .idle, used: used)
+                let working = Self.deal(variant, mood: .working, used: used)
+                for counts in [waiting, working] {
+                    let total = counts.values.reduce(0, +)
+                    #expect(counts.count >= 6, "\(id): \(counts)")
+                    #expect(counts.keys.allSatisfy { !$0.isSleepy }, "\(id): \(counts)")
+                    // No one clip is most of the programme.
+                    #expect(Double(counts.values.max() ?? 0) / Double(total) < 0.3, "\(id): \(counts)")
+                    #expect(counts.keys.allSatisfy { variant.frames($0) != nil })
+                }
+                #expect(Set(waiting.keys) != Set(working.keys), "\(id)")
+                #expect(working[.spin, default: 0] > 0 || variant.frames(.spin) == nil
+                        || !PuffleLayout.fitsMenuBar(.spin, of: variant), "\(id)")
+            }
+        }
+    }
+
+    @Test("Sleepy clips only from 75 % of the limit, and for a working puffle only when it is spent")
+    func sleepOnlyWhenTired() {
+        for variant in PuffleCatalog.all {
+            for mood in MarkMood.allCases {
+                for used in [nil, 0.0, 0.3, 0.6, 0.74] as [Double?] {
+                    let menu = PuffleChoreography.menu(for: mood, variant: variant, usedFraction: used)
+                    let tiredMood = mood == .tired || mood == .exhausted || mood == .spent
+                    if !tiredMood {
+                        #expect(menu.allSatisfy { !$0.value.isSleepy }, "\(variant.id) \(mood) \(String(describing: used))")
+                    }
+                }
+                if mood.isWorking {
+                    for used in [0.8, 0.95] {
+                        let menu = PuffleChoreography.menu(for: mood, variant: variant, usedFraction: used)
+                        #expect(menu.allSatisfy { !$0.value.isSleepy }, "\(variant.id) \(mood) \(used)")
+                    }
+                }
+            }
+        }
+    }
+
+    @Test("A thinking Codex puffle never sleeps, not even in the moment its turn starts")
+    func thinkingNeverSleeps() throws {
+        let white = try #require(PuffleCatalog.automatic(for: .codex))
+        for pose in [MascotPose.waking, .thinking, .type, .run, .testing] {
+            let mood = MarkMood.resolve(pose: pose, usedFraction: 0.3)
+            let counts = Self.deal(white, mood: mood, used: 0.3, hours: 1)
+            #expect(counts.keys.allSatisfy { !$0.isSleepy }, "\(pose): \(counts)")
+        }
+        // Spent, it sleeps whatever it is doing.
+        let spent = PuffleChoreography.menu(for: .working, variant: white, usedFraction: 1)
+        #expect(spent.map(\.value) == [.sleep])
+    }
+
+    @Test("Tired is mostly asleep with now and then a calm clip; spent is asleep")
+    func tiredAndSpent() throws {
+        for id in ["purple", "white", "orange", "blue"] {
+            let variant = try #require(PuffleCatalog.variant(id))
+            for mood in [MarkMood.tired, .exhausted] {
+                let counts = Self.deal(variant, mood: mood, used: 0.8, hours: 4)
+                let sleepy = counts.filter { $0.key.isSleepy }.values.reduce(0, +)
+                let calm = counts.filter { !$0.key.isSleepy }
+                let total = counts.values.reduce(0, +)
+                #expect(Double(sleepy) / Double(total) > 0.5, "\(id) \(mood): \(counts)")
+                #expect(!calm.isEmpty, "\(id) \(mood): \(counts)")
+                #expect(calm.keys.allSatisfy { [.look, .idle, .nuzzle, .eat].contains($0) }, "\(id): \(counts)")
+            }
+            // Asleep after a quiet spell, but with most of the limit left: awake.
+            let asleep = PuffleChoreography.menu(for: .asleep, variant: variant, usedFraction: 0.2)
+            #expect(asleep.allSatisfy { !$0.value.isSleepy })
+            #expect(PuffleChoreography.menu(for: .spent, variant: variant, usedFraction: 1).map(\.value) == [.sleep])
+            #expect(PuffleChoreography.menu(for: .asleep, variant: variant, usedFraction: 1).first?.value == .sleep)
+        }
+    }
+
     // MARK: - Settings
 
     @Test("Each AI's mark is a logo, its mascot or a puffle, and the puffle is remembered")

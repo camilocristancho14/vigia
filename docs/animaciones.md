@@ -43,7 +43,7 @@ Un clip que una variante no tiene se omite de su menú (las bibliotecas antiguas
 ## Eficiencia
 
 - Los puffles se redibujan solo al ritmo de sus fotogramas: 12,5 por segundo, 6,25 dormidos o exhaustos, y la mitad en modo de bajo consumo.
-- Cada variante tiene dos atlas PNG ya a su tamaño (celdas de 44 px = 22 pt @2x para la barra de menú, 80 px para los anillos y la vista previa). Se decodifican una vez, al usarse, y cada fotograma se recorta del atlas sin copiar píxeles.
+- Cada variante tiene dos atlas PNG (celdas de 44 px para las filas del menú, 80 px para todo lo animado: barra de menú, anillos y vista previa). Se decodifican una vez, al usarse; cada fotograma se recorta del atlas grande y se reduce una vez, con filtrado de alta calidad, exactamente a los píxeles que ocupa, y se guarda.
 - Agotado y «Reducir movimiento» son una imagen fija, sin línea de tiempo.
 - La coreografía de las mascotas se consulta una vez por segundo; la animación de cada pose conserva su propio ritmo (Clawd, vectores, logos).
 
@@ -54,6 +54,9 @@ Solo sprites originales del juego, nada redibujado ni generado:
 1. `scripts/puffles/fetch_swfs.py` baja, del índice CDX de la Wayback Machine (`scripts/puffles/cdx_puffle.json`), los 284 SWF de `media1.clubpenguin.com/play/v2/content/global/puffle/sprites/`. `scripts/puffles/sources.tsv` lista cada archivo con su snapshot exacto.
 2. `scripts/puffles/extract_frames.sh` exporta con JPEXS ffdec 26.4.0 cada `DefineSprite` como un PNG por fotograma.
 3. `scripts/puffles/build_puffles.py` clasifica los símbolos (idle de 5 direcciones de 8 fotogramas, caminatas de 12, ciclo de sueño de ~210, rebote de 64, bostezo de 167, hambre de 85, malestar de 45, y la copia grande de cada truco), arma los clips con fotogramas consecutivos, recorta, escala, centra en la celda y paletiza. `scripts/puffles/clip_sources.json` dice de qué SWF salió cada clip de cada variante.
+4. `scripts/puffles/measure_bodies.py` mide, leyendo solo los atlas grandes (80 px), qué tan grande queda el puffle en cada clip (`body`, `bodyScale`, `box`, `bodyBox` en `puffles.json`). `PuffleLayout` usa eso para dibujar al puffle del mismo tamaño en todos los clips —dormido, girando o comiendo—, siempre desde el atlas grande reducido, sin ampliar más de 1,15× a 2x. Un clip que en la barra de menús no alcanza ese tamaño dentro de un 10 % (burbujas de hambre, utilería) queda fuera de la rotación de la barra.
+
+Los clips de sueño (`doze`, `sleep`, `wake`, `yawn`) solo salen con el límite al 75 % o más; a un puffle trabajando, solo con el límite agotado. Esperando: rotación tranquila (idle, mirar, rebotar, caminar, acurrucarse, hablar, rodar, comer, saltar…); trabajando: rotación enérgica (girar, saltar, cavar, pesas, chapotear, rodar, caminar, de cabeza, hablar…); cansado: casi siempre dormitando, con algún clip tranquilo; al 100 %: dormido.
 
 Cada variante usa solo sus propios SWF: el naranja clásico y el naranja gato (1007, con orejas y cola) son opciones separadas, igual que cada criatura de cualquier color. El puffle café no tiene biblioteca de caminar ni de iglú en el archivo, así que su idle son los primeros fotogramas de su truco de hablar. Se dejaron fuera los clips donde la utilería (columpio, poste, hidrante, buceo) dejaba al puffle diminuto, y el cangrejo azul (1023), del que solo sobrevivió su SWF de cavar.
 

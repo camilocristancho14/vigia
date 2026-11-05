@@ -228,8 +228,13 @@ private struct MenuBarMascotItem: View {
     let now: Date
 
     private var markSize: CGFloat {
-        if settings.puffle(for: account) != nil { return 22 }
+        if settings.puffle(for: account) != nil { return PuffleLayout.menuBar.height }
         return (settings.showsBotMark(for: account) ? settings.mascotCharacter(for: account) : .bot).menuBarSize
+    }
+    /// A puffle gets a little more room across than up, so one asleep on
+    /// its side or under its Zs is as big as one standing.
+    private var markWidth: CGFloat {
+        settings.puffle(for: account) != nil ? PuffleLayout.menuBar.width : markSize
     }
     private let backdrop = MenuBarBackdrop.shared
 
@@ -247,7 +252,7 @@ private struct MenuBarMascotItem: View {
 
         HStack(spacing: 4) {
             mark(working: working, pose: pose, headline: headline)
-                .frame(width: markSize, height: markSize)
+                .frame(width: markWidth, height: markSize)
             if working, settings.menuBarActivityText || settings.menuBarTimer {
                 activity(for: provider)
             }
@@ -269,7 +274,7 @@ private struct MenuBarMascotItem: View {
         let reset = store.justReset(account)
         if let puffle = settings.puffle(for: account) {
             PuffleMarkView(variant: puffle, pose: pose, usedFraction: used, justReset: reset,
-                           size: markSize, seed: account.id)
+                           size: markSize, width: markWidth, seed: account.id)
         } else {
             ChoreographedMascot(pose: pose, usedFraction: used, justReset: reset, seed: account.id) { shown, still in
                 mascot(working: working, pose: shown, still: still, headline: headline)
