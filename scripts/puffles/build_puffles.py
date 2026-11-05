@@ -49,6 +49,7 @@ MIN_BODY = 0.33
 # How far a clip that reaches too high is scaled down before the camera
 # follows the puffle up instead.
 MIN_SHRINK = 0.7
+MIN_BODY_WINDOWED = 0.18
 
 COLORS = ["blue", "pink", "black", "green", "purple", "red", "yellow", "white",
           "orange", "brown", "gold", "rainbow"]
@@ -322,7 +323,10 @@ def place(frames, union, scale, width, height, track_x=False, track_y=False):
         span_x = width / scale
     if track_y:
         span_y = height / scale
-        top = smoothed([b[1] for b in boxes])
+        # The highest the puffle gets in the frames around each one, then
+        # smoothed: the camera is up there before it is, never behind it.
+        tops = [b[1] for b in boxes]
+        top = smoothed([min(tops[max(0, i - 3):i + 4]) for i in range(len(tops))], reach=1)
     out = []
     for i, f in enumerate(frames):
         if track_x:
@@ -331,7 +335,7 @@ def place(frames, union, scale, width, height, track_x=False, track_y=False):
             w = min(width, max(1, round((union[2] - union[0]) * scale)))
             x0, x1, ox = union[0], union[2], max((width - w) // 2, 0)
         if track_y:
-            y0 = min(max(top[i] - span_y * 0.03, union[1]), union[3] - span_y)
+            y0 = min(max(top[i] - span_y * 0.05, union[1]), union[3] - span_y)
             y1, h, oy = y0 + span_y, height, 0
         else:
             h = min(height, max(1, round((union[3] - union[1]) * scale)))
@@ -376,7 +380,7 @@ PUFFLE_ONLY = {"jump", "spin", "headstand", "bounce", "nuzzle", "speak", "wake"}
 # Clips where the puffle stays where it is and only its props fly about —
 # dirt, a bubble, a tub, a brush — so a camera fixed on it cuts the props,
 # never the puffle.
-WINDOWED = {"dig", "bubblegum", "bath", "brush"}
+WINDOWED = {"dig", "eat", "bubblegum", "bath", "brush"}
 
 ORDER = ["idle", "look", "bounce", "walk", "walkSide", "doze", "sleep", "wake", "jump", "spin",
          "nuzzle", "roll", "speak", "headstand", "dig", "eat", "splash", "lift", "yawn", "hungry", "sick"]
@@ -461,7 +465,8 @@ def build(frames_dir, resources, report_path=None):
                 if empty <= len(window[LARGE]) // 5:
                     placed, body = window, cell_body(window[LARGE]) / LARGE
                     print(f"  {pid}: {role} framed on the puffle", file=sys.stderr)
-            if role != "idle" and body < MIN_BODY:
+            # A windowed clip is measured with its props cut away: a lower bar.
+            if role != "idle" and body < (MIN_BODY_WINDOWED if role in WINDOWED else MIN_BODY):
                 print(f"  {pid}: {role} left out, too small to read ({body:.2f})", file=sys.stderr)
                 continue
             clips[role] = {"start": len(cells[SMALL]), "count": len(placed[SMALL]),
