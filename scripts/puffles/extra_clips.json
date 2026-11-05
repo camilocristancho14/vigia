@@ -574,5 +574,42 @@
    ]
   ]
  },
- "leftOut": {}
+ "leftOut": {
+  "white": [
+   "iceSkate",
+   "iceBlast"
+  ],
+  "yellow": [
+   "painting",
+   "film"
+  ],
+  "green": [
+   "juggle",
+   "unicycle"
+  ],
+  "purple": [
+   "disco"
+  ],
+  "red": [
+   "bowling"
+  ],
+  "pink": [
+   "trampoline"
+  ],
+  "gold": [
+   "sleep",
+   "dig"
+  ],
+  "purple1022": [
+   "beachBall",
+   "ballKick"
+  ],
+  "blue": [
+   "ballKick"
+  ],
+  "blue1006": [
+   "ballKick"
+  ]
+ },
+ "_leftOutWhy": "Props (easel, camera, unicycle, pins, rink, trampoline, disco ball) leave the puffle a speck at 22 points; the gold puffle's long sleep is the one where it vanishes in sparkles."
 }

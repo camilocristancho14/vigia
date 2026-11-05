@@ -52,6 +52,24 @@
    ],
    "sick": [
     "black"
+   ],
+   "skateboard": [
+    "black/DefineSprite_253"
+   ],
+   "bubblegum": [
+    "black/DefineSprite_218"
+   ],
+   "bath": [
+    "client__puffle__care__assetLibraryBlack/DefineSprite_221_com.clubpenguin.puffles.care.view.assets.black.BathAsset"
+   ],
+   "brush": [
+    "client__puffle__care__assetLibraryBlack/DefineSprite_130_com.clubpenguin.puffles.care.view.assets.black.BrushAsset"
+   ],
+   "tickle": [
+    "client__puffle__care__assetLibraryBlack/DefineSprite_87_com.clubpenguin.puffles.care.view.assets.black.TickleReactionAsset"
+   ],
+   "petting": [
+    "client__puffle__care__assetLibraryBlack/DefineSprite_95_com.clubpenguin.puffles.care.view.assets.black.PettingReactionAsset"
    ]
   }
  },
@@ -99,9 +117,6 @@
    ],
    "headstand": [
     "tricks__puffle_black1000_standOnHead"
-   ],
-   "dig": [
-    "dig__puffle_black1000_dig"
    ]
   }
  },
@@ -190,6 +205,21 @@
    ],
    "sick": [
     "igloo__puffle_blue_igloo"
+   ],
+   "bubblegum": [
+    "blue/DefineSprite_137"
+   ],
+   "bath": [
+    "client__puffle__care__assetLibraryBlue/DefineSprite_212_com.clubpenguin.puffles.care.view.assets.blue.BathAsset"
+   ],
+   "brush": [
+    "client__puffle__care__assetLibraryBlue/DefineSprite_136_com.clubpenguin.puffles.care.view.assets.blue.BrushAsset"
+   ],
+   "tickle": [
+    "client__puffle__care__assetLibraryBlue/DefineSprite_113_com.clubpenguin.puffles.care.view.assets.blue.TickleReactionAsset"
+   ],
+   "petting": [
+    "client__puffle__care__assetLibraryBlue/DefineSprite_119_com.clubpenguin.puffles.care.view.assets.blue.PettingReactionAsset"
    ]
   }
  },
@@ -299,6 +329,12 @@
    ],
    "sick": [
     "igloo__puffle_blue1006_igloo"
+   ],
+   "starBall": [
+    "igloo__puffle_blue1006_igloo/DefineSprite_78"
+   ],
+   "bubblegum": [
+    "igloo__puffle_blue1006_igloo/DefineSprite_79"
    ]
   }
  },
@@ -346,9 +382,6 @@
    ],
    "headstand": [
     "tricks__puffle_blue1011_standOnHead"
-   ],
-   "dig": [
-    "dig__puffle_blue1011_dig"
    ]
   }
  },
@@ -470,8 +503,38 @@
    "headstand": [
     "tricks__puffle_gold_standOnHead"
    ],
-   "dig": [
-    "dig__puffle_gold_dig"
+   "bath": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_601_com.clubpenguin.puffles.care.view.assets.gold.BathAsset"
+   ],
+   "brush": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_520_com.clubpenguin.puffles.care.view.assets.gold.BrushAsset"
+   ],
+   "tickle": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_186_com.clubpenguin.puffles.care.view.assets.gold.TickleReactionAsset"
+   ],
+   "petting": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_218_com.clubpenguin.puffles.care.view.assets.gold.PettingReactionAsset"
+   ],
+   "poke": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_206_com.clubpenguin.puffles.care.view.assets.gold.PokeReactionAsset"
+   ],
+   "calm": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_240_com.clubpenguin.puffles.care.view.assets.gold.NeutralReactionAsset"
+   ],
+   "upset": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_271_com.clubpenguin.puffles.care.view.assets.gold.NegativeReactionAsset"
+   ],
+   "fullCare": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_433_com.clubpenguin.puffles.care.view.assets.gold.HundredPercentAsset"
+   ],
+   "delight": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_440_com.clubpenguin.puffles.care.view.assets.gold.HappyReactionAsset"
+   ],
+   "disappointed": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_448_com.clubpenguin.puffles.care.view.assets.gold.DisappointmentAsset"
+   ],
+   "snack": [
+    "client__puffle__care__assetLibraryGold/DefineSprite_475_com.clubpenguin.puffles.care.view.assets.gold.ConsumptionAsset"
    ]
   }
  },
@@ -528,6 +591,9 @@
    ],
    "sick": [
     "igloo__puffle_green_igloo"
+   ],
+   "balloonAnimal": [
+    "igloo__puffle_green_igloo/DefineSprite_156"
    ]
   }
  },
@@ -557,9 +623,6 @@
    ],
    "wake": [
     "walk__puffle_green1008_walk"
-   ],
-   "dig": [
-    "dig__puffle_green1008_dig"
    ]
   }
  },
@@ -589,9 +652,6 @@
    ],
    "wake": [
     "walk__puffle_green1012_walk"
-   ],
-   "dig": [
-    "dig__puffle_green1012_dig"
    ]
   }
  },
@@ -674,6 +734,33 @@
    ],
    "sick": [
     "orange"
+   ],
+   "hulaHoop": [
+    "orange/DefineSprite_143"
+   ],
+   "wagon": [
+    "orange/DefineSprite_255"
+   ],
+   "bubblegum": [
+    "orange/DefineSprite_288"
+   ],
+   "jackInBox": [
+    "orange/DefineSprite_381"
+   ],
+   "pillowNap": [
+    "orange/DefineSprite_92"
+   ],
+   "bath": [
+    "client__puffle__care__assetLibraryOrange/DefineSprite_256_com.clubpenguin.puffles.care.view.assets.orange.BathAsset"
+   ],
+   "brush": [
+    "client__puffle__care__assetLibraryOrange/DefineSprite_161_com.clubpenguin.puffles.care.view.assets.orange.BrushAsset"
+   ],
+   "tickle": [
+    "client__puffle__care__assetLibraryOrange/DefineSprite_124_com.clubpenguin.puffles.care.view.assets.orange.TickleReactionAsset"
+   ],
+   "petting": [
+    "client__puffle__care__assetLibraryOrange/DefineSprite_131_com.clubpenguin.puffles.care.view.assets.orange.PettingReactionAsset"
    ]
   }
  },
@@ -772,11 +859,8 @@
    "headstand": [
     "tricks__puffle_orange1009_standOnHead"
    ],
-   "dig": [
-    "dig__puffle_orange1009_dig"
-   ],
-   "eat": [
-    "eat__puffle_orange1009_eat"
+   "splash": [
+    "animation__splash__puffle_orange1009_splash"
    ],
    "lift": [
     "hotelcare__weightlifting__puffle_orange1009_weightlifting"
@@ -862,6 +946,27 @@
    ],
    "sick": [
     "pink"
+   ],
+   "bubblegum": [
+    "pink/DefineSprite_135"
+   ],
+   "jumpRope": [
+    "pink/DefineSprite_234"
+   ],
+   "skipRope": [
+    "pink/DefineSprite_89"
+   ],
+   "bath": [
+    "client__puffle__care__assetLibraryPink/DefineSprite_186_com.clubpenguin.puffles.care.view.assets.pink.BathAsset"
+   ],
+   "brush": [
+    "client__puffle__care__assetLibraryPink/DefineSprite_143_com.clubpenguin.puffles.care.view.assets.pink.BrushAsset"
+   ],
+   "tickle": [
+    "client__puffle__care__assetLibraryPink/DefineSprite_112_com.clubpenguin.puffles.care.view.assets.pink.TickleReactionAsset"
+   ],
+   "petting": [
+    "client__puffle__care__assetLibraryPink/DefineSprite_118_com.clubpenguin.puffles.care.view.assets.pink.PettingReactionAsset"
    ]
   }
  },
@@ -941,9 +1046,6 @@
    ],
    "wake": [
     "walk__puffle_pink1010_walk"
-   ],
-   "dig": [
-    "dig__puffle_pink1010_dig"
    ]
   }
  },
@@ -973,9 +1075,6 @@
    ],
    "wake": [
     "walk__puffle_pink1013_walk"
-   ],
-   "dig": [
-    "dig__puffle_pink1013_dig"
    ]
   }
  },
@@ -1029,6 +1128,12 @@
    ],
    "hungry": [
     "igloo__puffle_purple_igloo"
+   ],
+   "bubblegum": [
+    "igloo__puffle_purple_igloo/DefineSprite_160"
+   ],
+   "ponder": [
+    "igloo__puffle_purple_igloo/DefineSprite_195"
    ]
   }
  },
@@ -1076,9 +1181,6 @@
    ],
    "headstand": [
     "tricks__puffle_purple1001_standOnHead"
-   ],
-   "dig": [
-    "dig__puffle_purple1001_dig"
    ]
   }
  },
@@ -1118,7 +1220,25 @@
   "source": "purple1022",
   "clips": {
    "idle": [
-    "tricks__puffle_purple1022_speak"
+    "walk__puffle_purple1022_walk"
+   ],
+   "look": [
+    "walk__puffle_purple1022_walk"
+   ],
+   "walk": [
+    "walk__puffle_purple1022_walk"
+   ],
+   "walkSide": [
+    "walk__puffle_purple1022_walk"
+   ],
+   "doze": [
+    "walk__puffle_purple1022_walk"
+   ],
+   "sleep": [
+    "walk__puffle_purple1022_walk"
+   ],
+   "wake": [
+    "walk__puffle_purple1022_walk"
    ],
    "jump": [
     "tricks__puffle_purple1022_jumpForward"
@@ -1143,6 +1263,18 @@
    ],
    "splash": [
     "animation__splash__puffle_purple1022_splash"
+   ],
+   "yawn": [
+    "igloo__puffle_purple1022_igloo"
+   ],
+   "hungry": [
+    "igloo__puffle_purple1022_igloo"
+   ],
+   "sick": [
+    "igloo__puffle_purple1022_igloo"
+   ],
+   "bubblegum": [
+    "igloo__puffle_purple1022_igloo/DefineSprite_160"
    ]
   }
  },
@@ -1222,6 +1354,48 @@
    ],
    "hungry": [
     "rainbow"
+   ],
+   "rainbowCloud": [
+    "rainbow/DefineSprite_163"
+   ],
+   "bubble": [
+    "rainbow/DefineSprite_201"
+   ],
+   "ponder": [
+    "rainbow/DefineSprite_241"
+   ],
+   "bath": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_639_com.clubpenguin.puffles.care.view.assets.rainbow.BathAsset"
+   ],
+   "brush": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_517_com.clubpenguin.puffles.care.view.assets.rainbow.BrushAsset"
+   ],
+   "tickle": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_134_com.clubpenguin.puffles.care.view.assets.rainbow.TickleReactionAsset"
+   ],
+   "petting": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_174_com.clubpenguin.puffles.care.view.assets.rainbow.PettingReactionAsset"
+   ],
+   "poke": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_164_com.clubpenguin.puffles.care.view.assets.rainbow.PokeReactionAsset"
+   ],
+   "calm": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_184_com.clubpenguin.puffles.care.view.assets.rainbow.NeutralReactionAsset"
+   ],
+   "upset": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_202_com.clubpenguin.puffles.care.view.assets.rainbow.NegativeReactionAsset"
+   ],
+   "fullCare": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_366_com.clubpenguin.puffles.care.view.assets.rainbow.HundredPercentAsset"
+   ],
+   "delight": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_377_com.clubpenguin.puffles.care.view.assets.rainbow.HappyReactionAsset"
+   ],
+   "disappointed": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_387_com.clubpenguin.puffles.care.view.assets.rainbow.DisappointmentAsset"
+   ],
+   "snack": [
+    "client__puffle__care__assetLibraryRainbow/DefineSprite_410_com.clubpenguin.puffles.care.view.assets.rainbow.ConsumptionAsset"
    ]
   }
  },
@@ -1267,9 +1441,6 @@
    "headstand": [
     "tricks__puffle_red_standOnHead"
    ],
-   "dig": [
-    "dig__puffle_red_dig"
-   ],
    "yawn": [
     "igloo__puffle_red_igloo"
    ],
@@ -1278,6 +1449,18 @@
    ],
    "sick": [
     "igloo__puffle_red_igloo"
+   ],
+   "bath": [
+    "client__puffle__care__assetLibraryRed/DefineSprite_199_com.clubpenguin.puffles.care.view.assets.red.BathAsset"
+   ],
+   "brush": [
+    "client__puffle__care__assetLibraryRed/DefineSprite_128_com.clubpenguin.puffles.care.view.assets.red.BrushAsset"
+   ],
+   "tickle": [
+    "client__puffle__care__assetLibraryRed/DefineSprite_97_com.clubpenguin.puffles.care.view.assets.red.TickleReactionAsset"
+   ],
+   "petting": [
+    "client__puffle__care__assetLibraryRed/DefineSprite_104_com.clubpenguin.puffles.care.view.assets.red.PettingReactionAsset"
    ]
   }
  },
@@ -1354,9 +1537,6 @@
    ],
    "wake": [
     "walk__puffle_red1015_walk"
-   ],
-   "dig": [
-    "dig__puffle_red1015_dig"
    ]
   }
  },
@@ -1445,6 +1625,24 @@
    ],
    "sick": [
     "white"
+   ],
+   "snowCloud": [
+    "white/DefineSprite_106"
+   ],
+   "bubblegum": [
+    "white/DefineSprite_221"
+   ],
+   "bath": [
+    "client__puffle__care__assetLibraryWhite/DefineSprite_234_com.clubpenguin.puffles.care.view.assets.white.BathAsset"
+   ],
+   "brush": [
+    "client__puffle__care__assetLibraryWhite/DefineSprite_139_com.clubpenguin.puffles.care.view.assets.white.BrushAsset"
+   ],
+   "tickle": [
+    "client__puffle__care__assetLibraryWhite/DefineSprite_98_com.clubpenguin.puffles.care.view.assets.white.TickleReactionAsset"
+   ],
+   "petting": [
+    "client__puffle__care__assetLibraryWhite/DefineSprite_112_com.clubpenguin.puffles.care.view.assets.white.PettingReactionAsset"
    ]
   }
  },
@@ -1474,9 +1672,6 @@
    ],
    "wake": [
     "walk__puffle_white1014_walk"
-   ],
-   "dig": [
-    "dig__puffle_white1014_dig"
    ]
   }
  },
@@ -1503,6 +1698,9 @@
    ],
    "wake": [
     "walk__puffle_white1021_walk"
+   ],
+   "dig": [
+    "dig__puffle_white1021_dig"
    ]
   }
  },
@@ -1559,6 +1757,9 @@
    ],
    "sick": [
     "yellow"
+   ],
+   "bubblegum": [
+    "yellow/DefineSprite_186"
    ]
   }
  },
@@ -1638,9 +1839,6 @@
    ],
    "wake": [
     "walk__puffle_yellow1020_walk"
-   ],
-   "dig": [
-    "dig__puffle_yellow1020_dig"
    ]
   }
  },

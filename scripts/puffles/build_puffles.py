@@ -348,7 +348,7 @@ def place_window(frames, scale, width, height):
 
 
 def coverage(cell):
-    return sum(1 for a in cell.getchannel("A").getdata() if a > 24)
+    return sum(cell.getchannel("A").histogram()[25:])
 
 
 def cell_body(cells):
@@ -357,6 +357,11 @@ def cell_body(cells):
                    (c.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox() for c in cells) if b)
     return sides[len(sides) // 4] if sides else 0
 
+
+# Clips where the puffle stays where it is and only its props fly about —
+# dirt, a bubble, a tub, a brush — so a camera fixed on it cuts the props,
+# never the puffle.
+WINDOWED = {"dig", "bubblegum", "bath", "brush"}
 
 ORDER = ["idle", "look", "bounce", "walk", "walkSide", "doze", "sleep", "wake", "jump", "spin",
          "nuzzle", "roll", "speak", "headstand", "dig", "eat", "splash", "lift", "yawn", "hungry", "sick"]
@@ -423,10 +428,15 @@ def build(frames_dir, resources, report_path=None):
                     # Too wide by far: follow the puffle across.
                     placed[size] = place(spec["frames"], union, s, cw, ch, track=True)
             body = cell_body(placed[LARGE]) / LARGE
-            if role != "idle" and body < MIN_BODY:
-                # Props or a leap made it a speck: the camera stays on the
-                # puffle instead, unless that leaves the frame empty.
-                window = {size: place_window(spec["frames"], ch / idle_h / own, cw, ch)
+            if role in WINDOWED and body < MIN_BODY:
+                # Props made it a speck, in a clip where the puffle stays put:
+                # the camera stays on the puffle instead, unless that leaves
+                # the frame empty. Measured by the puffle without its props.
+                # The median frame, props and all: zooming in less risks
+                # cutting the puffle less.
+                sides = sorted(max(b[2] - b[0], b[3] - b[1]) for b in map(bbox, spec["frames"]) if b)
+                plain = max(sides[len(sides) // 2] if sides else own, own)
+                window = {size: place_window(spec["frames"], ch / idle_h / plain, cw, ch)
                           for size, (cw, ch) in sizes.items()}
                 start = coverage(window[LARGE][0]) or 1
                 empty = sum(1 for c in window[LARGE] if coverage(c) < 0.3 * start)
