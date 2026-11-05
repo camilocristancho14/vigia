@@ -289,24 +289,29 @@ final class PuffleSheet {
 /// The atlases scale each clip by its own body, but a sleeping puffle under
 /// its Zs, one with a thought bubble or one whose motion fills the cell came
 /// out much smaller in its cell than the idle one. `measure_bodies.py`
-/// measured them; here every clip is scaled so its puffle is `bodyFill` of
-/// the box's height, unless that would cut the puffle off somewhere in the
-/// clip's motion — then as close to it as fits.
+/// measured them — by the puffle's area, so the orange puffle's spiky hair
+/// does not count as body — and here every clip is scaled so its puffle is
+/// `bodyFill` of the box's height, unless that would cut the puffle off
+/// somewhere in the clip's motion; then as close to it as fits. Props, Zs
+/// and bubbles may run off the box: across, they are cut at its edges, so
+/// they never spill onto the next mark.
 struct PuffleLayout: Equatable, Sendable {
     /// Points per large-atlas pixel.
     let scale: CGFloat
     /// Where the cell's top-left corner goes, from the box's top left.
     let origin: CGPoint
-    /// How tall the puffle comes out, in points.
-    let bodyHeight: CGFloat
+    /// How big the puffle comes out, in points: the side of a square of
+    /// its area, the measure `measure_bodies.py` takes.
+    let bodySize: CGFloat
 
-    /// The puffle's height in its resting pose, against the box's height.
-    /// The menu bar's 22 points give it 15.8: a spin, the tallest motion
-    /// most puffles have, then fits the bar at 14.4 — within `tolerance`.
-    static let bodyFill: CGFloat = 15.8 / 22.0
+    /// The puffle's size (the side of a square of its area) against the
+    /// box's height. The menu bar's 22 points give it 14.6, which is a
+    /// classic puffle 15.8 points tall: a spin, the tallest motion most
+    /// puffles have, then still fits the bar within `tolerance`.
+    static let bodyFill: CGFloat = 14.6 / 22.0
     /// The box a puffle has in the menu bar: wider than tall, so a puffle
     /// on its side or under its Zs keeps its size.
-    static let menuBar = CGSize(width: 26, height: 22)
+    static let menuBar = CGSize(width: 28, height: 22)
     /// How far below the resting size a clip may come out before it is left
     /// out of the menu bar's rotation.
     static let tolerance: CGFloat = 0.1
@@ -322,7 +327,7 @@ struct PuffleLayout: Equatable, Sendable {
             let s = min(canvas.width, canvas.height) / side
             return PuffleLayout(scale: s, origin: CGPoint(x: (canvas.width - side * s) / 2,
                                                           y: (canvas.height - side * s) / 2),
-                                bodyHeight: side * 0.74 * s)
+                                bodySize: side * 0.68 * s)
         }
         let idle = idle ?? metrics
         let restScale = scale(for: idle, cell: side, canvas: canvas, displayScale: displayScale, cap: nil)
@@ -335,7 +340,7 @@ struct PuffleLayout: Equatable, Sendable {
         let floor = min(canvas.height, max(ground, tall))
         let x = canvas.width / 2 - side / 2 * s
         let y = floor - CGFloat(metrics.bodyBox[3]) * s
-        return PuffleLayout(scale: s, origin: CGPoint(x: x, y: y), bodyHeight: CGFloat(metrics.body) * s)
+        return PuffleLayout(scale: s, origin: CGPoint(x: x, y: y), bodySize: CGFloat(metrics.body) * s)
     }
 
     private static func scale(for m: PuffleBodyMetrics, cell side: CGFloat, canvas: CGSize,
@@ -343,8 +348,8 @@ struct PuffleLayout: Equatable, Sendable {
         var s = canvas.height * bodyFill / CGFloat(m.body)
         // The puffle, wherever it goes in the clip, inside the box's height…
         s = min(s, canvas.height / CGFloat(max(m.bodyBox[3] - m.bodyBox[1], 1)))
-        // …and all of it, props and Zs too, inside its width, centred.
-        let half = CGFloat(max(side / 2 - m.box[0], m.box[2] - side / 2, 1))
+        // …and inside its width, centred. Props and Zs are cut at the edges.
+        let half = CGFloat(max(side / 2 - m.bodyBox[0], m.bodyBox[2] - side / 2, 1))
         s = min(s, canvas.width / 2 / half)
         // Never enlarged past what stays sharp — or, where even the resting
         // puffle is enlarged, past what it is.
@@ -366,7 +371,7 @@ struct PuffleLayout: Equatable, Sendable {
     static func fitsMenuBar(_ clip: PuffleClip, of variant: PuffleVariant) -> Bool {
         guard variant.frames(clip)?.metrics != nil else { return true }
         let rest = menuBar.height * bodyFill
-        return layout(clip, of: variant, in: menuBar).bodyHeight >= rest * (1 - tolerance) - 0.01
+        return layout(clip, of: variant, in: menuBar).bodySize >= rest * (1 - tolerance) - 0.01
     }
 }
 
@@ -566,6 +571,9 @@ struct PuffleMarkView: View {
             }
         }
         .frame(width: canvas.width, height: canvas.height, alignment: .topLeading)
+        // Cut across, never up and down: a prop stops at the mark's edge
+        // instead of spilling onto its neighbour; Zs may rise above it.
+        .mask { Rectangle().frame(width: canvas.width, height: canvas.height * 3) }
     }
 }
 

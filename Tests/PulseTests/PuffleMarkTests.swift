@@ -213,14 +213,15 @@ struct PuffleMarkTests {
             for clip in variant.available where PuffleLayout.fitsMenuBar(clip, of: variant) {
                 let m = try #require(variant.frames(clip)?.metrics)
                 let layout = PuffleLayout.layout(clip, of: variant, in: bar)
-                heights[clip] = layout.bodyHeight
+                heights[clip] = layout.bodySize
                 // The puffle, through all of its motion, inside the bar's height…
                 #expect(layout.origin.y + m.bodyBox[1] * layout.scale >= -0.01, "\(variant.id) \(clip) top")
                 #expect(layout.origin.y + m.bodyBox[3] * layout.scale <= bar.height + 0.01,
                         "\(variant.id) \(clip) bottom")
-                // …and everything in the clip inside its width.
-                #expect(layout.origin.x + m.box[0] * layout.scale >= -0.01, "\(variant.id) \(clip) left")
-                #expect(layout.origin.x + m.box[2] * layout.scale <= bar.width + 0.01, "\(variant.id) \(clip) right")
+                // …and inside its width (props are cut at the mark's edges).
+                #expect(layout.origin.x + m.bodyBox[0] * layout.scale >= -0.01, "\(variant.id) \(clip) left")
+                #expect(layout.origin.x + m.bodyBox[2] * layout.scale <= bar.width + 0.01,
+                        "\(variant.id) \(clip) right")
                 // Drawn down from the large atlas, or enlarged no more than stays sharp.
                 #expect(layout.scale * 2 <= PuffleLayout.maxUpscale + 1e-6, "\(variant.id) \(clip) upscaled")
             }
@@ -230,17 +231,59 @@ struct PuffleMarkTests {
         }
     }
 
+    @Test("Every clip any variant plays in the menu bar, and its still frame, is within 10 % of one size")
+    func everyMenuBarClipWithinTolerance() throws {
+        let bar = PuffleLayout.menuBar
+        let target = bar.height * PuffleLayout.bodyFill
+        var played = 0
+        for variant in PuffleCatalog.all {
+            var clips = Set<PuffleClip>()
+            for mood in MarkMood.allCases {
+                for used in [nil, 0.3, 0.6, 0.8, 0.95, 1] as [Double?] {
+                    clips.formUnion(PuffleChoreography.menu(for: mood, variant: variant, usedFraction: used).map(\.value))
+                }
+            }
+            for clip in clips {
+                let size = PuffleLayout.layout(clip, of: variant, in: bar).bodySize
+                #expect(abs(size / target - 1) <= PuffleLayout.tolerance + 0.001,
+                        "\(variant.id) \(clip): \(size) pt against \(target)")
+                played += 1
+            }
+            if variant.stillMetrics != nil {
+                let still = PuffleLayout.layout(nil, of: variant, in: bar).bodySize
+                #expect(abs(still / target - 1) <= PuffleLayout.tolerance + 0.001, "\(variant.id) still: \(still)")
+            }
+        }
+        #expect(played > 400)
+    }
+
+    @Test("The orange puffle's spiky hair does not make it smaller than the others")
+    func orangeIsNotSmaller() throws {
+        let bar = PuffleLayout.menuBar
+        let white = try #require(PuffleCatalog.variant("white"))
+        for id in ["orange", "orange-cat", "orange-raccoon", "orange-alien", "purple", "blue"] {
+            let variant = try #require(PuffleCatalog.variant(id))
+            for clip in [PuffleClip.idle, .look, .walk] where variant.frames(clip) != nil {
+                let a = PuffleLayout.layout(clip, of: variant, in: bar)
+                let b = PuffleLayout.layout(clip, of: white, in: bar)
+                // Same size, and the same number of the atlas's pixels on
+                // screen for the same amount of puffle.
+                #expect(abs(a.bodySize / b.bodySize - 1) <= 0.05, "\(id) \(clip): \(a.bodySize) vs \(b.bodySize)")
+            }
+        }
+    }
+
     @Test("Asleep is as big as awake: the sleepy clips and the still frame match the idle puffle")
     func sleepingIsNotTiny() throws {
         let bar = PuffleLayout.menuBar
         for id in ["purple", "white", "orange", "blue"] {
             let variant = try #require(PuffleCatalog.variant(id))
-            let idle = PuffleLayout.layout(.idle, of: variant, in: bar).bodyHeight
+            let idle = PuffleLayout.layout(.idle, of: variant, in: bar).bodySize
             for clip in [PuffleClip.doze, .sleep] {
-                let height = PuffleLayout.layout(clip, of: variant, in: bar).bodyHeight
+                let height = PuffleLayout.layout(clip, of: variant, in: bar).bodySize
                 #expect(abs(height / idle - 1) <= 0.1, "\(id) \(clip): \(height) against \(idle)")
             }
-            let still = PuffleLayout.layout(nil, of: variant, in: bar).bodyHeight
+            let still = PuffleLayout.layout(nil, of: variant, in: bar).bodySize
             #expect(abs(still / idle - 1) <= 0.1, "\(id) still: \(still) against \(idle)")
         }
     }
