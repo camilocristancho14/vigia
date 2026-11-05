@@ -109,15 +109,15 @@ struct MascotGalleryTests {
         }
     }
 
-    @Test("In the bar Clawd is exactly the size he was in 0.5.0; the other marks are the larger ones")
+    @Test("In the bar every mark stands the bar's full 22 points; Clawd as wide as his sprite")
     func barSizes() {
-        #expect(MascotCharacter.clawd.menuBarSize == 20)
-        for character in [MascotCharacter.floatBot, .starBuddy, .cloudGhost, .bot] {
+        for character in MascotCharacter.allCases {
             #expect(character.menuBarSize == 22)
         }
-        // His sprite is drawn in the same square box and the same grid as
-        // then: 51 x 36 frames, fitted in 20 points.
+        // His 51 x 36 frames, drawn 22 points tall rather than fitted in a
+        // 20-point square (which left him 14 points tall).
         #expect(ClawdFrames.frame(for: .awake, at: 0, colour: true)?.size == NSSize(width: 51, height: 36))
+        #expect(ClawdFrames.width(forHeight: 22) == 32)
     }
 
     @Test("Clawd has a frame for every pose on the walking sprite's grid")

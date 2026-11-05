@@ -200,7 +200,10 @@ final class MarkChoreographer<Value: Hashable & Sendable> {
     static func memory(for count: Int) -> Int { max(0, min(4, count / 3)) }
 
     private func deal(_ menu: [MarkBeat<Value>], at time: TimeInterval, after boundary: TimeInterval?) {
-        let held = Set(recent.suffix(Self.memory(for: menu.count)) + (current.map { [$0] } ?? []))
+        // The one showing is the newest of `recent`; the memory goes back
+        // that many more.
+        var held = Set(recent.suffix(Self.memory(for: menu.count) + 1))
+        if let current { held.insert(current) }
         let fresh = menu.filter { !held.contains($0.value) }
         let options = fresh.isEmpty ? (menu.count > 1 ? menu.filter { $0.value != current } : menu) : fresh
         let beat = Self.pick(options, using: &rng)

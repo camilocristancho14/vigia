@@ -46,6 +46,9 @@ SOURCE_FPS = 25.0
 # A clip whose puffle would end up smaller than this, against the cell's
 # height, is left out: at 22 points it would be a speck.
 MIN_BODY = 0.33
+# How far a clip that reaches too high is scaled down before the camera
+# follows the puffle up instead.
+MIN_SHRINK = 0.7
 
 COLORS = ["blue", "pink", "black", "green", "purple", "red", "yellow", "white",
           "orange", "brown", "gold", "rainbow"]
@@ -296,38 +299,46 @@ def union_box(frames):
             max(b[2] for b in boxes), max(b[3] for b in boxes))
 
 
-def place(frames, union, scale, width, height, track=False):
+def smoothed(values, reach=2):
+    """A running mean over five frames, so a camera glides."""
+    return [sum(values[max(0, i - reach):i + reach + 1]) / len(values[max(0, i - reach):i + reach + 1])
+            for i in range(len(values))]
+
+
+def place(frames, union, scale, width, height, track_x=False, track_y=False):
     """Every frame of a clip cut to the clip's own box — one crop for all of
     them, so nothing shakes — scaled by `scale`, centred across the cell and
     standing on its floor.
 
-    `track`: for a clip that travels sideways (a roll, a walk past, a dig
-    throwing dirt about) the camera follows the puffle across instead, as
-    the game's own room did, smoothly; top and bottom stay the clip's own.
+    `track_x`: for a clip that travels sideways (a roll, a dig throwing dirt
+    about) the camera follows the puffle across instead, smoothly.
+    `track_y`: for a leap too high to fit at a readable size, the camera
+    keeps the top of the puffle in view, smoothly: the shadow on the floor
+    may drop out of the frame while it is in the air; the puffle does not.
     """
-    h = min(height, max(1, round((union[3] - union[1]) * scale)))
-    if track:
-        centres = []
-        for f in frames:
-            b = bbox(f) or union
-            centres.append((b[0] + b[2]) / 2)
-        # A running mean over five frames, so the camera glides.
-        smooth = [sum(centres[max(0, i - 2):i + 3]) / len(centres[max(0, i - 2):i + 3])
-                  for i in range(len(centres))]
-        span = width / scale
+    boxes = [bbox(f) or union for f in frames]
+    if track_x:
+        cx = smoothed([(b[0] + b[2]) / 2 for b in boxes])
+        span_x = width / scale
+    if track_y:
+        span_y = height / scale
+        top = smoothed([b[1] for b in boxes])
     out = []
     for i, f in enumerate(frames):
-        image = Image.open(f).convert("RGBA")
-        canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
-        if track:
-            x0 = smooth[i] - span / 2
-            box = (round(x0), union[1], round(x0 + span), union[3])
-            crop = image.crop(box).resize((width, h), Image.LANCZOS)
-            canvas.alpha_composite(crop, (0, max(height - h, 0)))
+        if track_x:
+            x0, x1, w, ox = cx[i] - span_x / 2, cx[i] + span_x / 2, width, 0
         else:
             w = min(width, max(1, round((union[2] - union[0]) * scale)))
-            crop = image.crop(union).resize((w, h), Image.LANCZOS)
-            canvas.alpha_composite(crop, (max((width - w) // 2, 0), max(height - h, 0)))
+            x0, x1, ox = union[0], union[2], max((width - w) // 2, 0)
+        if track_y:
+            y0 = min(max(top[i] - span_y * 0.03, union[1]), union[3] - span_y)
+            y1, h, oy = y0 + span_y, height, 0
+        else:
+            h = min(height, max(1, round((union[3] - union[1]) * scale)))
+            y0, y1, oy = union[1], union[3], max(height - h, 0)
+        image = Image.open(f).convert("RGBA").crop((round(x0), round(y0), round(x1), round(y1)))
+        canvas = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+        canvas.alpha_composite(image.resize((w, h), Image.LANCZOS), (ox, oy))
         out.append(canvas)
     return out
 
@@ -357,6 +368,10 @@ def cell_body(cells):
                    (c.getchannel("A").point(lambda a: 255 if a > 24 else 0).getbbox() for c in cells) if b)
     return sides[len(sides) // 4] if sides else 0
 
+
+# The tricks: the puffle alone, no props, so a camera rising with it keeps
+# it whole and readable.
+PUFFLE_ONLY = {"jump", "spin", "headstand", "bounce", "nuzzle", "speak", "wake"}
 
 # Clips where the puffle stays where it is and only its props fly about —
 # dirt, a bubble, a tub, a brush — so a camera fixed on it cuts the props,
@@ -419,14 +434,17 @@ def build(frames_dir, resources, report_path=None):
                 # The idle puffle's body is `ch / idle_h` pixels; the clip is
                 # scaled down as a whole if it reaches past the cell.
                 scale = ch / idle_h / own
-                # Too tall (a headstand, a leap): the whole clip shrinks.
-                s = scale * min(1.0, ch / (h_units * own * scale))
+                # Too tall (a headstand, a leap): the whole clip shrinks, to
+                # 70 % at most; past that the camera rises with the puffle.
+                tall = ch / (h_units * own * scale)
+                track_y = tall < MIN_SHRINK and role in PUFFLE_ONLY
+                s = scale * (max(min(1.0, tall), MIN_SHRINK) if track_y else min(1.0, tall))
                 wide = cw / (w_units * own * s)
-                if wide >= 0.75:
-                    placed[size] = place(spec["frames"], union, s * min(1.0, wide), cw, ch)
-                else:
-                    # Too wide by far: follow the puffle across.
-                    placed[size] = place(spec["frames"], union, s, cw, ch, track=True)
+                track_x = wide < 0.75
+                if not track_x:
+                    s *= min(1.0, wide)
+                    track_y = track_y and (h_units * own * s) > ch
+                placed[size] = place(spec["frames"], union, s, cw, ch, track_x, track_y)
             body = cell_body(placed[LARGE]) / LARGE
             if role in WINDOWED and body < MIN_BODY:
                 # Props made it a speck, in a clip where the puffle stays put:
