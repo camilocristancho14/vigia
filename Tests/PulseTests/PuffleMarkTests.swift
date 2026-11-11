@@ -86,6 +86,22 @@ struct PuffleMarkTests {
         #expect(MarkMood.allCases.filter(\.isStill) == [.spent])
     }
 
+    @Test("Each animation plays where it means something")
+    func kindsByMood() throws {
+        let orange = try #require(PuffleCatalog.variant("orange"))
+        let kinds = { (mood: MarkMood) in Set(PuffleChoreography.menu(for: mood, variant: orange).compactMap { orange.frames($0.value)?.kind }) }
+        #expect(kinds(.working).isSubset(of: [.walk, .work, .power, .trick]))
+        #expect(kinds(.tired).isSubset(of: [.yawn, .doze, .hungry, .sad, .sick, .rest]))
+        #expect(kinds(.celebrating).isSubset(of: [.cheer, .trick, .dance, .laugh, .happy]))
+        #expect(kinds(.idle).contains(.play))
+        #expect(!kinds(.idle).contains(.work) && !kinds(.idle).contains(.sleep))
+        // The classic colours carry their toys and their care-screen moods.
+        for id in ["black", "blue", "orange", "pink", "white", "rainbow", "gold", "green", "purple", "yellow"] {
+            let variant = try #require(PuffleCatalog.variant(id))
+            #expect(variant.clips.count >= 15, "\(id) has \(variant.clips.count)")
+        }
+    }
+
     @Test("Every mood has something to play, for every puffle and every mascot pose")
     func menusNeverEmpty() {
         for variant in PuffleCatalog.all {

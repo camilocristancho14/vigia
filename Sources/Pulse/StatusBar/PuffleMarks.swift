@@ -7,44 +7,49 @@
 import AppKit
 import SwiftUI
 
-/// The animations a puffle can have. Which ones a variant has depends on
-/// which of its SWFs survived in the archive; `puffles.json` says.
-enum PuffleClip: String, CaseIterable, Sendable, Hashable {
-    /// Facing out, blinking.
-    case idle
+/// One of a puffle's animations, by the name `puffles.json` gives it.
+///
+/// Which ones a variant has depends on which of its SWFs survived in the
+/// archive: the classic colours carry their toys, baths and care-screen
+/// moods, the creatures mostly their walks and tricks. The ones every
+/// puffle may have are named here; the rest are only ever reached through
+/// their `PuffleKind`.
+struct PuffleClip: RawRepresentable, Hashable, Sendable, ExpressibleByStringLiteral, CustomStringConvertible {
+    let rawValue: String
+    init(rawValue: String) { self.rawValue = rawValue }
+    init(stringLiteral value: String) { rawValue = value }
+    var description: String { rawValue }
+
+    /// Facing out, blinking (the ghost: floating).
+    static let idle: PuffleClip = "idle"
     /// Turning its head to one side and back.
-    case look
+    static let look: PuffleClip = "look"
     /// The creature puffles' happy bob on the spot.
-    case bounce
-    /// Walking towards the viewer.
-    case walk
-    /// Walking past, in profile.
-    case walkSide
+    static let bounce: PuffleClip = "bounce"
+    static let walk: PuffleClip = "walk"
+    static let walkSide: PuffleClip = "walkSide"
     /// Eyes closing, nodding off.
-    case doze
+    static let doze: PuffleClip = "doze"
     /// Asleep under its Zs.
-    case sleep
+    static let sleep: PuffleClip = "sleep"
     /// Waking with a start.
-    case wake
-    case jump
+    static let wake: PuffleClip = "wake"
+    static let jump: PuffleClip = "jump"
     /// The jump with a spin, its best trick.
-    case spin
-    case nuzzle
-    case roll
-    /// Chattering away.
-    case speak
-    /// Standing on its head.
-    case headstand
-    case dig
-    case eat
-    case splash
-    /// The Puffle Hotel's weightlifting.
-    case lift
+    static let spin: PuffleClip = "spin"
+    static let nuzzle: PuffleClip = "nuzzle"
+    static let roll: PuffleClip = "roll"
+    static let speak: PuffleClip = "speak"
+    static let headstand: PuffleClip = "headstand"
+    static let dig: PuffleClip = "dig"
+    static let eat: PuffleClip = "eat"
+    static let splash: PuffleClip = "splash"
+    static let lift: PuffleClip = "lift"
     /// The classic puffles' moods, from the game's own care screens: a long
     /// yawn, a thought bubble of food, and a queasy green tongue.
-    case yawn
-    case hungry
-    case sick
+    static let yawn: PuffleClip = "yawn"
+    static let hungry: PuffleClip = "hungry"
+    static let sick: PuffleClip = "sick"
 }
 
 extension PuffleClip {
@@ -55,6 +60,51 @@ extension PuffleClip {
     static let sleepy: Set<PuffleClip> = [.doze, .sleep, .wake, .yawn]
 
     var isSleepy: Bool { Self.sleepy.contains(self) }
+}
+
+/// What an animation means, which decides the moods that play it. Every
+/// clip in `puffles.json` carries one; `docs/animaciones.md` has the table.
+enum PuffleKind: String, CaseIterable, Sendable, Decodable {
+    /// At rest: breathing, blinking.
+    case rest
+    /// Looking about.
+    case look
+    /// Pondering, a thought crossing its face.
+    case think
+    case walk
+    /// Busy at something: rolling, digging, weights, the easel, the camera,
+    /// the unicycle, the skipping rope.
+    case work
+    /// Bursting with energy: the black puffle's fire, the white one's ice.
+    case power
+    /// A toy: gum, a beach ball, a skateboard, a hoop, a balloon…
+    case play
+    /// Its tricks: jumps, the spin, the headstand, the creatures' bob.
+    case trick
+    /// The disco ball.
+    case dance
+    /// Content: a nuzzle, being petted.
+    case happy
+    /// Tickled, laughing.
+    case laugh
+    /// The big moments: full care, delight, a trampoline, the cannon.
+    case cheer
+    case eat
+    case bath
+    /// Being brushed.
+    case groom
+    case speak
+    /// A start: poked, the jack-in-the-box.
+    case surprise
+    /// Disappointed, upset.
+    case sad
+    case sick
+    case yawn
+    case hungry
+    case doze
+    /// Asleep: the Zs, the pillow, the dream.
+    case sleep
+    case wake
 }
 
 /// How big the puffle is in one clip of the large atlas, measured by
@@ -71,20 +121,38 @@ struct PuffleBodyMetrics: Decodable, Hashable, Sendable {
     let bodyBox: [Double]
 }
 
-/// Where one clip sits in a variant's atlas, and how big the puffle is in it.
+/// Where one clip sits in a variant's atlas, what it is, and how big the puffle is in it.
 struct PuffleClipFrames: Decodable, Hashable, Sendable {
     let start: Int
     let count: Int
     let fps: Double
+    let kind: PuffleKind
     let body: Double?
     let bodyScale: Double?
     let box: [Double]?
     let bodyBox: [Double]?
 
-    init(start: Int, count: Int, fps: Double, metrics: PuffleBodyMetrics? = nil) {
+    private enum CodingKeys: String, CodingKey {
+        case start, count, fps, kind, body, bodyScale, box, bodyBox
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        start = try container.decode(Int.self, forKey: .start)
+        count = try container.decode(Int.self, forKey: .count)
+        fps = try container.decode(Double.self, forKey: .fps)
+        kind = try container.decodeIfPresent(PuffleKind.self, forKey: .kind) ?? .rest
+        body = try container.decodeIfPresent(Double.self, forKey: .body)
+        bodyScale = try container.decodeIfPresent(Double.self, forKey: .bodyScale)
+        box = try container.decodeIfPresent([Double].self, forKey: .box)
+        bodyBox = try container.decodeIfPresent([Double].self, forKey: .bodyBox)
+    }
+
+    init(start: Int, count: Int, fps: Double, kind: PuffleKind = .rest, metrics: PuffleBodyMetrics? = nil) {
         self.start = start
         self.count = count
         self.fps = fps
+        self.kind = kind
         body = metrics?.body
         bodyScale = metrics?.bodyScale
         box = metrics?.box
@@ -127,7 +195,13 @@ struct PuffleVariant: Identifiable, Hashable, Sendable, Decodable {
 
     func frames(_ clip: PuffleClip) -> PuffleClipFrames? { clips[clip.rawValue] }
 
-    var available: [PuffleClip] { PuffleClip.allCases.filter { clips[$0.rawValue] != nil } }
+    /// Every clip it has, in a stable order.
+    var available: [PuffleClip] { clips.keys.sorted().map(PuffleClip.init(rawValue:)) }
+
+    /// Its clips of one kind, in a stable order.
+    func animations(of kind: PuffleKind) -> [PuffleClip] {
+        clips.filter { $0.value.kind == kind }.keys.sorted().map(PuffleClip.init(rawValue:))
+    }
 }
 
 /// The puffles in the app, read once from `puffles.json`.
