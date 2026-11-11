@@ -596,10 +596,7 @@
   "pink": [
    "trampoline"
   ],
-  "gold": [
-   "sleep",
-   "dig"
-  ],
+  "gold": ["sleep"],
   "purple1022": [
    "beachBall",
    "ballKick"
@@ -611,5 +608,5 @@
    "ballKick"
   ]
  },
- "_leftOutWhy": "Props (easel, camera, unicycle, pins, rink, trampoline, disco ball) leave the puffle a speck at 22 points; the gold puffle's long sleep is the one where it vanishes in sparkles."
+ "_leftOutWhy": "Props (easel, camera, unicycle, pins, rink, trampoline, disco ball) leave the puffle a speck at 22 points; the gold puffle's long sleep is the one where it vanishes in sparkles. The gold dig stays (0.14.0): main had it, and PuffleLayout keeps it out of the menu bar if it is too small there."
 }
