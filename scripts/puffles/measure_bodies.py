@@ -98,11 +98,14 @@ def union(a, b):
     return b if a is None else [min(a[0], b[0]), min(a[1], b[1]), max(a[2], b[2]), max(a[3], b[3])]
 
 
-def measure(atlas, columns, cell, indices, window=False):
+def measure(atlas, columns, cell, indices, window=False, width=None):
+    """`cell` is the cell's height and `width` its width, when the cells are
+    not square (build_puffles.py cuts them to the variant's own outline)."""
+    width = width or cell
     sizes, box, bodies = [], None, []
     for i in indices:
-        x, y = (i % columns) * cell, (i // columns) * cell
-        frame = atlas.crop((x, y, x + cell, y + cell))
+        x, y = (i % columns) * width, (i // columns) * cell
+        frame = atlas.crop((x, y, x + width, y + cell))
         bbox = frame.getchannel("A").point(lambda a: 255 if a > ALPHA else 0).getbbox()
         if not bbox:
             continue
@@ -146,12 +149,13 @@ def main(resources):
         manifest = json.load(f)
     for variant in manifest["variants"]:
         cell, columns = variant["large"], variant["columns"]
+        width = variant.get("largeWidth", cell)
         atlas = Image.open(os.path.join(resources, f"puffle-{variant['id']}-large.png")).convert("RGBA")
         metrics = {}
         for name, clip in variant["clips"].items():
             metrics[name] = measure(atlas, columns, cell, range(clip["start"], clip["start"] + clip["count"]),
-                                    window=name == "dig")
-        still = measure(atlas, columns, cell, [variant["still"]])
+                                    window=name == "dig", width=width)
+        still = measure(atlas, columns, cell, [variant["still"]], width=width)
         reference = metrics["idle"]["body"]
         for name, clip in variant["clips"].items():
             m = metrics[name]

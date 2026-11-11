@@ -93,7 +93,7 @@ enum VigiaMenuRows {
     ) -> NSImage? {
         if let puffle = settings.puffle(for: account) {
             return PuffleSheet.sheet(puffle, large: false).frame(.idle, at: 0).map { frame in
-                NSImage(cgImage: frame, size: NSSize(width: 18, height: 18))
+                NSImage(cgImage: frame, size: NSSize(width: (18 * puffle.aspect).rounded(), height: 18))
             }
         }
         guard marked else { return MenuBarReading.markImage(for: account.provider, size: 16) }

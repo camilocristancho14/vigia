@@ -190,8 +190,21 @@ final class MarkChoreographer<Value: Hashable & Sendable> {
                        previous: previous, previousStart: previousStart)
     }
 
+    /// The last few beats dealt, newest last, so a long menu goes round
+    /// before anything comes back.
+    private var recent: [Value] = []
+
+    /// How many of the last beats a menu of `count` keeps out besides the
+    /// current one: none for a short menu, up to four for a long one.
+    static func memory(for count: Int) -> Int { max(0, min(4, count / 3)) }
+
     private func deal(_ menu: [MarkBeat<Value>], at time: TimeInterval, after boundary: TimeInterval?) {
-        let options = menu.count > 1 ? menu.filter { $0.value != current } : menu
+        // The one showing is the newest of `recent`; the memory goes back
+        // that many more.
+        var held = Set(recent.suffix(Self.memory(for: menu.count) + 1))
+        if let current { held.insert(current) }
+        let fresh = menu.filter { !held.contains($0.value) }
+        let options = fresh.isEmpty ? (menu.count > 1 ? menu.filter { $0.value != current } : menu) : fresh
         let beat = Self.pick(options, using: &rng)
         previous = current
         previousStart = start
@@ -202,7 +215,13 @@ final class MarkChoreographer<Value: Hashable & Sendable> {
         start = begin
         end = begin + Self.length(of: beat, using: &rng)
         current = beat.value
+        remember(beat.value)
         dealt += 1
+    }
+
+    private func remember(_ value: Value) {
+        recent.append(value)
+        if recent.count > 8 { recent.removeFirst(recent.count - 8) }
     }
 
     /// Cuts straight to one beat, for news that names it.
@@ -212,6 +231,7 @@ final class MarkChoreographer<Value: Hashable & Sendable> {
         start = time
         end = time + Self.length(of: beat, using: &rng)
         current = beat.value
+        remember(beat.value)
         dealt += 1
     }
 
